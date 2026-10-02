@@ -25,7 +25,7 @@
 
   // رفع blob واحد إلى ImageKit وإرجاع URL
   async function uploadToImageKit(blob, fileName) {
-    console.log('ImageKit upload starting', fileName, publicKey, urlEndpoint);
+    //console.log('ImageKit upload starting', fileName, publicKey, urlEndpoint);
     const env = window.__ENV__ || {};
     const publicKey = env.IMAGEKIT_PUBLIC_KEY;
     const urlEndpoint = env.IMAGEKIT_URL_ENDPOINT;
