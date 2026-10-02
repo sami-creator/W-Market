@@ -39,7 +39,7 @@
           category_id: f.category || '', subcategory_id: f.subcategory || '',
           min_price: f.min_price || null, max_price: f.max_price || null,
           wilaya_ids: f.wilaya ? [Number(f.wilaya)].filter(Boolean) : [],
-          q: f.keywords ? Sanitize.cleanText(f.keywords, 100) : q
+          q: f.keywords ? Sanitize.cleanText(f.keywords, 100) : ''
         });
       } catch (e) {
         console.warn('[Search] AI fallback', e);
