@@ -171,7 +171,7 @@
         Utils.Store.remove(window.CONFIG.STORAGE_KEYS.DRAFT);
         UI.toastKey(editId ? 'ad.updated' : 'ad.published', 'success');
         setTimeout(() => Utils.go(R.AD, { id }), 700);
-      } catch (e) { console.error('[PostAd]', e); UI.toastKey(UI.errKey(e), 'error'); }
+      } catch (e) { console.error('[PostAd]', e?.message, e?.context, JSON.stringify(e)); UI.toastKey(UI.errKey(e), 'error'); }
       finally { UI.setLoading(btn, false); }
     });
     render();
