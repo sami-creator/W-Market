@@ -91,7 +91,7 @@
 
 .chat-list{display:flex;flex-direction:column;gap:6px}
 .chat-item{display:flex;gap:10px;align-items:center;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:14px}
-.chat-box{display:flex;flex-direction:column;height:calc(100vh - 150px)}
+.chat-box{display:flex;flex-direction:column;height:calc(100vh - 230px);height:calc(100dvh - 230px)}
 .chat-msgs{flex:1;overflow:auto;display:flex;flex-direction:column;gap:6px;padding:8px}
 .msg{max-width:78%;padding:8px 12px;border-radius:16px;background:var(--surface-2);word-break:break-word;font-size:14px}
 .msg--me{background:var(--c-primary);color:#fff}
