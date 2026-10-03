@@ -33,7 +33,7 @@
       ]);
       const meta = el('div', { class: 'card__meta' }, [
         el('span', { class: 'stars', text: '★ ' + Number(ad.rating_avg || 0).toFixed(1) + ' (' + (ad.rating_count || 0) + ')' }),
-        el('span', { text: '♥ ' + (ad.likes_count || 0) })
+        el('span', { 'data-likes': ad.id, text: '♥ ' + (ad.likes_count || 0) })
       ]);
       const priceRow = el('div', {}, [el('span', { class: 'card__price', text: p.text }), p.old ? el('span', { class: 'card__old', text: p.oldText }) : null]);
       const body = el('div', { class: 'card__body' }, [

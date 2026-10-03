@@ -34,6 +34,9 @@
         Interests.record('like', ad);
         if (!Utils.Store.get(K.LIKE_TOAST)) { Utils.Store.set(K.LIKE_TOAST, true); UI.toastKey('ad.like_toast', 'success', 5000); }
       }
+      document.querySelectorAll('[data-likes="' + ad.id + '"]').forEach(s => {
+  const n = Math.max(0, (parseInt(s.textContent.replace(/\D/g, '')) || 0) + (was ? -1 : 1));
+  s.textContent = '♥ ' + n;});
       document.dispatchEvent(new CustomEvent('likechange', { detail: { id: ad.id, liked: !was } }));
     },
 
