@@ -30,8 +30,8 @@
     <div class="field"><label for="l-tiktok" data-i18n="link.tiktok"></label><input id="l-tiktok" class="input" type="url" inputmode="url"><span class="error-text"></span></div>
     <div class="field"><label for="l-telegram" data-i18n="link.telegram"></label><input id="l-telegram" class="input" type="url" inputmode="url"><span class="error-text"></span></div>
     <div class="field"><label for="l-maps" data-i18n="profile.maps_link"></label><input id="l-maps" class="input" type="url" inputmode="url"></div>
-    <div class="field"><label for="phone" data-i18n="verify.phone"></label><input id="phone" class="input" type="tel" inputmode="tel" placeholder="05XXXXXXXX"></div>
     <label class="row"><input id="show-phone" type="checkbox"><span data-i18n="profile.show_phone"></span></label>
+    <p id="phone-hint" class="hint" data-i18n="edit.phone_hint"></p>
     <button id="btn-save" class="btn btn--primary btn--block" type="submit" data-i18n="common.save"></button>
   </form>
 </main>

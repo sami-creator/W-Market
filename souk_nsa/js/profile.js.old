@@ -91,15 +91,15 @@
     const st = await App.boot({ guard: true });
     if (!st) return;
     const p = st.profile;
-    const f = { name: $('#name'), gender: $('#gender'), year: $('#year'), w: $('#wilaya'), d: $('#daira'), c: $('#commune'), avatar: $('#avatar-file'), show: $('#show-phone'), phone: $('#phone') };
+    const f = { name: $('#name'), gender: $('#gender'), year: $('#year'), w: $('#wilaya'), d: $('#daira'), c: $('#commune'), avatar: $('#avatar-file'), show: $('#show-phone') };
     const links = ['facebook', 'instagram', 'tiktok', 'telegram'].map(k => ({ k, i: $('#l-' + k) }));
     const maps = $('#l-maps');
     f.name.value = p.name || ''; f.name.maxLength = L.NAME; f.gender.value = p.gender || '';
     fillYears(f.year, p.birth_year);
     await Geo.bindCascade(f.w, f.d, f.c, p);
     links.forEach(x => { x.i.value = p[x.k] || ''; x.i.maxLength = 300; }); maps.value = p.maps_url || ''; maps.maxLength = 300;
-    f.phone.value = p.phone || ''; f.phone.maxLength = 16; f.phone.disabled = !!p.is_verified;
-    f.show.checked = !!p.show_phone;
+    f.show.checked = !!p.show_phone; f.show.disabled = !p.is_verified;
+    $('#phone-hint').hidden = !!p.is_verified;
     $('#avatar-prev').src = Utils.imgUrl(p.avatar_url || 'assets/images/avatar.svg', 'thumb');
 
     let newAvatar = null;
@@ -118,11 +118,7 @@
         if (!Auth.validateBirthYear(f.year.value)) return UI.toastKey('err.age_min', 'error');
         const g = Geo.values(f.w, f.d, f.c);
         if (!g.wilaya_id || !g.daira_id || !g.commune_id) return UI.toastKey('err.location_required', 'error');
-        const rawPhone = Sanitize.toLatinDigits(f.phone.value).replace(/[\s.\-()]/g, '');
-        if (!p.is_verified && rawPhone && !/^(?:\+213|0)[567]\d{8}$/.test(rawPhone)) return UI.toastKey('verify.bad_phone', 'error');
-        const phoneNow = p.is_verified ? p.phone : (rawPhone || null);
-        const patch = { name: name.value, gender: f.gender.value, birth_year: Number(f.year.value), show_phone: f.show.checked && !!phoneNow };
-        if (!p.is_verified) patch.phone = phoneNow;
+        const patch = { name: name.value, gender: f.gender.value, birth_year: Number(f.year.value), show_phone: f.show.checked && !!p.is_verified };
         Object.assign(patch, g);
         for (const x of links) { const v = Sanitize.validateUrl(x.i.value, x.k); if (!v.ok) { showErr(x.i, v.error); return UI.toastKey(v.error, 'error'); } showErr(x.i, null); patch[x.k] = v.value || null; }
         const m = Sanitize.validateUrl(maps.value, 'maps'); if (!m.ok) return UI.toastKey(m.error, 'error'); patch.maps_url = m.value || null;

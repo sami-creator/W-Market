@@ -64,7 +64,6 @@
     const online = seller.last_seen && (Date.now() - new Date(seller.last_seen).getTime() < ONLINE_MS);
     const links = [];
     if (ad.show_phone && seller.show_phone && seller.phone) links.push(el('a', { href: 'tel:' + seller.phone.replace(/[^\d+]/g, ''), text: '📞 ' + seller.phone }));
-    if (ad.show_phone && seller.show_phone && seller.phone) { const d = seller.phone.replace(/\D/g, ''); links.push(el('a', { href: 'https://wa.me/' + (d.startsWith('0') ? '213' + d.slice(1) : d), target: '_blank', rel: 'noopener noreferrer', text: 'WhatsApp' })); }
     [['facebook', 'Facebook'], ['instagram', 'Instagram'], ['tiktok', 'TikTok'], ['telegram', 'Telegram'], ['maps_url', 'Maps']].forEach(([k, n]) => {
       const u = seller[k] && safeLink(seller[k]); if (u) links.push(el('a', { href: u, target: '_blank', rel: 'noopener noreferrer', text: n }));
     });
