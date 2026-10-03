@@ -22,7 +22,7 @@
   }
 
   // أرقام لاتينية دائمًا + "دج"
-  function formatNumber(n) { return Number(n || 0).toLocaleString('en-US').replace(/,/g, ' '); }
+  function formatNumber(n) { return Number(n || 0).toLocaleString('en-US').replace(/,/g, '\u00A0'); }
   function formatPrice(n) { return formatNumber(n) + ' ' + (window.I18n ? I18n.t('currency') : 'دج'); }
   // التحويل إلى السنتيم يتم هنا (Client-side): 1 دج = 100 سنتيم
   function toSantim(n) { return formatNumber(Number(n || 0) * 100) + ' ' + (window.I18n ? I18n.t('santim') : 'سنتيم'); }
