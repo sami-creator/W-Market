@@ -18,7 +18,7 @@
     const id = Utils.qs('id');
     if (!id || !/^[0-9a-f-]{36}$/i.test(id)) return Utils.go(R.MY_ADS);
     await Geo.load();
-    const { data, error } = await SB.db.rpc('ad_stats', { p_ad: id });
+    const { data, error } = await SB.db.rpc('ad_stats_v2', { p_ad: id });
     if (error || !data) { console.error('[Stats]', error); return Utils.go(R.MY_ADS); }
     const s = typeof data === 'string' ? JSON.parse(data) : data;
     const tot = s.totals || {};
