@@ -91,7 +91,8 @@
 
 .chat-list{display:flex;flex-direction:column;gap:6px}
 .chat-item{display:flex;gap:10px;align-items:center;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:14px}
-body[data-page="chat"]{display:flex;flex-direction:column;height:100dvh;box-sizing:border-box}
+html:has(body[data-page="chat"]){overflow:hidden}
+body[data-page="chat"]{display:flex;flex-direction:column;height:100dvh;min-height:0;overflow:hidden;box-sizing:border-box}
 body[data-page="chat"] main{flex:1;min-height:0;display:flex;flex-direction:column}
 #chat-root{flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto}
 .chat-box{display:flex;flex-direction:column;flex:1;min-height:0}
