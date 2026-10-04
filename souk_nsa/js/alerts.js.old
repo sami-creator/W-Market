@@ -3,18 +3,6 @@
   'use strict';
   const el = Utils.el, t = k => I18n.t(k), MAX = () => window.CONFIG.LIMITS.ALERTS_MAX;
 
-  // تحميل push.js عند الحاجة فقط ثم تفعيل إشعارات Firebase (طلب الإذن + حفظ رمز الجهاز)
-  async function enablePush() {
-    if (!window.Push) {
-      await new Promise((res, rej) => {
-        const s = document.createElement('script');
-        s.src = 'js/push.js'; s.onload = res; s.onerror = rej;
-        document.head.append(s);
-      });
-    }
-    return window.Push.enable();
-  }
-
   const Alerts = {
     async list() {
       const { data } = await SB.db.from('alert_subscriptions').select('id,category_id,wilaya_id,min_price,max_price').eq('user_id', Auth.uid()).order('created_at');
@@ -51,7 +39,7 @@
         add.addEventListener('click', async () => {
           const r = await this.add({ subcategory_id: sub.value, wilaya_id: Number(w.value) || null, min_price: Number(min.value) || null, max_price: Number(max.value) || null });
           if (r.error) return UI.toastKey(r.error, 'error');
-          await enablePush().catch(e => console.error('[Alerts] push', e)); paint();
+          await Notifications.requestPermission(); paint();
         });
         container.append(el('div', { class: 'card-box' }, [sub, w, el('div', { class: 'row' }, [min, max]), add]));
       };
