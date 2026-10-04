@@ -83,15 +83,14 @@
     const faq = (ad.faq || []).length ? el('div', {}, [el('h3', { text: t('ad.faq') }), ...ad.faq.map(q => el('div', { class: 'faq-item' }, [el('b', { text: q.q }), el('span', { text: q.a })]))]) : null;
     const video = ad.video_url && safeLink(ad.video_url) ? el('a', { class: 'btn btn--ghost', href: safeLink(ad.video_url), target: '_blank', rel: 'noopener noreferrer', text: '▶ ' + t('ad.video') }) : null;
 
-    info.replaceChildren(
+    info.replaceChildren(...[
       el('h1', { class: 'page-title', text: ad.title }), badges, priceLine, actions,
       el('div', { class: 'hint', text: Categories.path(ad.category_id, ad.subcategory_id) }),
       attrs.length ? el('div', { class: 'row', style: 'flex-wrap:wrap;margin:8px 0' }, attrs) : null,
       el('p', { class: 'prose', text: ad.description }), video, oldPrices, faq,
       el('div', { class: 'hint', text: '📍 ' + loc }),
       el('div', { class: 'hint', text: t('ad.published_on') + ' ' + Utils.formatDate(ad.created_at) }),
-      sellerCard
-    );
+      sellerCard].filter(Boolean));
     Likes.load().then(() => Likes.paint(info));
 
     // التقييمات: للإعلان وللناشرة
