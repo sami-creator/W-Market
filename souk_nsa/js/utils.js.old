@@ -1,4 +1,7 @@
-/* utils.js — دوال مساعدة صغيرة، كل دالة لمهمة واحدة */
+/* 
+تم استبداله لاجل حساب السعر بالدارجة
+
+utils.js — دوال مساعدة صغيرة، كل دالة لمهمة واحدة */
 (function () {
   'use strict';
   const K = () => window.CONFIG.STORAGE_KEYS;
@@ -24,46 +27,8 @@
   // أرقام لاتينية دائمًا + "دج"
   function formatNumber(n) { return Number(n || 0).toLocaleString('en-US').replace(/,/g, '\u00A0'); }
   function formatPrice(n) { return formatNumber(n) + ' ' + (window.I18n ? I18n.t('currency') : 'دج'); }
-
-  const D_ONES = ['', 'واحد', 'اثنين', 'ثلاثة', 'ربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة', 'عشرة', 'إحداش', 'طناش', 'ثلطاش', 'ربعطاش', 'خمستاش', 'ستاش', 'سبعطاش', 'ثمنطاش', 'تسعطاش'];
-  const D_TENS = ['', '', 'عشرين', 'ثلاثين', 'ربعين', 'خمسين', 'ستين', 'سبعين', 'ثمانين', 'تسعين'];
-  const D_HUNDREDS = ['', 'مية', 'ميتين', 'ثلاثمية', 'ربعمية', 'خمسمية', 'ستمية', 'سبعمية', 'ثمانمية', 'تسعمية'];
-  function dEndsWithHundred(text) { return D_HUNDREDS.includes(text.split(' و ').pop()); }
-  function dUnder1000(n) {
-    if (n === 0) return '';
-    const parts = [], h = Math.floor(n / 100), rest = n % 100;
-    if (h > 0) parts.push(D_HUNDREDS[h]);
-    if (rest > 0) {
-      if (rest < 20) parts.push(D_ONES[rest]);
-      else {
-        const t = Math.floor(rest / 10), u = rest % 10;
-        parts.push(u === 0 ? D_TENS[t] : D_ONES[u] + ' و ' + D_TENS[t]);
-      }
-    }
-    return parts.join(' و ');
-  }
-  // السعر بالدارجة (بدل السنتيم): 10 دج = ألف، 10000 دج = مليون
-  function toSantim(n) {
-    let value = Math.floor(Number(n || 0));
-    value = value - (value % 10);
-    if (value <= 0) return 'صفر';
-    const total = value / 10, millions = Math.floor(total / 1000), thousands = total % 1000, parts = [];
-    if (millions > 0) {
-      if (millions === 1) parts.push('مليون');
-      else if (millions === 2) parts.push('اثنين ملاين');
-      else if (millions <= 10) parts.push(dUnder1000(millions) + ' ملاين');
-      else parts.push(dUnder1000(millions) + ' مليون');
-    }
-    if (thousands > 0) {
-      const th = dUnder1000(thousands);
-      if (parts.length === 0) {
-        if (thousands === 1) parts.push('ألف');
-        else if (thousands === 2) parts.push('اثنين آلاف');
-        else parts.push(th + ' ألف');
-      } else parts.push(dEndsWithHundred(th) ? th : th + ' ألف');
-    }
-    return parts.join(' و ') || 'صفر';
-  }
+  // التحويل إلى السنتيم يتم هنا (Client-side): 1 دج = 100 سنتيم
+  function toSantim(n) { return formatNumber(Number(n || 0) * 100) + ' ' + (window.I18n ? I18n.t('santim') : 'سنتيم'); }
   function applyDiscount(price, pct) { return pct > 0 ? Math.round(price * (100 - pct) / 100) : price; }
 
   function timeAgo(iso) {
