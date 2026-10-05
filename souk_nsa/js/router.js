@@ -1,50 +1,57 @@
-/* router.js — تنقل بلا إعادة تحميل غير ضرورية + حراسة الصفحات */
-(function () {
-  'use strict';
-  const R = window.CONFIG.ROUTES;
+/* router.js — حفظ حالة التنقل: الفلاتر + البحث + الصنف عبر الصفحات */
+'use strict';
+(function(){
 
-  function currentRoute() {
-    const p = location.pathname.split('/').pop();
-    return p ? (p.endsWith('.html') ? p : p + '.html') : R.HOME;
+  const NAV_KEY   = 'snsa_nav_state';
+  const FILT_KEY  = 'snsa_filters';
+
+  /* ===== تنقل مع حفظ الحالة ===== */
+  function go(path){
+    // حفظ الحالة الحالية قبل المغادرة
+    _persist();
+    if(path.startsWith('/')){
+      // SPA-style (إن كان هناك router)
+      location.href = path.replace(/^\//,'');
+    } else {
+      location.href = path;
+    }
   }
 
-  const Router = {
-    current: currentRoute,
-    // الضغط على رابط صفحة أنت عليها لا يعيد التحميل
-    bindNav(root = document) {
-      const cur = currentRoute();
-      root.querySelectorAll('[data-route]').forEach(a => {
-        const target = a.dataset.route;
-        if (target === cur) a.classList.add('active');
-        a.addEventListener('click', e => {
-          e.preventDefault();
-          if (target === currentRoute()) {
-            document.dispatchEvent(new CustomEvent('samepage', { detail: target }));
-            return;
-          }
-          Utils.go(target);
-        });
-      });
-    },
-    // صفحات تحتاج تسجيل الدخول: تنتظر التحقق قبل أي عرض
-    async guard({ complete = true } = {}) {
-      document.body.classList.add('is-gated');
-      const st = await Auth.ready();
-      if (st.status === 'guest') { this.toLogin(); return null; }
-      if (complete && st.status === 'partial') { Utils.go(R.COMPLETE); return null; }
-      document.body.classList.remove('is-gated');
-      return st;
-    },
-    toLogin() {
-      sessionStorage.setItem('sn_return', location.pathname.split('/').pop() + location.search);
-      Utils.go(R.AUTH);
-    },
-    afterLogin() {
-      const back = sessionStorage.getItem('sn_return');
-      sessionStorage.removeItem('sn_return');
-      if (back && /^[a-z0-9\-]+(\.html)?(\?[^\s]*)?$/i.test(back)) location.href = back;
-      else Utils.go(R.PROFILE);
-    }
-  };
-  window.Router = Router;
+  function _persist(){
+    // sessionStorage يبقى عبر الصفحات في نفس النافذة
+    // لا نحتاج فعل شيء إضافي — كل من filters.js و app.js يحفظان في sessionStorage
+  }
+
+  /* ===== عند تحميل أي صفحة: استعادة حالة الفلاتر ===== */
+  function restoreState(){
+    // الفلاتر تُستعاد تلقائياً في filters.js
+    // الصنف يُستعاد في app.js
+    // البحث يُستعاد في app.js
+  }
+
+  /* ===== زر الرجوع — الحفاظ على الحالة ===== */
+  function back(){
+    history.back();
+  }
+
+  /* ===== تنظيف عند تسجيل الخروج ===== */
+  function clearAll(){
+    sessionStorage.removeItem(NAV_KEY);
+    sessionStorage.removeItem(FILT_KEY);
+  }
+
+  /* ===== تحديث نشاط الناف-بار ===== */
+  function markActive(){
+    const path=location.pathname.split('/').pop()||'index.html';
+    document.querySelectorAll('.bottom-nav a[data-page]').forEach(a=>{
+      a.classList.toggle('active', a.dataset.page===path);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    restoreState();
+    markActive();
+  });
+
+  window.ROUTER = { go, back, clearAll };
 })();

@@ -1,0 +1,2413 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Souk Nsa — سوق النساء</title>
+<style>
+  :root{
+    --red:#F472B6;
+    --red-dark:#EC4899;
+    --ink:#1F1B24;
+    --muted:#8A8590;
+    --bg:#FFFFFF;
+    --pill-bg:#F3F1F5;
+    --card-shadow: 0 10px 25px rgba(31,27,36,0.08);
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --nav-h: 38px;
+    --blue-verified:#1877F2;
+    --gold:#F5A623;
+    --light-gray:#E5E2E8;
+  }
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+
+  html,body{
+    margin:0; padding:0;
+    height:100%;
+    background:#EDEBEF;
+    font-family: 'Poppins','Segoe UI',system-ui,-apple-system,sans-serif;
+    color:var(--ink);
+  }
+
+  .app-frame{
+    position:relative;
+    width:100%;
+    height:100vh;
+    height:100dvh;
+    background:var(--bg);
+    overflow:hidden;
+    max-width:600px;
+    margin:0 auto;
+  }
+
+  /* ===== Fixed top bar ===== */
+  .top-bar{
+    position:absolute;
+    top:0; left:0; right:0;
+    z-index:20;
+    background:var(--bg);
+    padding: calc(10px + var(--safe-top)) 16px 10px;
+    box-shadow: 0 6px 16px rgba(31,27,36,0.05);
+  }
+
+  .search-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    position:relative;
+  }
+
+  .filter-wrap{
+    position:relative;
+    flex:none;
+    order:0;
+  }
+
+  .search-box{
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--pill-bg);
+    border-radius:16px;
+    padding:12px 16px;
+    order:1;
+  }
+  .search-box svg{ flex:none; opacity:0.55; }
+  .search-box input{
+    border:none; outline:none; background:transparent;
+    font-size:14px; color:var(--ink); width:100%;
+    font-family:inherit;
+    text-align:right;
+  }
+  .search-box input::placeholder{ color:#B7B2BD; font-weight:500; }
+
+  .filter-btn{
+    width:46px; height:46px;
+    border-radius:14px;
+    background:var(--red);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 8px 16px rgba(244,114,182,0.35);
+    cursor:pointer;
+    transition: transform 0.15s ease;
+    border:none;
+  }
+  .filter-btn:active{ transform:scale(0.92); }
+
+  /* Settings gear button - placed to the RIGHT of filter (visually right in RTL) */
+  .settings-btn{
+    width:46px; height:46px;
+    border-radius:14px;
+    background:var(--pill-bg);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
+    border:none;
+    flex:none;
+    order:2;
+  }
+  .settings-btn:active{ transform:scale(0.92); background:#e5e2e8; }
+  .settings-btn svg{
+    width:20px; height:20px;
+    stroke: var(--ink);
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .filter-dropdown{
+    position:absolute;
+    top:56px;
+    right:0;
+    left:auto;
+    width:300px;
+    max-width:85vw;
+    background:#fff;
+    border-radius:16px;
+    box-shadow:0 20px 40px rgba(0,0,0,0.15);
+    padding:18px 16px 16px;
+    display:none;
+    z-index:30;
+    max-height:70vh;
+    overflow-y:auto;
+  }
+  .filter-dropdown.show{ display:block; }
+  .filter-dropdown label{
+    display:block;
+    font-size:13px;
+    font-weight:600;
+    color:var(--muted);
+    margin:8px 0 4px;
+  }
+  .filter-dropdown select, .filter-dropdown input[type="checkbox"]{
+    width:100%;
+    padding:8px 10px;
+    border-radius:10px;
+    border:1px solid #E5E2E8;
+    font-family:inherit;
+    font-size:13px;
+    background:var(--pill-bg);
+    margin-bottom:4px;
+  }
+  .filter-dropdown .checkbox-group{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin:6px 0 10px;
+  }
+  .filter-dropdown .checkbox-group label{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-weight:400;
+    color:var(--ink);
+    margin:0;
+    font-size:13px;
+  }
+  .filter-dropdown .apply-btn{
+    width:100%;
+    padding:10px;
+    background:var(--red);
+    color:#fff;
+    border:none;
+    border-radius:12px;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    font-family:inherit;
+    margin-top:6px;
+  }
+
+  .tabs{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+    overflow-x:auto;
+    scrollbar-width:none;
+    padding-bottom:2px;
+  }
+  .tabs::-webkit-scrollbar{ display:none; }
+
+  .tab{
+    flex:none;
+    padding:8px 18px;
+    border-radius:14px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--muted);
+    background:var(--pill-bg);
+    white-space:nowrap;
+    cursor:pointer;
+    transition: all 0.2s ease;
+    user-select:none;
+    display:flex;
+    align-items:center;
+    gap:4px;
+  }
+  .tab.active{
+    background:var(--red);
+    color:#fff;
+    box-shadow: 0 8px 16px rgba(244,114,182,0.3);
+  }
+  .tab:active{ transform:scale(0.94); }
+  .tab .arrow-down{
+    display:inline-block;
+    font-size:10px;
+    transition: transform 0.3s ease;
+  }
+  .tab .arrow-down.rotated{ transform:rotate(180deg); }
+
+  .sub-tabs{
+    display:flex;
+    gap:8px;
+    margin-top:8px;
+    overflow-x:auto;
+    scrollbar-width:none;
+    padding-bottom:6px;
+    border-bottom:1px solid #f0edf2;
+    display:none;
+    transition: all 0.3s ease;
+  }
+  .sub-tabs.show{ display:flex; }
+  .sub-tabs::-webkit-scrollbar{ display:none; }
+  .sub-tab{
+    flex:none;
+    padding:6px 14px;
+    border-radius:12px;
+    font-size:12px;
+    font-weight:500;
+    color:var(--muted);
+    background:var(--pill-bg);
+    white-space:nowrap;
+    cursor:pointer;
+    transition: all 0.2s ease;
+  }
+  .sub-tab.active{
+    background:var(--red);
+    color:#fff;
+  }
+
+  /* ===== Content area ===== */
+  .content{
+    position:absolute;
+    top:0; left:0; right:0; bottom:0;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding-top: calc(100px + var(--safe-top));
+    padding-bottom: calc(var(--nav-h) + 60px + var(--safe-bottom));
+    padding-left:16px;
+    padding-right:16px;
+    background:var(--bg);
+    transition: padding-bottom 0.3s ease;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+    gap:14px;
+    margin-top:4px;
+  }
+
+  .card{
+    background:#fff;
+    border-radius:20px;
+    padding:12px 12px 14px;
+    box-shadow: var(--card-shadow);
+    border:1px solid #F1EFF3;
+    position:relative;
+    cursor:pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .card:active{ transform:scale(0.97); }
+
+  .card .img-wrap{
+    width:100%;
+    aspect-ratio:10/12;
+    border-radius:14px;
+    overflow:hidden;
+    background:#f6f6f6;
+    margin-bottom:10px;
+    position:relative;
+  }
+  .card .img-wrap img{
+    width:100%; height:100%;
+    object-fit:cover;
+    display:block;
+  }
+
+  .badge{
+    position:absolute;
+    top:8px; right:8px;
+    background:var(--red);
+    color:#fff;
+    padding:2px 8px;
+    border-radius:20px;
+    font-size:9px;
+    font-weight:700;
+    box-shadow: 0 4px 10px rgba(244,114,182,0.3);
+    z-index:2;
+  }
+  .badge-discount{
+    position:absolute;
+    top:8px; left:8px;
+    background:#10B981;
+    color:#fff;
+    padding:2px 8px;
+    border-radius:20px;
+    font-size:9px;
+    font-weight:700;
+    z-index:2;
+  }
+
+  .card h3{
+    margin:0 0 2px;
+    font-size:14px;
+    font-weight:700;
+    color:var(--ink);
+    text-align:right;
+  }
+
+  .card .seller-row{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin:0 0 2px;
+    justify-content:flex-start;
+    flex-direction:row;
+  }
+  .card .seller-avatar{
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    overflow:visible;
+    flex:none;
+    position:relative;
+  }
+  .card .seller-avatar img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    border-radius:50%;
+    border:2px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  .card .seller-avatar .mini-dot{
+    position:absolute;
+    bottom:-2px;
+    right:-2px;
+    width:11px;
+    height:11px;
+    border-radius:50%;
+    border:2px solid #fff;
+    z-index:2;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+  }
+  .mini-dot.online{ background:#10B981; }
+  .mini-dot.offline{ background:#EF4444; }
+
+  .card .seller{
+    font-size:11px;
+    color:var(--muted);
+    font-weight:500;
+    text-align:right;
+  }
+  .card .seller-verified{
+    color:var(--blue-verified);
+    font-size:11px;
+    font-weight:700;
+  }
+  .card .distance{
+    margin:1px 0 2px;
+    font-size:10px;
+    color:var(--muted);
+    font-weight:500;
+    text-align:right;
+  }
+  .card .negotiable-tag{
+    font-size:9px;
+    color:#F59E0B;
+    font-weight:600;
+    text-align:right;
+    margin:0 0 4px;
+  }
+  .card .price{
+    text-align:center;
+    font-size:14px;
+    font-weight:700;
+    color:var(--ink);
+    margin:2px 0 8px;
+    direction:ltr;
+    unicode-bidi:plaintext;
+  }
+  .card .price .old-price{
+    font-size:11px;
+    color:var(--muted);
+    text-decoration:line-through;
+    font-weight:400;
+    margin-left:4px;
+  }
+
+  .card-footer{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+
+  .rating{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    font-size:12px;
+    font-weight:700;
+    color:var(--ink);
+  }
+  .rating svg{ flex:none; width:14px; height:14px; }
+
+  .heart{
+    display:flex;
+    align-items:center;
+    gap:3px;
+    color:#C9C5D0;
+    cursor:pointer;
+    background:transparent;
+    border:none;
+    padding:0;
+    font-size:12px;
+    font-weight:600;
+  }
+  .heart.active{ color:var(--red); }
+  .heart:active{ transform:scale(0.85); }
+  .heart svg{ width:16px; height:16px; }
+
+  .card .date{
+    font-size:9px;
+    color:var(--muted);
+    text-align:left;
+    margin-top:3px;
+  }
+
+  /* ===== Page overlay ===== */
+  .page-overlay{
+    position:absolute;
+    top:0; left:0; right:0; bottom:0;
+    z-index:30;
+    background:var(--bg);
+    display:none;
+    flex-direction:column;
+    padding-top: calc(16px + var(--safe-top));
+    overflow-y:hidden;
+  }
+  .page-overlay.show{ display:flex; }
+
+  .page-header{
+    display:flex;
+    align-items:center;
+    padding: 8px 16px 12px;
+    border-bottom:1px solid #f0edf2;
+    gap:10px;
+    flex:none;
+  }
+  .page-header .back{
+    width:36px; height:36px;
+    border-radius:50%;
+    background:var(--pill-bg);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    border:none;
+    font-size:20px;
+    color:var(--ink);
+    transition: background 0.15s ease;
+    flex:none;
+  }
+  .page-header .back:active{ background:#e5e2e8; }
+  .page-header h2{
+    margin:0;
+    font-size:18px;
+    font-weight:700;
+    color:var(--ink);
+  }
+
+  .page-body{
+    padding:16px;
+    padding-bottom:24px;
+    flex:1;
+    min-height:0;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  /* ===== Profile page ===== */
+  .profile-card{
+    text-align:center;
+    padding:16px 0;
+  }
+  .profile-card .avatar-lg{
+    width:90px; height:90px;
+    border-radius:50%;
+    overflow:visible;
+    margin:0 auto 12px;
+    position:relative;
+  }
+  .profile-card .avatar-lg img{
+    width:100%; height:100%;
+    object-fit:cover;
+    border-radius:50%;
+    border:3px solid var(--red);
+    box-shadow: 0 8px 20px rgba(244,114,182,0.2);
+  }
+  .profile-card .avatar-lg .online-dot{
+    position:absolute;
+    bottom:1px; right:1px;
+    width:18px; height:18px;
+    border-radius:50%;
+    border:3px solid #fff;
+    background:#10B981;
+    z-index:2;
+  }
+  .profile-card h2{
+    margin:0 0 2px;
+    font-size:20px;
+    font-weight:700;
+  }
+  .profile-card .username{
+    color:var(--muted);
+    font-size:14px;
+    margin:0 0 8px;
+  }
+  .profile-stats{
+    display:flex;
+    justify-content:center;
+    gap:24px;
+    margin:12px 0 20px;
+  }
+  .profile-stats div{
+    text-align:center;
+  }
+  .profile-stats .num{
+    font-size:18px;
+    font-weight:700;
+    display:block;
+  }
+  .profile-stats .label{
+    font-size:12px;
+    color:var(--muted);
+  }
+
+  .profile-menu{
+    list-style:none;
+    padding:0;
+    margin:0;
+  }
+  .profile-menu li{
+    padding:14px 10px;
+    border-bottom:1px solid #f0edf2;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    cursor:pointer;
+    transition: background 0.15s ease;
+    border-radius:8px;
+  }
+  .profile-menu li:active{ background:var(--pill-bg); }
+  .profile-menu li span{
+    font-weight:500;
+    font-size:14px;
+  }
+  .profile-menu li .arrow{
+    color:var(--muted);
+    font-size:16px;
+  }
+
+  .my-ads-list{
+    margin-top:12px;
+  }
+  .my-ad-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px;
+    background:var(--pill-bg);
+    border-radius:12px;
+    margin-bottom:8px;
+  }
+  .my-ad-item img{
+    width:50px; height:50px;
+    border-radius:8px;
+    object-fit:cover;
+  }
+  .my-ad-item .info{ flex:1; }
+  .my-ad-item .info h4{
+    margin:0 0 2px;
+    font-size:13px;
+  }
+  .my-ad-item .info .status{
+    font-size:11px;
+    color:var(--muted);
+    display:flex;
+    gap:8px;
+  }
+  .my-ad-item .actions{
+    display:flex;
+    gap:4px;
+  }
+  .my-ad-item .actions button{
+    padding:4px 8px;
+    border:none;
+    border-radius:6px;
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+    background:var(--red);
+    color:#fff;
+  }
+  .my-ad-item .actions button.outline{
+    background:#fff;
+    color:var(--ink);
+  }
+
+  /* ===== Ad detail page ===== */
+  .detail-gallery{
+    width:100%;
+    border-radius:16px;
+    overflow:hidden;
+    background:#f6f6f6;
+    margin-bottom:8px;
+    position:relative;
+  }
+  .detail-gallery .main-img{
+    width:100%;
+    height:320px;
+    object-fit:contain;
+    display:block;
+    touch-action: pan-y;
+    background:#f6f6f6;
+  }
+  .img-counter{
+    position:absolute;
+    top:12px;
+    left:12px;
+    background:rgba(0,0,0,0.6);
+    color:#fff;
+    padding:4px 10px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:600;
+    z-index:3;
+    backdrop-filter: blur(4px);
+    direction:ltr;
+  }
+
+  /* Small icon action row directly under the ad image */
+  .detail-icon-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    margin:6px 0 10px;
+    padding:6px 0;
+    border-bottom:1px solid #f0edf2;
+    padding-bottom:12px;
+  }
+  .detail-icon-row .icon-action{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    background:var(--pill-bg);
+    border:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
+    flex:none;
+    padding:0;
+    color:var(--ink);
+  }
+  .detail-icon-row .icon-action:active{ transform:scale(0.88); }
+  .detail-icon-row .icon-action svg{
+    width:17px;
+    height:17px;
+    flex:none;
+  }
+  .detail-icon-row .icon-action.report{ color:#EF4444; }
+  .detail-icon-row .icon-action.liked{ color:var(--red); background:rgba(244,114,182,0.1); }
+
+  .detail-seller-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin:2px 0 10px;
+    justify-content:flex-start;
+    flex-direction:row;
+  }
+  .detail-seller-row .seller-avatar{
+    width:46px;
+    height:46px;
+    border-radius:50%;
+    overflow:visible;
+    flex:none;
+    position:relative;
+  }
+  .detail-seller-row .seller-avatar .avatar-img-inner{
+    width:100%;
+    height:100%;
+    border-radius:50%;
+    overflow:hidden;
+    border:2px solid #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .detail-seller-row .seller-avatar img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .detail-seller-row .seller-avatar .mini-dot{
+    position:absolute;
+    bottom:-2px;
+    left:-2px;
+    width:14px;
+    height:14px;
+    border-radius:50%;
+    border:2.5px solid #fff;
+    z-index:2;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+  }
+  .detail-seller-row .seller-name{
+    font-size:13px;
+    font-weight:600;
+    color:var(--ink);
+  }
+  .detail-seller-row .seller-name .verified-badge{
+    color:var(--blue-verified);
+    font-size:14px;
+    font-weight:700;
+  }
+
+  .detail-title{
+    font-size:20px;
+    font-weight:700;
+    margin:0 0 6px;
+    text-align:right;
+  }
+  .detail-price{
+    font-size:22px;
+    font-weight:700;
+    color:var(--red);
+    margin:0 0 4px;
+    text-align:right;
+    direction:ltr;
+    unicode-bidi:plaintext;
+  }
+  .detail-price .old-price{
+    font-size:15px;
+    color:var(--muted);
+    text-decoration:line-through;
+    font-weight:400;
+    margin-left:8px;
+  }
+  .negotiable-tag-detail{
+    font-size:12px;
+    color:#F59E0B;
+    font-weight:600;
+    text-align:right;
+    margin:0 0 10px;
+  }
+  .detail-desc{
+    font-size:14px;
+    line-height:1.8;
+    color:#444;
+    margin:0 0 12px;
+    text-align:right;
+  }
+  .detail-desc strong{
+    font-weight:700;
+    color:var(--ink);
+  }
+  .detail-meta{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    margin:8px 0 14px;
+    padding:12px;
+    background:var(--pill-bg);
+    border-radius:14px;
+  }
+  .detail-meta span{
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    align-items:center;
+    gap:4px;
+  }
+  .delivery-available{ color:#10B981; font-weight:600; }
+  .delivery-unavailable{ color:#EF4444; font-weight:600; }
+
+  /* ===== CONTACT ICONS ===== */
+  .detail-contact-row{
+    display:flex;
+    gap:18px;
+    margin:12px 0 20px;
+    flex-wrap:nowrap;
+    align-items:center;
+    justify-content:flex-start;
+    overflow-x:auto;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+    padding:4px 2px;
+  }
+  .detail-contact-row::-webkit-scrollbar{ display:none; }
+  .detail-contact-row .icon-btn{
+    width:34px;
+    height:34px;
+    background:none;
+    border:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition: transform 0.15s ease;
+    flex:none;
+    text-decoration:none;
+    color:var(--ink);
+    padding:0;
+    border-radius:0;
+    box-shadow:none;
+  }
+  .detail-contact-row .icon-btn:active{ transform:scale(0.85); }
+  .detail-contact-row .icon-btn img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    display:block;
+  }
+
+  /* ===== Similar products (now BELOW reviews) ===== */
+  .similar-section{
+    margin-top:24px;
+    border-top:1px solid #f0edf2;
+    padding-top:16px;
+  }
+  .similar-section h3{
+    margin:0 0 12px;
+    font-size:16px;
+    font-weight:700;
+  }
+  .similar-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap:12px;
+  }
+  .similar-card{
+    background:var(--pill-bg);
+    border-radius:16px;
+    padding:10px;
+    cursor:pointer;
+    transition: transform 0.15s ease;
+  }
+  .similar-card:active{ transform:scale(0.96); }
+  .similar-card .similar-img{
+    width:100%;
+    aspect-ratio:1/1;
+    border-radius:12px;
+    overflow:hidden;
+    background:#eee;
+    margin-bottom:8px;
+  }
+  .similar-card .similar-img img{
+    width:100%; height:100%;
+    object-fit:cover;
+  }
+  .similar-card h4{
+    margin:0 0 2px;
+    font-size:12px;
+    font-weight:600;
+    text-align:right;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .similar-card .similar-price{
+    font-size:13px;
+    font-weight:700;
+    color:var(--red);
+    text-align:right;
+    direction:ltr;
+  }
+
+  /* ===== Reviews Section ===== */
+  .reviews-section{
+    margin-top:24px;
+    border-top:1px solid #f0edf2;
+    padding-top:16px;
+  }
+  .reviews-section h3{
+    margin:0 0 12px;
+    font-size:16px;
+    font-weight:700;
+  }
+  .review-filters{
+    display:flex;
+    gap:8px;
+    margin-bottom:16px;
+  }
+  .filter-chip{
+    padding:6px 14px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:600;
+    background:var(--pill-bg);
+    color:var(--muted);
+    cursor:pointer;
+    transition: all 0.15s ease;
+    border:none;
+  }
+  .filter-chip.active{
+    background:var(--red);
+    color:#fff;
+  }
+  .filter-chip:active{ transform:scale(0.95); }
+
+  .review-item{
+    display:flex;
+    gap:12px;
+    padding:12px 0;
+    border-bottom:1px solid #f0edf2;
+    align-items:flex-start;
+  }
+  .review-avatar{
+    width:36px; height:36px;
+    border-radius:50%;
+    overflow:hidden;
+    flex:none;
+    border:1px solid #eee;
+  }
+  .review-avatar img{
+    width:100%; height:100%;
+    object-fit:cover;
+  }
+  .review-content{ flex:1; }
+  .review-user{
+    font-size:12px;
+    font-weight:600;
+    color:var(--muted);
+    margin-bottom:2px;
+  }
+  .review-stars-date{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:4px;
+  }
+  .review-stars{
+    display:flex;
+    gap:2px;
+    direction:ltr;
+  }
+  .review-stars .star{
+    font-size:14px;
+    line-height:1;
+    color:var(--light-gray);
+  }
+  .review-stars .star.filled{ color:var(--gold); }
+  .review-date{
+    font-size:10px;
+    color:var(--muted);
+  }
+  .review-comment{
+    font-size:13px;
+    color:var(--ink);
+    line-height:1.6;
+  }
+
+  /* ===== Sticky bottom footer ===== */
+  .detail-footer{
+    flex:none;
+    background:#fff;
+    padding: 16px 16px calc(16px + var(--safe-bottom));
+    box-shadow: 0 -6px 16px rgba(0,0,0,0.08);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:0;
+    position:relative;
+    z-index:5;
+  }
+
+  .buy-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    width:100%;
+    max-width:420px;
+  }
+  .btn-back-small{
+    width:46px;
+    height:46px;
+    border-radius:14px;
+    background:var(--pill-bg);
+    border:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    flex:none;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .btn-back-small:active{ transform:scale(0.92); background:#e5e2e8; }
+  .btn-back-small svg{
+    width:22px; height:22px;
+    stroke: var(--ink);
+    stroke-width: 2.5;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .btn-buy-full{
+    flex:1;
+    padding:15px;
+    border:none;
+    border-radius:14px;
+    background:var(--red);
+    color:#fff;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+    box-shadow: 0 10px 20px rgba(244,114,182,0.35);
+    font-family:inherit;
+    transition: transform 0.15s ease;
+  }
+  .btn-buy-full:active{ transform:scale(0.97); }
+
+  .video-modal{
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.9);
+    z-index:100;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .video-modal.show{ display:flex; }
+  .video-modal .modal-close{
+    position:absolute;
+    top:20px; right:20px;
+    background:rgba(255,255,255,0.2);
+    border:none;
+    color:#fff;
+    width:40px; height:40px;
+    border-radius:50%;
+    font-size:24px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    backdrop-filter:blur(10px);
+  }
+  .video-modal iframe{
+    width:100%;
+    max-width:560px;
+    aspect-ratio:16/9;
+    border-radius:16px;
+    border:none;
+  }
+
+  /* ===== Bottom bar ===== */
+  .bottom-bar{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    z-index:20;
+    height: calc(var(--nav-h) + var(--safe-bottom));
+    padding-bottom: var(--safe-bottom);
+    background:var(--red);
+    display:flex;
+    align-items:center;
+    justify-content:space-around;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transform:translateY(0);
+  }
+  .bottom-bar.hidden{
+    transform:translateY(100%);
+  }
+
+  .nav-item{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    height:100%;
+    color:rgba(255,255,255,0.65);
+    cursor:pointer;
+    border:none;
+    background:transparent;
+    padding:0;
+    transition: color 0.15s ease;
+    position:relative;
+  }
+  .nav-item.active{ color:#fff; }
+  .nav-item svg{ width:18px; height:18px; }
+
+  .nav-profile{
+    position:relative;
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    overflow:visible;
+    flex:none;
+  }
+  .nav-profile img{
+    width:100%; height:100%;
+    object-fit:cover;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,0.8);
+    display:block;
+  }
+  .nav-profile .nav-dot{
+    position:absolute;
+    bottom:-2px; right:-2px;
+    width:10px; height:10px;
+    border-radius:50%;
+    border:2px solid var(--red);
+    background:#10B981;
+    z-index:2;
+  }
+
+  .fab-spacer{ flex:1; visibility:hidden; }
+
+  .fab{
+    position:absolute;
+    left:50%;
+    bottom: calc(var(--nav-h) + var(--safe-bottom) + 3px);
+    transform:translateX(-50%);
+    width:52px; height:52px;
+    border-radius:50%;
+    background:var(--red);
+    border:4px solid #fff;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 10px 20px rgba(244,114,182,0.45);
+    z-index:25;
+    cursor:pointer;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.25s ease,
+                bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .fab:active{ transform:translateX(-50%) scale(0.92); }
+  .fab.hidden{
+    transform:translateX(-50%) translateY(80px);
+    opacity:0;
+    pointer-events:none;
+  }
+
+  @media (max-width:360px){
+    .grid{ gap:10px; }
+    .card{ padding:10px; }
+    .filter-dropdown{ width:250px; }
+    .detail-icon-row{ gap:10px; }
+    .detail-icon-row .icon-action{ width:30px; height:30px; }
+    .detail-icon-row .icon-action svg{ width:15px; height:15px; }
+  }
+
+  @media (min-width:768px){
+    .grid{ grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+    .content{ padding-left:24px; padding-right:24px; }
+    .page-body{ padding:24px; padding-bottom:32px; }
+  }
+
+  .toast{
+    position:fixed;
+    bottom:100px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--ink);
+    color:#fff;
+    padding:10px 20px;
+    border-radius:12px;
+    font-size:13px;
+    font-weight:500;
+    opacity:0;
+    transition: all 0.3s ease;
+    z-index:50;
+    pointer-events:none;
+    white-space:nowrap;
+    box-shadow:0 8px 20px rgba(0,0,0,0.2);
+  }
+  .toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div class="app-frame" id="frame">
+
+  <!-- ===== TOP BAR (search + filter + settings) ===== -->
+  <div class="top-bar" id="topBar">
+    <div class="search-row">
+      <!-- Filter button (left in RTL visual) -->
+      <div class="filter-wrap">
+        <button class="filter-btn" onclick="toggleFilter()" aria-label="فلتر">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round">
+            <line x1="4" y1="6" x2="20" y2="6"/>
+            <line x1="4" y1="12" x2="20" y2="12"/>
+            <line x1="4" y1="18" x2="20" y2="18"/>
+            <circle cx="9" cy="6" r="1.6" fill="#fff" stroke="none"/>
+            <circle cx="15" cy="12" r="1.6" fill="#fff" stroke="none"/>
+            <circle cx="9" cy="18" r="1.6" fill="#fff" stroke="none"/>
+          </svg>
+        </button>
+        <div class="filter-dropdown" id="filterDropdown">
+          <label>ترتيب حسب</label>
+          <select id="sortBy">
+            <option value="latest">الأحدث</option>
+            <option value="views">الأكثر مشاهدة</option>
+            <option value="rating">التقييم</option>
+            <option value="price">السعر</option>
+            <option value="nearest">الأقرب مني</option>
+            <option value="wilaya">الولاية</option>
+          </select>
+
+          <label>الولاية</label>
+          <select id="wilayaFilter" onchange="updateDistricts()">
+            <option value="">اختر الولاية</option>
+            <option value="الجزائر">الجزائر</option>
+            <option value="وهران">وهران</option>
+            <option value="قسنطينة">قسنطينة</option>
+          </select>
+
+          <label>الدائرة</label>
+          <select id="districtFilter" onchange="updateMunicipalities()">
+            <option value="">اختر الدائرة</option>
+          </select>
+
+          <label>البلدية</label>
+          <select id="municipalityFilter">
+            <option value="">اختر البلدية</option>
+          </select>
+
+          <div class="checkbox-group">
+            <label><input type="checkbox" id="ascending"> تصاعدي</label>
+            <label><input type="checkbox" id="delivery"> توصيل متوفر</label>
+            <label><input type="checkbox" id="verified"> موثق الهوية فقط</label>
+          </div>
+          <button class="apply-btn" onclick="applyFilters()">تطبيق الفلتر</button>
+        </div>
+      </div>
+      <!-- Search box -->
+      <div class="search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A8590" stroke-width="2.2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="7"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" placeholder="بحث في سوق النساء" dir="rtl" id="searchInput">
+      </div>
+      <!-- Settings gear (now to the RIGHT of filter in RTL) -->
+      <button class="settings-btn" onclick="showSettings()" aria-label="الإعدادات">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v3m0 16v3M4.22 4.22l2.12 2.12m11.32 11.32l2.12 2.12M1 12h3m16 0h3M4.22 19.78l2.12-2.12m11.32-11.32l2.12-2.12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <div class="tab active" onclick="toggleSubTabs('all', this)">الكل</div>
+      <div class="tab" onclick="toggleSubTabs('wedding', this)">فساتين أعراس <span class="arrow-down">▼</span></div>
+      <div class="tab" onclick="toggleSubTabs('shoes', this)">أحذية <span class="arrow-down">▼</span></div>
+      <div class="tab" onclick="toggleSubTabs('beauty', this)">تجميل <span class="arrow-down">▼</span></div>
+      <div class="tab" onclick="toggleSubTabs('services', this)">خدمات <span class="arrow-down">▼</span></div>
+      <div class="tab" onclick="toggleSubTabs('accessories', this)">إكسسوارات <span class="arrow-down">▼</span></div>
+    </div>
+
+    <div class="sub-tabs" id="subTabs"></div>
+  </div>
+
+  <!-- ===== CONTENT (MAIN) ===== -->
+  <div class="content" id="content">
+    <div class="grid" id="adsGrid"></div>
+  </div>
+
+  <!-- ===== PROFILE OVERLAY ===== -->
+  <div class="page-overlay" id="profilePage">
+    <div class="page-header">
+      <button class="back" onclick="hideProfile()">‹</button>
+      <h2>حسابي</h2>
+    </div>
+    <div class="page-body">
+      <div class="profile-card">
+        <div class="avatar-lg">
+          <img src="https://images.unsplash.com/photo-1486649567693-aaa9b2e59385?fm=jpg&q=70&w=300&auto=format&fit=crop" alt="Profile">
+          <div class="online-dot"></div>
+        </div>
+        <h2>سارة أحمد <span style="color:var(--blue-verified);font-size:16px;">✓</span></h2>
+        <div class="username">@sara_style</div>
+        <div class="profile-stats">
+          <div><span class="num">12</span><span class="label">إعلانات</span></div>
+          <div><span class="num">4.8</span><span class="label">⭐</span></div>
+          <div><span class="num">156</span><span class="label">متابعون</span></div>
+        </div>
+      </div>
+      <ul class="profile-menu">
+        <li onclick="showToast('تعديل المعلومات')"><span>تعديل معلومات الحساب</span><span class="arrow">‹</span></li>
+        <li onclick="showToast('طلب توثيق الحساب')"><span>توثيق الحساب</span><span class="arrow">‹</span></li>
+        <li onclick="showToast('ترقية الحساب')"><span>ترقية الحساب</span><span class="arrow">‹</span></li>
+        <li onclick="toggleMyAds()"><span>إدارة الإعلانات</span><span class="arrow" id="myAdsArrow">‹</span></li>
+        <li onclick="showToast('تسجيل الخروج')"><span style="color:var(--red)">تسجيل الخروج</span><span class="arrow">‹</span></li>
+      </ul>
+      <div id="myAdsList" style="display:none;" class="my-ads-list">
+        <div class="my-ad-item">
+          <img src="https://images.unsplash.com/photo-1563074408-455d75186f14?fm=jpg&q=70&w=200&auto=format&fit=crop" alt="ad">
+          <div class="info">
+            <h4>كراكو عاصمي فاخر</h4>
+            <div class="status">✅ <span>👁 45</span> <span>💬 12</span></div>
+          </div>
+          <div class="actions">
+            <button onclick="showToast('تعديل السعر (مرة 1 من 3)')">✏️</button>
+            <button class="outline" onclick="showToast('تم البيع ✓')">✅</button>
+            <button class="outline" onclick="showToast('توقيف الإعلان')">⏸</button>
+          </div>
+        </div>
+        <div class="my-ad-item">
+          <img src="https://images.unsplash.com/photo-1603064752734-4c48eff53d05?fm=jpg&q=70&w=200&auto=format&fit=crop" alt="ad">
+          <div class="info">
+            <h4>قندورة قسنطينية مطرزة</h4>
+            <div class="status">⏸ <span>👁 23</span> <span>💬 5</span></div>
+          </div>
+          <div class="actions">
+            <button onclick="showToast('تعديل السعر (مرة 2 من 3)')">✏️</button>
+            <button class="outline" onclick="showToast('تنشيط الإعلان')">▶</button>
+            <button class="outline" onclick="showToast('حذف الإعلان')">🗑</button>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;">👁 68 · 💬 17</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== AD DETAIL OVERLAY ===== -->
+  <div class="page-overlay" id="detailPage">
+    <div class="page-header">
+      <button class="back" onclick="hideDetail()">‹</button>
+      <h2>تفاصيل الإعلان</h2>
+    </div>
+    <div class="page-body" id="detailBody"></div>
+    <div class="detail-footer" id="detailFooter"></div>
+  </div>
+
+  <!-- ===== VIDEO MODAL ===== -->
+  <div class="video-modal" id="videoModal">
+    <button class="modal-close" onclick="closeVideo()">×</button>
+    <iframe id="videoIframe" src="" allowfullscreen></iframe>
+  </div>
+
+  <!-- ===== BOTTOM BAR ===== -->
+  <div class="bottom-bar" id="bottomBar">
+    <button class="nav-item active" onclick="showToast('الرئيسية')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 11l9-8 9 8"/>
+        <path d="M5 10v10h14V10"/>
+      </svg>
+    </button>
+    <button class="nav-item" onclick="showToast('المفضلة')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 21s-6.7-4.35-9.33-8.02C.86 10.6 1.2 7.3 3.6 5.4 5.8 3.66 8.9 4.1 10.6 6.1L12 7.7l1.4-1.6c1.7-2 4.8-2.44 7-.7 2.4 1.9 2.74 5.2 0.93 7.58C18.7 16.65 12 21 12 21z"/>
+      </svg>
+    </button>
+    <div class="fab-spacer"></div>
+    <button class="nav-item" onclick="showToast('الإشعارات')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+    </button>
+    <!-- Profile avatar bottom-right -->
+    <button class="nav-item" onclick="showProfile()">
+      <div class="nav-profile">
+        <img src="https://images.unsplash.com/photo-1486649567693-aaa9b2e59385?fm=jpg&q=70&w=100&auto=format&fit=crop" alt="حسابي">
+        <div class="nav-dot"></div>
+      </div>
+    </button>
+  </div>
+
+  <div class="fab" id="fab" onclick="showToast('إضافة إعلان جديد')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round">
+      <line x1="12" y1="5" x2="12" y2="19"/>
+      <line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  const locationData = {
+    'الجزائر': {
+      'الجزائر الوسطى': ['الجزائر الوسطى', 'القصبة', 'سيدي امحمد'],
+      'باب الواد': ['باب الواد', 'بولوار', 'واد كنيس'],
+      'الحرارة': ['الحرارة', 'براقي', 'المحمدية']
+    },
+    'وهران': {
+      'وهران المركز': ['وهران المركز', 'العين الترك', 'الحمري'],
+      'بئر الجير': ['بئر الجير', 'حاسي بونيف', 'مرسى الكبير']
+    },
+    'قسنطينة': {
+      'قسنطينة المركز': ['قسنطينة المركز', 'الجديدة', 'الخروب'],
+      'عين سمارة': ['عين سمارة', 'ابن زياد', 'المنتزه']
+    }
+  };
+
+  function updateDistricts() {
+    const wilaya = document.getElementById('wilayaFilter').value;
+    const districtSelect = document.getElementById('districtFilter');
+    const municipalitySelect = document.getElementById('municipalityFilter');
+    districtSelect.innerHTML = '<option value="">اختر الدائرة</option>';
+    municipalitySelect.innerHTML = '<option value="">اختر البلدية</option>';
+    if (wilaya && locationData[wilaya]) {
+      Object.keys(locationData[wilaya]).forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d;
+        districtSelect.appendChild(opt);
+      });
+    }
+  }
+
+  function updateMunicipalities() {
+    const wilaya = document.getElementById('wilayaFilter').value;
+    const district = document.getElementById('districtFilter').value;
+    const municipalitySelect = document.getElementById('municipalityFilter');
+    municipalitySelect.innerHTML = '<option value="">اختر البلدية</option>';
+    if (wilaya && district && locationData[wilaya] && locationData[wilaya][district]) {
+      locationData[wilaya][district].forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = m;
+        municipalitySelect.appendChild(opt);
+      });
+    }
+  }
+
+  // --- Updated image URLs (fixed broken ones) ---
+  const weddingImgs = [
+    'https://images.unsplash.com/photo-1594552072238-b8a33785b261?fm=jpg&q=70&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1595777457583-95e059d581b8?fm=jpg&q=70&w=600&auto=format&fit=crop',
+    'https://i.ibb.co/hxxHqYBP/IMG-20250923-WA0012.jpg',
+    'https://i.ibb.co/RkTYX6b0/IMG-20250923-WA0014.jpg',
+    'https://i.ibb.co/XrNpRKsx/IMG-20250923-WA0015.jpg',
+    'https://i.ibb.co/CpQS2rwp/received-2221987301638514.jpg'
+  ];
+  const shoesImgs = [
+    'https://images.unsplash.com/photo-1603508102983-99b101395d1a?fm=jpg&q=70&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?fm=jpg&q=70&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1518049362265-d5b2a6467637?fm=jpg&q=70&w=600&auto=format&fit=crop'
+  ];
+  const beautyImgs = [
+    'https://images.unsplash.com/photo-1596462502278-27bfdc403348?fm=jpg&q=70&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?fm=jpg&q=70&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1526947425960-945c6e72858f?fm=jpg&q=70&w=600&auto=format&fit=crop'
+  ];
+  const hairImgs = [
+    'https://images.unsplash.com/photo-1519699047748-de8e457a634e?fm=jpg&q=70&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?fm=jpg&q=70&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1560066984-138dadb4c035?fm=jpg&q=70&w=600&auto=format&fit=crop'
+  ];
+  const makeupImgs = [
+    'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?fm=jpg&q=70&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?fm=jpg&q=70&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1516575150278-77136aed6920?fm=jpg&q=70&w=600&auto=format&fit=crop'
+  ];
+  const dressImgs = [
+    'https://images.unsplash.com/photo-1595777457583-95e059d581b8?fm=jpg&q=70&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1550639525-c97d455acf70?fm=jpg&q=70&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1566174053879-31528523f8ae?fm=jpg&q=70&w=600&auto=format&fit=crop'
+  ];
+  const sweetsImgs = [
+    'https://images.unsplash.com/photo-1587314168485-3236d6710814?fm=jpg&q=70&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1519676867240-f03562e64548?fm=jpg&q=70&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1541599468348-e96984315921?fm=jpg&q=70&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1481391319762-47dff72954d9?fm=jpg&q=70&w=600&auto=format&fit=crop'
+  ];
+  const sewingImgs = [
+    'https://images.unsplash.com/photo-1544441893-675973e31985?fm=jpg&q=70&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1596425107710-51a6d95fd0f5?fm=jpg&q=70&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?fm=jpg&q=70&w=600&auto=format&fit=crop'
+  ];
+  const nailsImgs = [
+    'https://images.unsplash.com/photo-1604654894610-df63bc536371?fm=jpg&q=70&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1519014816548-bf5751d51937?fm=jpg&q=70&w=600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1610992015732-2449b76344bc?fm=jpg&q=70&w=600&auto=format&fit=crop'
+  ];
+
+  function boldNumbers(text) {
+    return text.replace(/(\d+)/g, '<strong>$1</strong>');
+  }
+
+  const ads = [{
+    id: 1,
+    title: 'كراكو عاصمي فاخر',
+    seller: 'خياطة ليلى',
+    sellerAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?fm=jpg&q=70&w=100&auto=format&fit=crop',
+    sellerVerified: true,
+    online: true,
+    category: 'wedding',
+    subCategories: ['كراكو', 'قندورة', 'قفطان'],
+    price: 1200000,
+    oldPrice: null,
+    discount: null,
+    distance: '2.3 كلم',
+    rating: 4.9,
+    reviewCount: 24,
+    image: weddingImgs[0],
+    images: [weddingImgs[0], weddingImgs[1], weddingImgs[2], weddingImgs[3], weddingImgs[4], weddingImgs[5]],
+    desc: 'كراكو عاصمي مطرز بالذهب عيار 18، قماش فاخر مع تنورة واسعة. مناسب للأعراس والمناسبات الكبيرة. يتكون من 3 قطع: القميص، التنورة، والرداء. تطريز يدوي دقيق بألوان ذهبية وفضية. قماش من الحرير الطبيعي مع لمسات من الدانتيل الفرنسي. مقاس M قابل للتعديل. مناسب للعرائس والملكات. تصميم عصري يجمع بين الأصالة والأناقة. يمكن تنسيقه مع حجاب من نفس القماش (متوفر بسعر إضافي). التوصيل متاح داخل وخارج الولاية عبر شركات نقل موثوقة، مع إمكانية تجربة اللباس قبل الشراء النهائي في المحل. يشمل السعر تعديل بسيط على المقاس مجانًا. السعر: 1,200,000 دج.',
+    likes: 24,
+    views: 78,
+    negotiable: true,
+    delivery: true,
+    sold: false,
+    status: 'active',
+    date: '2026-01-10',
+    wilaya: 'الجزائر',
+    district: 'الجزائر الوسطى',
+    municipality: 'القصبة',
+    phone: '0555123456',
+    videoUrl: 'https://www.facebook.com/reel/2190386968375670?mibextid=9drbnH&s=yWDuG2&fs=e',
+    contacts: { facebook: '#', instagram: '#', tiktok: '#', telegram: '#', email: 'sara@email.com' },
+    reviews: [
+      { user: 'أميرة', avatar: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?fm=jpg&q=70&w=100&auto=format&fit=crop', rating: 5, date: '2026-01-15', comment: 'فستان رائع جداً، الخامة ممتازة والتطريز دقيق. أنصح به بشدة!' },
+      { user: 'نورة', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?fm=jpg&q=70&w=100&auto=format&fit=crop', rating: 4, date: '2026-01-12', comment: 'جميل جداً، لكن المقاس كان كبيراً قليلاً. اضطررت لتعديله.' },
+      { user: 'سهام', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?fm=jpg&q=70&w=100&auto=format&fit=crop', rating: 2, date: '2026-01-08', comment: 'المنتج ليس كما في الصورة، الألوان مختلفة.' }
+    ]
+  }, {
+    id: 2,
+    title: 'قندورة قسنطينية مطرزة',
+    seller: 'دار القندورة',
+    sellerAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?fm=jpg&q=70&w=100&auto=format&fit=crop',
+    sellerVerified: true,
+    online: false,
+    category: 'wedding',
+    subCategories: ['قندورة', 'كراكو'],
+    price: 850000,
+    oldPrice: null,
+    discount: null,
+    distance: '5.1 كلم',
+    rating: 4.8,
+    reviewCount: 18,
+    image: weddingImgs[1],
+    images: [weddingImgs[1], weddingImgs[0], weddingImgs[2], weddingImgs[3]],
+    desc: 'قندورة قسنطينية تقليدية بتطريز يدوي فاخر. قماش حريري مع زريور ذهبي. تتميز بالتفاصيل الدقيقة والألوان الزاهية. مناسبة للأعراس والمناسبات الرسمية. تشمل الرداء التقليدي مع تنورة واسعة. تصميم مستوحى من التراث القسنطيني الأصيل. يمكن تخصيص الألوان حسب الطلب. تُصنع بالكامل يدويًا من طرف حرفيات متخصصات، وتستغرق مدة التحضير حوالي 3 أسابيع، مع إمكانية الحجز المسبق. السعر: 850,000 دج.',
+    likes: 18,
+    views: 45,
+    negotiable: false,
+    delivery: true,
+    sold: false,
+    status: 'active',
+    date: '2026-01-08',
+    wilaya: 'قسنطينة',
+    district: 'قسنطينة المركز',
+    municipality: 'الجديدة',
+    phone: '0555987654',
+    videoUrl: null,
+    contacts: { facebook: '#', instagram: '#', tiktok: '#', telegram: '#', email: 'dar@email.com' },
+    reviews: []
+  }, {
+    id: 3,
+    title: 'حذاء عرس فضي',
+    seller: 'أحذية سعاد',
+    sellerAvatar: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?fm=jpg&q=70&w=100&auto=format&fit=crop',
+    sellerVerified: false,
+    online: true,
+    category: 'shoes',
+    subCategories: ['أحذية عرس', 'أحذية سهرة'],
+    price: 180000,
+    oldPrice: 230000,
+    discount: -22,
+    distance: '1.5 كلم',
+    rating: 4.7,
+    reviewCount: 9,
+    image: shoesImgs[0],
+    images: [shoesImgs[0], shoesImgs[1], shoesImgs[2], weddingImgs[0]],
+    desc: 'حذاء عرس فضي بكعب عالي مع أحجار كريستال سواروفسكي. مقاس 37-40. تصميم أنيق يضفي لمسة من الفخامة على إطلالتك. كعب مريح مع وسادة ناعمة للراحة طوال اليوم. مناسب للأعراس والسهرات والمناسبات الرسمية. النعل مصنوع من مطاط مضاد للانزلاق، ويأتي مع كيس تخزين مخملي فاخر. يمكن طلب مقاسات خاصة عند التوفر. السعر: 180,000 دج.',
+    likes: 9,
+    views: 34,
+    negotiable: true,
+    delivery: false,
+    sold: false,
+    status: 'active',
+    date: '2026-01-05',
+    wilaya: 'وهران',
+    district: 'وهران المركز',
+    municipality: 'العين الترك',
+    phone: null,
+    videoUrl: null,
+    contacts: { facebook: '#', instagram: '#', tiktok: '#', telegram: '#', email: 'souad@email.com' },
+    reviews: []
+  }, {
+    id: 4,
+    title: 'مجموعة كريمات عناية فاخرة',
+    seller: 'بيوتي شوب',
+    sellerAvatar: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?fm=jpg&q=70&w=100&auto=format&fit=crop',
+    sellerVerified: true,
+    online: true,
+    category: 'beauty',
+    subCategories: ['كريمات', 'مستحضرات'],
+    price: 45000,
+    oldPrice: 60000,
+    discount: -25,
+    distance: '800 متر',
+    rating: 4.6,
+    reviewCount: 32,
+    image: beautyImgs[0],
+    images: [beautyImgs[0], beautyImgs[1], beautyImgs[2], hairImgs[0]],
+    desc: 'مجموعة كريمات عناية بالبشرة من ماركة فرنسية. تحتوي على 5 منتجات للترطيب والتفتيح ومكافحة التجاعيد. مناسبة لجميع أنواع البشرة. غنية بفيتامين E ومضادات الأكسدة. نتائج مضمونة خلال 28 يوماً. عبوات عملية وسهلة الاستخدام. المنتجات خالية من البارابين والعطور الصناعية، وتم اختبارها جلديًا. تشمل المجموعة غسول، سيروم، كريم نهاري وكريم ليلي وواقي شمس. السعر: 45,000 دج.',
+    likes: 32,
+    views: 89,
+    negotiable: false,
+    delivery: true,
+    sold: false,
+    status: 'active',
+    date: '2026-01-12',
+    wilaya: 'الجزائر',
+    district: 'الحرارة',
+    municipality: 'براقي',
+    phone: '0555123789',
+    videoUrl: null,
+    contacts: { facebook: '#', instagram: '#', tiktok: '#', telegram: '#', email: 'beauty@email.com' },
+    reviews: []
+  }, {
+    id: 5,
+    title: 'شعر مستعار طبيعي',
+    seller: 'شعر فاخر',
+    sellerAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?fm=jpg&q=70&w=100&auto=format&fit=crop',
+    sellerVerified: false,
+    online: false,
+    category: 'beauty',
+    subCategories: ['شعر مستعار', 'إكسسوارات شعر'],
+    price: 95000,
+    oldPrice: null,
+    discount: null,
+    distance: '4.2 كلم',
+    rating: 4.5,
+    reviewCount: 15,
+    image: hairImgs[0],
+    images: [hairImgs[0], hairImgs[1], hairImgs[2], beautyImgs[0]],
+    desc: 'شعر مستعار طبيعي 100% من البرازيل، طول 60 سم، لون أشقر عسلي. ناعم ولامع، مناسب للمناسبات والحياة اليومية. يمكن تصفيفه بالحرارة حتى 180 درجة. قبعة داخلية قابلة للتعديل تناسب جميع المقاسات. يمكن صبغه بألوان أخرى، ويأتي مع دليل عناية وصيانة لإطالة عمره الافتراضي. السعر: 95,000 دج.',
+    likes: 15,
+    views: 56,
+    negotiable: true,
+    delivery: true,
+    sold: false,
+    status: 'active',
+    date: '2026-01-03',
+    wilaya: 'سطيف',
+    district: 'سطيف المركز',
+    municipality: 'سطيف',
+    phone: null,
+    videoUrl: 'https://www.facebook.com/plugins/video.php?href=https://www.facebook.com/reel/0987654321',
+    contacts: { facebook: '#', instagram: '#', tiktok: '#', telegram: '#', email: 'hair@email.com' },
+    reviews: []
+  }, {
+    id: 6,
+    title: 'خدمة مكياج أعراس',
+    seller: 'مكياج نادين',
+    sellerAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?fm=jpg&q=70&w=100&auto=format&fit=crop',
+    sellerVerified: true,
+    online: true,
+    category: 'services',
+    subCategories: ['مكياج', 'تسريحات'],
+    price: 150000,
+    oldPrice: null,
+    discount: null,
+    distance: '3.0 كلم',
+    rating: 4.9,
+    reviewCount: 41,
+    image: makeupImgs[0],
+    images: [makeupImgs[0], makeupImgs[1], makeupImgs[2], hairImgs[1]],
+    desc: 'خدمة مكياج احترافي للأعراس والمناسبات. مكياج عروس مع تجربة مسبقة. تشمل المكياج وتسريحة الشعر. استخدام منتجات عالية الجودة من ماركات عالمية. خبرة 10 سنوات في مجال المكياج الفني. خدمة منزلية متوفرة. نتائج تدوم طوال اليوم. تشمل الخدمة أيضًا مكياج خفيف لأفراد العائلة بسعر تفضيلي، ويُنصح بالحجز قبل موعد العرس بأسبوعين على الأقل. السعر: 150,000 دج.',
+    likes: 41,
+    views: 102,
+    negotiable: true,
+    delivery: false,
+    sold: false,
+    status: 'active',
+    date: '2026-01-14',
+    wilaya: 'الجزائر',
+    district: 'الجزائر الوسطى',
+    municipality: 'سيدي امحمد',
+    phone: '0555678901',
+    videoUrl: 'https://www.facebook.com/plugins/video.php?href=https://www.facebook.com/reel/1122334455',
+    contacts: { facebook: '#', instagram: '#', tiktok: '#', telegram: '#', email: 'nadin@email.com' },
+    reviews: []
+  }, {
+    id: 7,
+    title: 'فستان سهرة أنيق',
+    seller: 'فساتين إلهام',
+    sellerAvatar: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?fm=jpg&q=70&w=100&auto=format&fit=crop',
+    sellerVerified: false,
+    online: false,
+    category: 'wedding',
+    subCategories: ['فساتين سهرة', 'قفطان'],
+    price: 320000,
+    oldPrice: 400000,
+    discount: -20,
+    distance: '6.7 كلم',
+    rating: 4.4,
+    reviewCount: 11,
+    image: dressImgs[0],
+    images: [dressImgs[0], dressImgs[1], dressImgs[2], weddingImgs[2]],
+    desc: 'فستان سهرة طويل بقصة مميزة، تطريز يدوي وأحجار كريستال. مقاس M، لون بيج ذهبي. مناسب للسهرات والحفلات الرسمية. قماش عالي الجودة مع بطانة ناعمة. تصميم عصري يجمع بين الأناقة والراحة. يمكن تنسيقه مع إكسسوارات ذهبية. يتوفر أيضًا للتأجير بسعر مخفض، مع خدمة تعديل بسيط للمقاس عند الاستلام. السعر: 320,000 دج.',
+    likes: 11,
+    views: 28,
+    negotiable: false,
+    delivery: true,
+    sold: false,
+    status: 'active',
+    date: '2026-01-01',
+    wilaya: 'عنابة',
+    district: 'عنابة المركز',
+    municipality: 'عنابة',
+    phone: null,
+    videoUrl: null,
+    contacts: { facebook: '#', instagram: '#', tiktok: '#', telegram: '#', email: 'elham@email.com' },
+    reviews: []
+  }, {
+    id: 8,
+    title: 'حلويات تقليدية مغربية',
+    seller: 'حلويات مريم',
+    sellerAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?fm=jpg&q=70&w=100&auto=format&fit=crop',
+    sellerVerified: false,
+    online: true,
+    category: 'services',
+    subCategories: ['حلويات', 'طبخ منزلي'],
+    price: 12000,
+    oldPrice: null,
+    discount: null,
+    distance: '1.2 كلم',
+    rating: 4.8,
+    reviewCount: 27,
+    image: sweetsImgs[0],
+    images: [sweetsImgs[0], sweetsImgs[1], sweetsImgs[2], sweetsImgs[3]],
+    desc: 'صحن حلويات تقليدية مغربية متنوع (بريوات، غريبة، معمول). طازج وطبيعي. محضر بيد ماهرة من أجود المكونات الطبيعية. مناسب للولائم والمناسبات. يمكن تخصيص الطلب حسب الرغبة. تغليف فاخر يصلح كهدية. متوفر بأحجام مختلفة حسب عدد الحضور، ويمكن الطلب المسبق ليوم العرس مع توصيل في نفس اليوم لضمان الطزاجة. السعر: 12,000 دج.',
+    likes: 27,
+    views: 63,
+    negotiable: true,
+    delivery: true,
+    sold: false,
+    status: 'active',
+    date: '2026-01-13',
+    wilaya: 'الجزائر',
+    district: 'باب الواد',
+    municipality: 'واد كنيس',
+    phone: '0555789012',
+    videoUrl: null,
+    contacts: { facebook: '#', instagram: '#', tiktok: '#', telegram: '#', email: 'mariam@email.com' },
+    reviews: []
+  }, {
+    id: 9,
+    title: 'خياطة قندورة سطايفي',
+    seller: 'خياطة فاطمة',
+    sellerAvatar: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?fm=jpg&q=70&w=100&auto=format&fit=crop',
+    sellerVerified: true,
+    online: false,
+    category: 'services',
+    subCategories: ['خياطة', 'تفصيل'],
+    price: 400000,
+    oldPrice: null,
+    discount: null,
+    distance: '7.5 كلم',
+    rating: 4.7,
+    reviewCount: 19,
+    image: sewingImgs[0],
+    images: [sewingImgs[0], sewingImgs[1], sewingImgs[2], weddingImgs[1]],
+    desc: 'خياطة قندورة سطايفي بتطريز الكراكو التقليدي. تشمل القندورة والتنورة والرداء. تصميم أصيل مستوحى من التراث السطايفي. تطريز يدوي دقيق بألوان متناسقة. قماش حريري فاخر مع لمسات ذهبية. يمكن تخصيص القياسات حسب الطلب. مدة التنفيذ من 3 إلى 4 أسابيع، مع جلستين للقياس لضمان مقاس مثالي. السعر: 400,000 دج.',
+    likes: 19,
+    views: 41,
+    negotiable: true,
+    delivery: false,
+    sold: false,
+    status: 'active',
+    date: '2026-01-09',
+    wilaya: 'سطيف',
+    district: 'سطيف المركز',
+    municipality: 'سطيف',
+    phone: '0555789345',
+    videoUrl: null,
+    contacts: { facebook: '#', instagram: '#', tiktok: '#', telegram: '#', email: 'fatima@email.com' },
+    reviews: []
+  }, {
+    id: 10,
+    title: 'طقم أظافر اصطناعية',
+    seller: 'نيل أرتيست',
+    sellerAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?fm=jpg&q=70&w=100&auto=format&fit=crop',
+    sellerVerified: false,
+    online: true,
+    category: 'accessories',
+    subCategories: ['أظافر', 'إكسسوارات'],
+    price: 8500,
+    oldPrice: 12000,
+    discount: -29,
+    distance: '2.8 كلم',
+    rating: 4.3,
+    reviewCount: 6,
+    image: nailsImgs[0],
+    images: [nailsImgs[0], nailsImgs[1], nailsImgs[2], beautyImgs[1]],
+    desc: 'طقم أظافر اصطناعية بتصميم فرنسي كلاسيكي. 24 قطعة بأحجام مختلفة، مع غراء. سهلة التركيب والإزالة. مثالية للمناسبات والحياة اليومية. ألوان طبيعية ومتألقة. تدوم حتى أسبوعين مع العناية المناسبة. يشمل الطقم مبرد وعصا خشبية لتنظيف الأظافر، مع دليل توضيحي للتركيب خطوة بخطوة. السعر: 8,500 دج.',
+    likes: 6,
+    views: 23,
+    negotiable: false,
+    delivery: true,
+    sold: false,
+    status: 'active',
+    date: '2026-01-07',
+    wilaya: 'وهران',
+    district: 'بئر الجير',
+    municipality: 'حاسي بونيف',
+    phone: null,
+    videoUrl: null,
+    contacts: { facebook: '#', instagram: '#', tiktok: '#', telegram: '#', email: 'nail@email.com' },
+    reviews: []
+  }];
+
+  const subCategoriesMap = {
+    'all': [],
+    'wedding': ['الكل', 'كراكو', 'قندورة', 'قفطان', 'تكشيطة', 'فساتين سهرة'],
+    'shoes': ['الكل', 'أحذية عرس', 'أحذية سهرة', 'أحذية كاجوال'],
+    'beauty': ['الكل', 'كريمات', 'مستحضرات', 'شعر مستعار', 'إكسسوارات شعر', 'مكياج'],
+    'services': ['الكل', 'مكياج', 'تسريحات', 'خياطة', 'تفصيل', 'حلويات', 'طبخ منزلي'],
+    'accessories': ['الكل', 'أظافر', 'إكسسوارات', 'حقائب', 'مجوهرات']
+  };
+
+  let currentCategory = 'all';
+  let subTabsVisible = false;
+
+  function cardHtml(ad) {
+    return `
+      <div class="card" onclick="showDetail(${ad.id})">
+        ${ad.sold ? '<div class="badge">تم البيع</div>' : ''}
+        ${ad.discount ? `<div class="badge-discount">-${Math.abs(ad.discount)}%</div>` : ''}
+        <div class="img-wrap">
+          <img src="${ad.image}" alt="${ad.title}" loading="lazy">
+        </div>
+        <h3>${ad.title}</h3>
+        <div class="seller-row">
+          <div class="seller-avatar">
+            <img src="${ad.sellerAvatar}" alt="${ad.seller}">
+            <div class="mini-dot ${ad.online ? 'online' : 'offline'}"></div>
+          </div>
+          <div class="seller">${ad.seller} ${ad.sellerVerified ? '<span class="seller-verified">✓</span>' : ''}</div>
+        </div>
+        <div class="distance">${ad.distance}</div>
+        ${ad.negotiable ? '<div class="negotiable-tag">قابل للتفاوض</div>' : ''}
+        <div class="price">
+          ${ad.oldPrice ? `<span class="old-price">${ad.oldPrice.toLocaleString()} دج</span>` : ''}
+          ${ad.price.toLocaleString()} دج
+        </div>
+        <div class="card-footer">
+          <div class="rating">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#F5A623"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+            ${ad.rating}
+          </div>
+          <button class="heart ${ad.likes > 0 ? 'active' : ''}" onclick="event.stopPropagation(); toggleHeart(this, ${ad.id})">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="${ad.likes > 0 ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="${ad.likes > 0 ? '0' : '2'}"><path d="M12 21s-6.7-4.35-9.33-8.02C.86 10.6 1.2 7.3 3.6 5.4 5.8 3.66 8.9 4.1 10.6 6.1L12 7.7l1.4-1.6c1.7-2 4.8-2.44 7-.7 2.4 1.9 2.74 5.2 0.93 7.58C18.7 16.65 12 21 12 21z"/></svg>
+            <span>${ad.likes}</span>
+          </button>
+        </div>
+        <div class="date">${ad.date}</div>
+      </div>
+    `;
+  }
+
+  function renderAds(filter = 'all', subFilter = 'all') {
+    const grid = document.getElementById('adsGrid');
+    let filtered = filter === 'all' ? ads : ads.filter(ad => ad.category === filter);
+    if (subFilter !== 'all' && subFilter !== 'الكل') {
+      filtered = filtered.filter(ad => ad.subCategories && ad.subCategories.includes(subFilter));
+    }
+    if (filtered.length === 0) {
+      grid.innerHTML = `<p style="text-align:center;color:var(--muted);padding:40px 0;font-size:15px;">لا توجد إعلانات في هذا القسم</p>`;
+      return;
+    }
+    grid.innerHTML = filtered.map(cardHtml).join('');
+  }
+
+  function toggleHeart(el, adId) {
+    el.classList.toggle('active');
+    const isActive = el.classList.contains('active');
+    const svg = el.querySelector('svg');
+    const countSpan = el.querySelector('span');
+    let ad = ads.find(a => a.id === adId);
+    if (isActive) {
+      svg.setAttribute('fill', 'currentColor');
+      svg.setAttribute('stroke-width', '0');
+      ad.likes += 1;
+    } else {
+      svg.setAttribute('fill', 'none');
+      svg.setAttribute('stroke-width', '2');
+      ad.likes -= 1;
+    }
+    countSpan.textContent = ad.likes;
+  }
+
+  function toggleSubTabs(category, el) {
+    const tab = el;
+    const arrow = tab.querySelector('.arrow-down');
+    const subTabs = document.getElementById('subTabs');
+
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+
+    if (category === 'all') {
+      currentCategory = 'all';
+      subTabs.classList.remove('show');
+      document.querySelectorAll('.arrow-down').forEach(a => a.classList.remove('rotated'));
+      subTabsVisible = false;
+      renderAds('all');
+      return;
+    }
+
+    if (subTabsVisible && currentCategory === category) {
+      subTabs.classList.remove('show');
+      if (arrow) arrow.classList.remove('rotated');
+      subTabsVisible = false;
+      renderAds(category);
+      return;
+    }
+
+    currentCategory = category;
+    document.querySelectorAll('.arrow-down').forEach(a => a.classList.remove('rotated'));
+    if (arrow) arrow.classList.add('rotated');
+
+    const subs = subCategoriesMap[category] || [];
+    subTabs.innerHTML = subs.map(s =>
+      `<div class="sub-tab ${s === 'الكل' ? 'active' : ''}" onclick="event.stopPropagation(); filterSub('${s}', this)">${s}</div>`
+    ).join('');
+    subTabs.classList.add('show');
+    subTabsVisible = true;
+    renderAds(category);
+  }
+
+  document.addEventListener('click', function(e) {
+    const subTabs = document.getElementById('subTabs');
+    const tabs = document.getElementById('tabs');
+    if (subTabsVisible && !tabs.contains(e.target) && !subTabs.contains(e.target)) {
+      subTabs.classList.remove('show');
+      document.querySelectorAll('.arrow-down').forEach(a => a.classList.remove('rotated'));
+      subTabsVisible = false;
+    }
+  });
+
+  function filterSub(sub, el) {
+    document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+    if (el) el.classList.add('active');
+    renderAds(currentCategory, sub);
+  }
+
+  function toggleFilter() {
+    document.getElementById('filterDropdown').classList.toggle('show');
+  }
+
+  function applyFilters() {
+    document.getElementById('filterDropdown').classList.remove('show');
+    showToast('تم تطبيق الفلاتر');
+  }
+
+  document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('filterDropdown');
+    const wrap = document.querySelector('.filter-wrap');
+    if (dropdown && wrap && !wrap.contains(e.target)) {
+      dropdown.classList.remove('show');
+    }
+  });
+
+  function showProfile() {
+    document.getElementById('profilePage').classList.add('show');
+    document.getElementById('content').style.display = 'none';
+  }
+
+  function hideProfile() {
+    document.getElementById('profilePage').classList.remove('show');
+    document.getElementById('content').style.display = 'block';
+  }
+
+  function showSettings() {
+    showToast('الإعدادات: اللغة، الليلي، الألوان، الخط');
+  }
+
+  function toggleMyAds() {
+    const list = document.getElementById('myAdsList');
+    const arrow = document.getElementById('myAdsArrow');
+    if (list.style.display === 'none') {
+      list.style.display = 'block';
+      arrow.textContent = '▲';
+    } else {
+      list.style.display = 'none';
+      arrow.textContent = '‹';
+    }
+  }
+
+  function renderStars(rating) {
+    let html = '<span class="review-stars">';
+    for (let i = 1; i <= 5; i++) {
+      html += `<span class="star ${i <= rating ? 'filled' : ''}">★</span>`;
+    }
+    html += '</span>';
+    return html;
+  }
+
+  let currentAdImages = [];
+  let currentImgIndex = 0;
+  let touchStartX = 0;
+  let currentDetailAdId = null;
+
+  // --- showDetail with icon-only action row UNDER image, similar products BELOW reviews ---
+  function showDetail(id) {
+    const ad = ads.find(a => a.id === id);
+    if (!ad) return;
+    currentDetailAdId = id;
+    currentAdImages = ad.images || [ad.image];
+    currentImgIndex = 0;
+
+    const body = document.getElementById('detailBody');
+    const footer = document.getElementById('detailFooter');
+
+    const counterHtml = `<div class="img-counter" id="imgCounter">1/${currentAdImages.length}</div>`;
+
+    const contactIcons = [
+      { icon: 'data/icons/disc_icon.svg', label: 'محادثة', cls: 'chat-btn', action: `showToast('💬 ${ad.seller}')` },
+      { icon: 'data/icons/whatsapp_icon.svg', label: 'هاتف', action: `showToast('${ad.phone || '📱 غير متوفر'}')` },
+      { icon: 'data/icons/facebook_icon.svg', label: 'فيسبوك', action: `showToast('فيسبوك')` },
+      { icon: 'data/icons/instagram_icon.svg', label: 'إنستغرام', action: `showToast('إنستغرام')` },
+      { icon: 'data/icons/tiktok_icon.svg', label: 'تيك توك', action: `showToast('تيك توك')` },
+      { icon: 'data/icons/telegram_icon.svg', label: 'تلغرام', action: `showToast('تلغرام')` },
+      { icon: 'data/icons/gmail_icon.svg', label: 'بريد', action: `showToast('${ad.contacts.email}')` },
+      { icon: 'data/icons/map_icon.svg', label: 'خريطة', action: `showToast('🗺 Google Maps')` }
+    ];
+
+    const contactBtns = contactIcons.map(c =>
+      `<button class="icon-btn ${c.cls || ''}" onclick="${c.action}" title="${c.label}">
+        <img src="${c.icon}" alt="${c.label}">
+      </button>`
+    ).join('');
+
+    const locationStr = `${ad.municipality || ''}، ${ad.district || ''}، ${ad.wilaya || ''}`;
+    const deliveryStatus = ad.delivery ?
+      '<span class="delivery-available">التوصيل: متوفر ✅</span>' :
+      '<span class="delivery-unavailable">التوصيل: غير متوفر ❌</span>';
+
+    // --- Similar products: computed but placed BELOW reviews ---
+    let similarHtml = '';
+    const similarAds = ads.filter(a => a.category === ad.category && a.id !== ad.id).slice(0, 4);
+    if (similarAds.length > 0) {
+      similarHtml = `
+        <div class="similar-section">
+          <h3>منتجات مشابهة</h3>
+          <div class="similar-grid">
+            ${similarAds.map(sa => `
+              <div class="similar-card" onclick="event.stopPropagation(); showDetail(${sa.id})">
+                <div class="similar-img"><img src="${sa.image}" alt="${sa.title}"></div>
+                <h4>${sa.title}</h4>
+                <div class="similar-price">${sa.price.toLocaleString()} دج</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    let reviewsHtml = '';
+    if (ad.reviews && ad.reviews.length > 0) {
+      reviewsHtml = `
+        <div class="reviews-section">
+          <h3>التقييمات (${ad.reviews.length})</h3>
+          <div class="review-filters">
+            <button class="filter-chip active" data-type="all" onclick="filterReviews('all', this)">الكل</button>
+            <button class="filter-chip" data-type="positive" onclick="filterReviews('positive', this)">إيجابية</button>
+            <button class="filter-chip" data-type="negative" onclick="filterReviews('negative', this)">سلبية</button>
+          </div>
+          <div id="reviewsList">
+            ${ad.reviews.map(r => `
+              <div class="review-item" data-rating="${r.rating}">
+                <div class="review-avatar">
+                  <img src="${r.avatar}" alt="${r.user}">
+                </div>
+                <div class="review-content">
+                  <div class="review-user">${r.user}</div>
+                  <div class="review-stars-date">
+                    ${renderStars(r.rating)}
+                    <span class="review-date">${r.date}</span>
+                  </div>
+                  <div class="review-comment">${r.comment}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // --- Build body: gallery → icon action row → seller → title → price → meta → contacts → desc → reviews → similar ---
+    body.innerHTML = `
+      <div class="detail-gallery">
+        <img src="${currentAdImages[0]}" alt="${ad.title}" class="main-img" id="detailMainImg">
+        ${counterHtml}
+      </div>
+
+      <!-- Small icon-only action row directly under the ad image -->
+      <div class="detail-icon-row" id="iconActionRow">
+        <button class="icon-action report" onclick="showToast('🚨 تم الإبلاغ')" title="إبلاغ">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+            <line x1="4" y1="22" x2="4" y2="15"/>
+          </svg>
+        </button>
+        <button class="icon-action" onclick="showToast('📤 مشاركة')" title="مشاركة">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18" cy="5" r="3"/>
+            <circle cx="6" cy="12" r="3"/>
+            <circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+        </button>
+        ${ad.videoUrl ? `
+        <button class="icon-action" onclick="openVideo('${ad.videoUrl}')" title="فيديو">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="15" height="14" rx="2"/>
+            <path d="M17 9.5l5-3v11l-5-3z"/>
+          </svg>
+        </button>
+        ` : `
+        <button class="icon-action" style="opacity:0.4;" onclick="showToast('لا يوجد فيديو')" title="فيديو">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="15" height="14" rx="2"/>
+            <path d="M17 9.5l5-3v11l-5-3z"/>
+          </svg>
+        </button>
+        `}
+        <button class="icon-action ${ad.likes > 0 ? 'liked' : ''}" onclick="toggleDetailLike()" id="detailLikeBtn" title="إعجاب">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="${ad.likes > 0 ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="${ad.likes > 0 ? '0' : '2'}">
+            <path d="M12 21s-6.7-4.35-9.33-8.02C.86 10.6 1.2 7.3 3.6 5.4 5.8 3.66 8.9 4.1 10.6 6.1L12 7.7l1.4-1.6c1.7-2 4.8-2.44 7-.7 2.4 1.9 2.74 5.2 0.93 7.58C18.7 16.65 12 21 12 21z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="detail-seller-row">
+        <div class="seller-avatar">
+          <div class="avatar-img-inner">
+            <img src="${ad.sellerAvatar}" alt="${ad.seller}">
+          </div>
+          <div class="mini-dot ${ad.online ? 'online' : 'offline'}"></div>
+        </div>
+        <span class="seller-name">${ad.seller} ${ad.sellerVerified ? '<span class="verified-badge">✓</span>' : ''}</span>
+      </div>
+
+      <h2 class="detail-title">${ad.title}</h2>
+      <div class="detail-price">
+        ${ad.oldPrice ? `<span class="old-price">${ad.oldPrice.toLocaleString()} دج</span>` : ''}
+        ${ad.price.toLocaleString()} دج
+        ${ad.discount ? `<span style="font-size:13px;color:#10B981;font-weight:600;"> -${Math.abs(ad.discount)}%</span>` : ''}
+      </div>
+      ${ad.negotiable ? '<div class="negotiable-tag-detail">قابل للتفاوض</div>' : ''}
+
+      <div class="detail-meta">
+        <span>⭐ ${ad.rating}</span>
+        <span>❤️ ${ad.likes}</span>
+        <span>👁 ${ad.views}</span>
+        <span>📍 ${ad.distance}</span>
+        <span>🏷 ${locationStr}</span>
+        <span>${deliveryStatus}</span>
+      </div>
+
+      <div class="detail-contact-row">
+        ${contactBtns}
+      </div>
+
+      <p class="detail-desc">${boldNumbers(ad.desc)}</p>
+      <div style="font-size:11px;color:var(--muted);text-align:right;margin-bottom:12px;">${ad.date}</div>
+
+      ${reviewsHtml}
+      ${similarHtml}
+    `;
+
+    // --- Footer: back small button + buy button only ---
+    footer.innerHTML = `
+      <div class="buy-row">
+        <button class="btn-back-small" onclick="hideDetail()" title="رجوع">
+          <svg viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"/>
+            <polyline points="12 19 5 12 12 5"/>
+          </svg>
+        </button>
+        <button class="btn-buy-full" onclick="showToast('🛒 تم إرسال طلب الشراء')">🛒 طلب الآن</button>
+      </div>
+    `;
+
+    document.getElementById('detailPage').classList.add('show');
+    document.getElementById('content').style.display = 'none';
+
+    // Touch swipe on main image
+    const mainImg = document.getElementById('detailMainImg');
+    mainImg.addEventListener('touchstart', handleTouchStart, { passive: true });
+    mainImg.addEventListener('touchend', handleTouchEnd, { passive: true });
+    mainImg.addEventListener('mousedown', (e) => { touchStartX = e.clientX; });
+    mainImg.addEventListener('mouseup', (e) => {
+      const diff = e.clientX - touchStartX;
+      if (Math.abs(diff) > 40) {
+        if (diff < 0) {
+          currentImgIndex = (currentImgIndex + 1) % currentAdImages.length;
+        } else {
+          currentImgIndex = (currentImgIndex - 1 + currentAdImages.length) % currentAdImages.length;
+        }
+        changeDetailImage(currentImgIndex);
+      }
+    });
+  }
+
+  function handleTouchStart(e) { touchStartX = e.touches[0].clientX; }
+
+  function handleTouchEnd(e) {
+    const diff = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(diff) > 40) {
+      if (diff < 0) {
+        currentImgIndex = (currentImgIndex + 1) % currentAdImages.length;
+      } else {
+        currentImgIndex = (currentImgIndex - 1 + currentAdImages.length) % currentAdImages.length;
+      }
+      changeDetailImage(currentImgIndex);
+    }
+  }
+
+  function changeDetailImage(index) {
+    currentImgIndex = index;
+    document.getElementById('detailMainImg').src = currentAdImages[index];
+    const counter = document.getElementById('imgCounter');
+    if (counter) counter.textContent = `${index + 1}/${currentAdImages.length}`;
+  }
+
+  function toggleDetailLike() {
+    const btn = document.getElementById('detailLikeBtn');
+    if (!btn) return;
+    const isLiked = btn.classList.toggle('liked');
+    const svg = btn.querySelector('svg');
+    if (isLiked) {
+      svg.setAttribute('fill', 'currentColor');
+      svg.setAttribute('stroke-width', '0');
+    } else {
+      svg.setAttribute('fill', 'none');
+      svg.setAttribute('stroke-width', '2');
+    }
+    if (currentDetailAdId !== null) {
+      const ad = ads.find(a => a.id === currentDetailAdId);
+      if (ad) {
+        ad.likes += isLiked ? 1 : -1;
+      }
+    }
+  }
+
+  function filterReviews(type, el) {
+    const items = document.querySelectorAll('.review-item');
+    items.forEach(item => {
+      const rating = parseInt(item.dataset.rating, 10);
+      if (type === 'all') {
+        item.style.display = 'flex';
+      } else if (type === 'positive') {
+        item.style.display = rating >= 3 ? 'flex' : 'none';
+      } else if (type === 'negative') {
+        item.style.display = rating < 3 ? 'flex' : 'none';
+      }
+    });
+    document.querySelectorAll('.review-filters .filter-chip').forEach(c => c.classList.remove('active'));
+    if (el) el.classList.add('active');
+  }
+
+  function hideDetail() {
+    document.getElementById('detailPage').classList.remove('show');
+    document.getElementById('content').style.display = 'block';
+  }
+
+  function openVideo(url) {
+    document.getElementById('videoIframe').src = url;
+    document.getElementById('videoModal').classList.add('show');
+  }
+
+  function closeVideo() {
+    document.getElementById('videoIframe').src = '';
+    document.getElementById('videoModal').classList.remove('show');
+  }
+
+  let toastTimeout;
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  document.getElementById('searchInput').addEventListener('input', function(e) {
+    const query = e.target.value.trim().toLowerCase();
+    const grid = document.getElementById('adsGrid');
+    if (query === '') { renderAds('all'); return; }
+    const filtered = ads.filter(ad =>
+      ad.title.toLowerCase().includes(query) ||
+      ad.seller.toLowerCase().includes(query) ||
+      ad.desc.toLowerCase().includes(query)
+    );
+    if (filtered.length === 0) {
+      grid.innerHTML = `<p style="text-align:center;color:var(--muted);padding:40px 0;font-size:15px;">🔍 لا توجد نتائج لـ "${e.target.value}"</p>`;
+    } else {
+      grid.innerHTML = filtered.map(cardHtml).join('');
+    }
+  });
+
+  function syncTopPadding() {
+    const topBar = document.getElementById('topBar');
+    const content = document.getElementById('content');
+    if (!topBar || !content) return;
+    requestAnimationFrame(() => {
+      const h = topBar.offsetHeight;
+      content.style.paddingTop = (h + 8) + 'px';
+    });
+  }
+
+  let lastScrollY = 0;
+  let isNavHidden = false;
+
+  function handleScroll() {
+    const content = document.getElementById('content');
+    const bottomBar = document.getElementById('bottomBar');
+    const fab = document.getElementById('fab');
+    if (!content || !bottomBar || !fab) return;
+
+    const scrollY = content.scrollTop;
+    const delta = scrollY - lastScrollY;
+
+    if (delta > 12 && scrollY > 60) {
+      if (!isNavHidden) {
+        bottomBar.classList.add('hidden');
+        fab.classList.add('hidden');
+        isNavHidden = true;
+      }
+    } else if (delta < -8) {
+      if (isNavHidden) {
+        bottomBar.classList.remove('hidden');
+        fab.classList.remove('hidden');
+        isNavHidden = false;
+      }
+    }
+    lastScrollY = scrollY;
+  }
+
+  function syncNotch() {
+    const bar = document.getElementById('bottomBar');
+    if (!bar) return;
+    const w = bar.offsetWidth;
+    const h = bar.offsetHeight;
+    if (w === 0) return;
+    const midX = w / 2;
+    const halfSpan = 28;
+    const depth = 14;
+    const x1 = midX - halfSpan;
+    const x2 = midX + halfSpan;
+    const path = 'M0,0 L' + x1 + ',0 C' + (midX - halfSpan * 0.55) + ',0 ' + (midX - halfSpan * 0.65) + ',' + depth +
+      ' ' + midX + ',' + depth + ' C' + (midX + halfSpan * 0.65) + ',' + depth + ' ' + (midX + halfSpan * 0.55) +
+      ',0 ' + x2 + ',0 L' + w + ',0 L' + w + ',' + h + ' L0,' + h + ' Z';
+    bar.style.clipPath = "path('" + path + "')";
+    bar.style.webkitClipPath = "path('" + path + "')";
+  }
+
+  window.addEventListener('load', () => {
+    renderAds('all');
+    setTimeout(() => {
+      syncTopPadding();
+      syncNotch();
+    }, 100);
+    const content = document.getElementById('content');
+    content.addEventListener('scroll', handleScroll, { passive: true });
+
+    const topBar = document.getElementById('topBar');
+    if (topBar) {
+      const roTop = new ResizeObserver(() => syncTopPadding());
+      roTop.observe(topBar);
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    syncTopPadding();
+    syncNotch();
+  });
+
+  const ro = new ResizeObserver(() => syncNotch());
+  const bottomBar = document.getElementById('bottomBar');
+  if (bottomBar) ro.observe(bottomBar);
+</script>
+
+</body>
+</html>

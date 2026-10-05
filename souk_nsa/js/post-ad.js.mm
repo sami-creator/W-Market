@@ -68,18 +68,17 @@
       const dc = el('input', { class: 'input', type: 'number', min: 0, max: 90, inputmode: 'numeric', value: S.discount_pct }); bind(dc, 'discount_pct', v => Math.min(90, Math.max(0, parseInt(v, 10) || 0)));
       const ng = el('input', { type: 'checkbox' }); ng.checked = S.negotiable; ng.addEventListener('change', () => { S.negotiable = ng.checked; saveDraft(); });
       const mk = (val, key) => { const i = el('input', { type: 'radio', name: 'dl' }); i.checked = S.delivery === val; i.addEventListener('change', () => { S.delivery = val; saveDraft(); }); return el('label', { class: 'row' }, [i, t(key)]); };
-      const sp = el('input', { type: 'checkbox' }); sp.checked = S.show_phone && verified; sp.disabled = !verified;
+      const sp = el('input', { type: 'checkbox' }); sp.checked = S.show_phone;
       sp.addEventListener('change', () => { S.show_phone = sp.checked; saveDraft(); });
       return [field(t('ad.price'), pr, hint), field(t('ad.discount'), dc), el('label', { class: 'row' }, [ng, t('ad.negotiable')]),
         el('div', { class: 'field' }, [el('label', { text: t('ad.delivery') }), mk(true, 'ad.delivery_yes'), mk(false, 'ad.delivery_no')]),
-        el('label', { class: 'row' }, [sp, t('ad.show_phone')]), verified ? null : el('p', { class: 'hint', text: t('err.verify_required') })];
+        el('label', { class: 'row' }, [sp, t('ad.show_phone')])];
     }
     async function check2() {
       const v = Price.validate(S.price, S.category_id, S.subcategory_id);
       if (!v.ok) return v.vars ? t(v.error).replace('{min}', v.vars.min).replace('{max}', v.vars.max) : v.error;
       S.price = v.value;
       if (S.delivery === null) return 'err.delivery_required';
-      if (S.show_phone && !verified) return 'err.verify_required';
       if (orig && Number(S.price) !== Number(orig.price)) {
         const left = Price.editsLeft(orig);
         if (left <= 0) return 'err.price_edits_max';
