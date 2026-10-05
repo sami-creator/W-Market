@@ -1,194 +1,76 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>حسابي — سوق نسا</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>profile — souk nsa</title>
 <link rel="stylesheet" href="css/themes.css">
 <link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/rtl.css">
 <link rel="stylesheet" href="css/components.css">
 <link rel="stylesheet" href="css/pages.css">
-<link rel="stylesheet" href="css/rtl.css">
 </head>
-<body data-page="profile.html">
-
-<!-- بانر الأدمن -->
-<div id="site-banner" class="site-banner" hidden></div>
-
-<!-- شريط علوي -->
-<header class="topbar">
-  <div class="topbar__row">
-    <button class="icon-btn" onclick="history.back()" aria-label="رجوع">‹</button>
-    <h1 class="grow" style="font-size:17px;margin:0;text-align:center" id="page-title">حسابي</h1>
-    <a class="icon-btn" href="settings.html" aria-label="إعدادات">⚙️</a>
+<body class="is-gated" data-page="profile">
+<main class="container">
+  <div class="profile-top-actions">
+    <span></span>
+    <div class="row">
+      <a class="icon-btn" href="chat.html" data-i18n-aria="profile.messages">✉</a>
+      <a class="icon-btn" href="notifications.html" data-i18n-aria="notif.title">🔔</a>
+    </div>
   </div>
-</header>
-
-<main id="profile-root">
-
-  <!-- بطاقة الملف الشخصي -->
-  <section class="profile-page__card">
-    <div class="profile-page__av">
-      <img id="pf-avatar" src="" alt="صورة الحساب"
-        onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3Crect fill=%22%23ddd%22 width=%221%22 height=%221%22/%3E%3C/svg%3E'">
-    </div>
-    <h2 id="pf-name" style="margin:0 0 2px;font-size:20px;font-weight:800"></h2>
-    <p id="pf-username" style="color:var(--muted);font-size:14px;margin:0 0 8px"></p>
-    <div class="profile-page__stats">
-      <div><span class="num" id="pf-ads-count">0</span><span class="label">إعلان</span></div>
-      <div><span class="num" id="pf-rating">0</span><span class="label">⭐</span></div>
-      <div><span class="num" id="pf-followers">0</span><span class="label">متابعون</span></div>
-    </div>
-    <div id="pf-verify-badge" hidden
-      style="display:inline-flex;align-items:center;gap:4px;background:var(--c-soft);color:var(--c-primary-2);padding:4px 12px;border-radius:999px;font-size:13px;font-weight:700">
-      ✓ حساب موثّق
+  <section class="profile-head">
+    <img id="p-avatar" class="avatar" alt="" src="assets/images/avatar.svg">
+    <h1 class="page-title" style="margin:4px 0"><span id="p-name"></span> <span id="p-tick" class="verified-tick" hidden>✓</span></h1>
+    <div class="profile-stats">
+      <div><b id="s-followers">0</b><span data-i18n="profile.followers"></span></div>
+      <div><b id="s-ads">0</b><span data-i18n="profile.ads"></span></div>
+      <div><b id="s-rating">0.0</b><span data-i18n="profile.rating"></span></div>
     </div>
   </section>
-
-  <!-- قائمة الحساب -->
-  <ul class="profile-page__menu" id="profile-menu">
-    <li onclick="location.href='settings.html'">
-      <span>⚙️ تعديل معلومات الحساب</span><span>‹</span>
-    </li>
-    <li id="menu-verify" onclick="requestVerify()">
-      <span>🪪 توثيق الحساب</span><span>‹</span>
-    </li>
-    <li onclick="location.href='settings.html#upgrade'">
-      <span>⬆️ ترقية الحساب</span><span>‹</span>
-    </li>
-    <li onclick="toggleMyAds()">
-      <span>📋 إدارة إعلاناتي</span>
-      <span id="my-ads-arrow">‹</span>
-    </li>
-    <li onclick="location.href='notifications.html'">
-      <span>🔔 الإشعارات والتنبيهات</span><span>‹</span>
-    </li>
-    <li onclick="signOut()">
-      <span style="color:var(--danger)">🚪 تسجيل الخروج</span><span>‹</span>
-    </li>
-  </ul>
-
-  <!-- إعلاناتي (قابلة للطي) -->
-  <section id="my-ads-section" hidden style="padding:0 16px">
-    <div id="my-ads-list"></div>
-  </section>
-
+  <nav class="menu-list">
+    <a href="favorites.html"><span data-i18n="profile.prefs"></span><span>♥</span></a>
+    <button id="btn-ads" type="button"><span data-i18n="profile.ads"></span><span>▾</span></button>
+    <div id="ads-sub" class="menu-list" hidden>
+      <a href="post-ad.html"><span data-i18n="ad.add"></span></a>
+      <a href="my-ads.html"><span data-i18n="ad.manage"></span></a>
+    </div>
+    <a href="edit-profile.html"><span data-i18n="profile.edit"></span></a>
+    <a href="verify.html"><span id="verify-label" data-i18n="profile.verify"></span></a>
+    <button id="btn-upgrade" type="button"><span data-i18n="profile.upgrade"></span></button>
+    <button id="btn-logout" type="button"><span data-i18n="auth.logout"></span></button>
+  </nav>
 </main>
-
-<!-- شريط التنقل -->
-<nav class="bottom-nav" aria-label="تنقل رئيسي">
-  <a href="index.html" data-page="index.html" aria-label="الرئيسية">🏠</a>
-  <a href="favorites.html" data-page="favorites.html" aria-label="المفضلة">🤍</a>
-  <a href="post-ad.html" class="plus" aria-label="إضافة إعلان">＋</a>
-  <a href="notifications.html" data-page="notifications.html" aria-label="الإشعارات">🔔</a>
-  <a href="profile.html" data-page="profile.html" class="active" aria-label="حسابي">👤</a>
-</nav>
-
-<button id="scroll-top-btn" aria-label="العودة للأعلى">↑</button>
-
-<div id="toast-host"></div>
-
+<script src="js/env.js"></script>
 <script src="js/config.js"></script>
+<script src="js/console-logger.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/sanitize.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/theme.js"></script>
 <script src="js/router.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/supabase.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/geo.js"></script>
+<script src="js/categories.js"></script>
+<script src="js/price.js"></script>
+<script src="js/ads.js"></script>
+<script src="js/cards.js"></script>
+<script src="js/filters.js"></script>
+<script src="js/search.js"></script>
+<script src="js/offline-cache.js"></script>
+<script src="js/fingerprint.js"></script>
+<script src="js/interests.js"></script>
+<script src="js/likes.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/alerts.js"></script>
+<script src="js/tracking.js"></script>
+<script src="js/banners.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/app.js"></script>
 <script src="js/profile.js"></script>
-<script>
-  // إضافة منطق صفحة الحساب
-  (function(){
-    async function loadProfile(){
-      const user=window.__auth_user;
-      if(!user){ location.href='auth.html'; return; }
-      const base=window.SUPABASE_URL||''; const key=window.SUPABASE_ANON||'';
-      if(!base||!key) return;
-      try{
-        const r=await fetch(`${base}/rest/v1/profiles?id=eq.${user.id}&select=*`,
-          {headers:{'apikey':key,'Authorization':'Bearer '+key}});
-        const d=await r.json();
-        const p=d[0]||{};
-        document.getElementById('pf-avatar').src=p.avatar||'';
-        document.getElementById('pf-name').textContent=p.name||user.email||'';
-        document.getElementById('pf-username').textContent='@'+(p.username||'');
-        document.getElementById('pf-ads-count').textContent=p.ad_count||0;
-        document.getElementById('pf-rating').textContent=(p.rating||0).toFixed(1);
-        document.getElementById('pf-followers').textContent=p.followers||0;
-        if(p.verified){ document.getElementById('pf-verify-badge').hidden=false; }
-        document.title=`${p.name||''} — سوق نسا`;
-        loadMyAds(user.id);
-      }catch(e){ console.error(e); }
-    }
-
-    function loadMyAds(uid){
-      const base=window.SUPABASE_URL||''; const key=window.SUPABASE_ANON||'';
-      if(!base||!key) return;
-      fetch(`${base}/rest/v1/ads?seller_id=eq.${uid}&select=id,title,thumb,price,status,views,likes&order=created_at.desc`,
-        {headers:{'apikey':key,'Authorization':'Bearer '+key}})
-        .then(r=>r.json()).then(ads=>{
-          const list=document.getElementById('my-ads-list');
-          if(!list) return;
-          if(!ads||!ads.length){
-            list.innerHTML='<p style="color:var(--muted);text-align:center;padding:16px">لا توجد إعلانات بعد</p>';
-            return;
-          }
-          list.innerHTML=ads.map(ad=>`
-            <div class="my-ad-item">
-              <img src="${ad.thumb||''}" alt="${ad.title||''}">
-              <div class="info">
-                <h4>${ad.title||''}</h4>
-                <div style="font-size:12px;color:var(--muted);display:flex;gap:8px">
-                  <span>${ad.status==='active'?'✅':'⏸'}</span>
-                  <span>👁 ${ad.views||0}</span>
-                  <span>❤️ ${ad.likes||0}</span>
-                </div>
-                <div class="actions" style="margin-top:6px">
-                  <a class="btn btn--primary" href="post-ad.html?edit=${ad.id}" style="font-size:12px;padding:4px 8px;min-height:28px">✏️ تعديل</a>
-                  <button class="btn btn--ghost" style="font-size:12px;padding:4px 8px;min-height:28px"
-                    onclick="toggleAdStatus('${ad.id}','${ad.status}',this)">
-                    ${ad.status==='active'?'⏸ إيقاف':'▶ تنشيط'}
-                  </button>
-                </div>
-              </div>
-            </div>`).join('');
-        }).catch(e=>console.error(e));
-    }
-
-    window.toggleMyAds=function(){
-      const sec=document.getElementById('my-ads-section');
-      const arrow=document.getElementById('my-ads-arrow');
-      const hidden=sec.hidden;
-      sec.hidden=!hidden;
-      arrow.textContent=hidden?'▲':'‹';
-    };
-
-    window.toggleAdStatus=async function(id,status,btn){
-      const base=window.SUPABASE_URL||''; const key=window.SUPABASE_ANON||'';
-      const next=status==='active'?'paused':'active';
-      try{
-        await fetch(`${base}/rest/v1/ads?id=eq.${id}`,{
-          method:'PATCH',
-          headers:{'apikey':key,'Authorization':'Bearer '+key,'Content-Type':'application/json'},
-          body:JSON.stringify({status:next})
-        });
-        btn.textContent=next==='active'?'⏸ إيقاف':'▶ تنشيط';
-        window.UI?.toast(next==='active'?'تم التنشيط':'تم الإيقاف','success');
-      }catch(e){ console.error(e); }
-    };
-
-    window.requestVerify=function(){
-      window.UI?.toast('سيتم التواصل معك قريباً ✓','success');
-    };
-
-    window.signOut=async function(){
-      if(window.supabase) await window.supabase.auth.signOut();
-      window.ROUTER?.clearAll();
-      location.href='auth.html';
-    };
-
-    if(document.readyState!=='loading') loadProfile();
-    else document.addEventListener('DOMContentLoaded',loadProfile);
-  })();
-</script>
-</body>
-</html>
+<script src="js/logger.js"></script>
+</body></html>
