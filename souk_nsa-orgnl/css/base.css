@@ -1,0 +1,37 @@
+/* base.css — إعادة ضبط + تخطيط + نماذج + أزرار */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font,'Cairo',system-ui,sans-serif);font-size:15px;line-height:1.55;min-height:100vh;padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+body.is-gated main{visibility:hidden}
+img,svg,video{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+.container{width:100%;max-width:980px;margin-inline:auto;padding-inline:12px}
+.row{display:flex;align-items:center;gap:8px}
+.grow{flex:1;min-width:0}
+.muted{color:var(--muted)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.field label{font-weight:600;font-size:14px}
+.input,select.input,textarea.input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);outline:none;transition:border-color .15s}
+.input:focus{border-color:var(--c-primary)}
+textarea.input{min-height:100px;resize:vertical}
+.hint{font-size:12px;color:var(--muted)}
+.error-text{font-size:12px;color:var(--danger)}
+.input.is-invalid{border-color:var(--danger)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border:0;border-radius:12px;font-weight:600;min-height:42px;transition:opacity .15s,transform .05s}
+.btn:active{transform:scale(.98)}
+.btn--primary{background:var(--c-primary);color:#fff}
+.btn--ghost{background:var(--surface-2);color:var(--text)}
+.btn--danger{background:var(--danger);color:#fff}
+.btn--block{width:100%}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn.is-loading{position:relative;color:transparent!important;pointer-events:none}
+.btn.is-loading::after{content:"";position:absolute;width:18px;height:18px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.page-title{font-size:20px;margin:14px 0}
+.card-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
