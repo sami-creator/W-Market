@@ -1,4 +1,5 @@
-/* app.js — تشغيل التطبيق (الهيكل المشترك) + متحكمات صفحات: الرئيسية، المفضلة، الإشعارات، الدردشة، الإعدادات */
+/* app.js — تشغيل التطبيق (الهيكل المشترك) + متحكمات صفحات: الرئيسية، المفضلة، الإشعارات، الدردشة، الإعدادات
+   + استعادة حالة الصفحة الرئيسية (بحث/صنف/فلاتر/موضع التمرير) عند العودة من صفحة أخرى */
 (function () {
   'use strict';
   const el = Utils.el, t = k => I18n.t(k), R = window.CONFIG.ROUTES;
@@ -67,9 +68,12 @@
     await App.boot();
     await Promise.all([Categories.load(), Geo.load()]);
     const grid = $('#grid'), tags = $('#active-tags'), chips = $('#chips'), subWrap = $('#sub-wrap'), sub = $('#sub-chips');
-    let page = 0, loading = false, done = false, token = 0, subOpen = null;
+    let page = 0, loading = false, done = false, token = 0;
+    // الحالة المستعادة (من sessionStorage): الصنف المختار يعرض أصنافه الفرعية
+    let subOpen = Filters.get().category_id || null;
 
     Search.mount({ input: $('#q'), suggest: $('#suggest'), didYouMean: $('#dym'), button: $('#btn-search'), onSubmit: f => Filters.set(f) });
+    $('#q').value = Filters.get().q || '';
     $('#btn-filters').addEventListener('click', () => Filters.openPanel());
 
     const closeSub = () => { subOpen = null; subWrap.hidden = true; };
@@ -79,14 +83,14 @@
     };
     function paintChips() {
       const s = Filters.get(); chips.replaceChildren();
-      chips.append(chip(t('common.all'), !s.category_id, () => { closeSub(); Filters.set({ category_id: '', subcategory_id: '', attrs: {} }); }));
-      Categories.all().forEach(c => chips.append(chip(Categories.label(c), s.category_id === c.id, () => {
+      chips.append(chip(t('common.all'), !s.category_id, () => { closeSub(); Filters.set({ category_id: '', subcategory_id: '', attrs: Filters.baseAttrs() }); }));
+      Categories.all().forEach(c => chips.append(chip(Categories.labelWithIcon(c), s.category_id === c.id, () => {
         if (subOpen === c.id) return closeSub();
-        subOpen = c.id; Filters.set({ category_id: c.id, subcategory_id: '', attrs: {} });
+        subOpen = c.id; Filters.set({ category_id: c.id, subcategory_id: '', attrs: Filters.baseAttrs() });
       }, true)));
       sub.replaceChildren();
       const m = Categories.main(subOpen);
-      if (m) { m.sub.forEach(x => sub.append(chip(Categories.label(x), s.subcategory_id === x.id, () => { closeSub(); Filters.set({ category_id: m.id, subcategory_id: x.id, attrs: {} }); }))); subWrap.hidden = false; UI.fadeEdge(sub); }
+      if (m) { m.sub.forEach(x => sub.append(chip(Categories.label(x), s.subcategory_id === x.id, () => { closeSub(); Filters.set({ category_id: m.id, subcategory_id: x.id, attrs: Filters.baseAttrs() }); }))); subWrap.hidden = false; UI.fadeEdge(sub); }
       else subWrap.hidden = true;
     }
     // أي ضغطة خارج الأزرار تُخفي قائمة الأصناف الفرعية
@@ -117,13 +121,21 @@
       } finally { loading = false; }
     }
 
-    Filters.onChange(() => { paintChips(); Filters.renderTags(tags); load(true); });
+    Filters.onChange(() => { paintChips(); Filters.renderTags(tags); Router.saveState({ scroll: 0 }); load(true); });
     new IntersectionObserver(es => { if (es[0].isIntersecting && !done && !loading && grid.children.length) load(false); }, { rootMargin: '400px' }).observe($('#sentinel'));
     // الضغط على "الرئيسية" وأنت عليها: لا إعادة تحميل، فقط الصعود لأعلى
     document.addEventListener('samepage', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     document.addEventListener('likechange', () => Likes.paint(grid));
     document.addEventListener('langchange', () => { paintChips(); Filters.renderTags(tags); });
-    paintChips(); load(true);
+    // استعادة موضع التمرير فقط عند الرجوع بزر الرجوع من صفحة إعلان
+    const restoreScroll = () => {
+      const nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+      const y = Router.state().scroll;
+      if (y && nav && nav.type === 'back_forward') window.scrollTo(0, y);
+      Router.saveState({ scroll: 0 });
+    };
+    Filters.renderTags(tags); Filters.paintButton();
+    paintChips(); load(true).then(restoreScroll);
   };
 
   /* ===== المفضلة ===== */

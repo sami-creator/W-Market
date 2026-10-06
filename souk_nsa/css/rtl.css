@@ -1,15 +1,4 @@
-/* rtl.css — تعديلات الاتجاه RTL */
-
-.gallery__nav--prev{inset-inline-start:auto;inset-inline-end:8px}
-.gallery__nav--next{inset-inline-end:auto;inset-inline-start:8px}
-.bottom-nav a.active::after{content:none}
-.detail__price{direction:ltr;unicode-bidi:plaintext}
-select{text-align:inherit;direction:inherit}
-
-/* الأرقام دائماً LTR */
-.num-ltr{direction:ltr;unicode-bidi:plaintext;display:inline-block}
-
-/* ===== قواعد من المشروع الأصلي غير موجودة في الـ patch (للحفاظ على تنسيق بقية الصفحات) ===== */
+/* rtl.css — بقية الاتجاهات تعتمد على الخصائص المنطقية؛ هنا فقط ما يحتاج قلبًا */
 [dir="rtl"] .flip{transform:scaleX(-1)}
 [dir="rtl"] .chips.has-more::after{inset-inline-end:0;background:linear-gradient(to left,transparent,var(--bg))}
 [dir="ltr"] .chips.has-more::after{inset-inline-end:0;background:linear-gradient(to right,transparent,var(--bg))}
