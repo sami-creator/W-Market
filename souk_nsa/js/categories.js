@@ -7,7 +7,7 @@
   const Categories = {
     async load() {
       if (loaded) return cats;
-      try { cats = await (await fetch('data/categories.json')).json(); } catch (e) { console.error('[Categories]', e); cats = []; }
+      try { const _raw = await (await fetch('data/categories.json')).json(); cats = Array.isArray(_raw) ? _raw : (_raw.categories || []); } catch (e) { console.error('[Categories]', e); cats = []; }
       try {
         const { data } = await SB.db.from('categories').select('id,min_price,max_price');
         (data || []).forEach(r => { ranges[r.id] = { min: r.min_price, max: r.max_price }; });
