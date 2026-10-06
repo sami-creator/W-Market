@@ -1,9 +1,23 @@
-/* filters.js — حالة الفلاتر + اللوحة المنبثقة + شارات الفلاتر النشطة (قابلة للإزالة) */
+/* filters.js — حالة الفلاتر + حفظها عند التنقل + لوحة الفلاتر + شارات الفلاتر */
 (function () {
   'use strict';
   const el = Utils.el, t = k => I18n.t(k);
+  const SK_FILTERS = window.CONFIG.STORAGE_KEYS.FILTERS_STATE;
   const EMPTY = () => ({ q: '', category_id: '', subcategory_id: '', wilaya_ids: [], daira_ids: [], commune_ids: [], min_price: null, max_price: null, sort: '', order: 'desc', delivery: false, verified_only: false, attrs: {} });
-  let state = EMPTY(), cb = () => {};
+
+  // تحميل حالة الفلاتر المحفوظة أو البدء من الصفر
+  function loadSaved() {
+    try {
+      const raw = sessionStorage.getItem(SK_FILTERS);
+      if (raw) return Object.assign(EMPTY(), JSON.parse(raw));
+    } catch (e) {}
+    return EMPTY();
+  }
+  function saveCurrent() {
+    try { sessionStorage.setItem(SK_FILTERS, JSON.stringify(state)); } catch (e) {}
+  }
+
+  let state = loadSaved(), cb = () => {};
 
   async function ensureLocation() {
     return new Promise(res => {
@@ -16,7 +30,9 @@
 
   function checks(name, items, selected, labelFn) {
     const box = el('div', { class: 'multi' });
-    items.forEach(o => {
+    // ترتيب الولايات 1-58
+    const sorted = [...items].sort((a, b) => (a.id || 0) - (b.id || 0));
+    sorted.forEach(o => {
       const cb = el('input', { type: 'checkbox', value: o.id, name });
       cb.checked = selected.map(String).includes(String(o.id));
       box.append(el('label', {}, [cb, labelFn(o)]));
@@ -25,18 +41,42 @@
   }
   const picked = box => [...box.querySelectorAll('input:checked')].map(i => Number(i.value));
 
+  // تحديث لون زر الفلاتر حسب حالة النشاط
+  function updateFilterBtn() {
+    const btn = document.getElementById('btn-filters');
+    if (!btn) return;
+    const active = !Filters.isDefault();
+    btn.classList.toggle('has-active', active);
+  }
+
   const Filters = {
     get() { return state; },
-    set(patch) { state = Object.assign(state, patch); cb(state); },
-    reset() { state = EMPTY(); cb(state); },
+    set(patch) {
+      state = Object.assign(state, patch);
+      saveCurrent();
+      updateFilterBtn();
+      cb(state);
+    },
+    reset() {
+      state = EMPTY();
+      saveCurrent();
+      updateFilterBtn();
+      cb(state);
+    },
     onChange(fn) { cb = fn; },
     isDefault() { return JSON.stringify(state) === JSON.stringify(EMPTY()); },
     async location() { return ensureLocation(); },
 
-    // شارات الفلاتر النشطة مع زر إزالة لكل فلتر
+    // إعادة تطبيق حالة الفلاتر المحفوظة عند العودة (للبحث أيضاً)
+    restore() {
+      state = loadSaved();
+      updateFilterBtn();
+      return state;
+    },
+
     renderTags(container) {
       container.replaceChildren();
-      const add = (text, clear) => container.append(el('span', { class: 'tag' }, [text, el('button', { type: 'button', 'aria-label': t('filters.remove'), onclick: () => { clear(); cb(state); Filters.renderTags(container); } }, '×')]));
+      const add = (text, clear) => container.append(el('span', { class: 'tag' }, [text, el('button', { type: 'button', 'aria-label': t('filters.remove'), onclick: () => { clear(); saveCurrent(); updateFilterBtn(); cb(state); Filters.renderTags(container); } }, '×')]));
       if (state.category_id) add(Categories.label(Categories.main(state.category_id)), () => { state.category_id = ''; state.subcategory_id = ''; state.attrs = {}; });
       if (state.subcategory_id) { const s = Categories.findSub(state.subcategory_id); add(Categories.label(s && s.sub), () => { state.subcategory_id = ''; state.attrs = {}; }); }
       state.wilaya_ids.forEach(id => add(Geo.label(Geo.wilaya(id)), () => { state.wilaya_ids = state.wilaya_ids.filter(x => x !== id); }));
@@ -68,7 +108,6 @@
         (m ? m.sub : []).forEach(s => selSub.append(new Option(Categories.label(s), s.id)));
         selSub.value = tmp.subcategory_id || ''; fillAttrs();
       };
-      // فلاتر خاصة بالصنف الفرعي فقط، وتظهر عند اختياره
       const fillAttrs = () => {
         attrsBox.replaceChildren();
         Categories.filtersFor(selSub.value).forEach(f => {
@@ -85,6 +124,7 @@
       selSub.addEventListener('change', () => { tmp.attrs = {}; fillAttrs(); });
       fillSub();
 
+      // الولايات مرتبة 1-58
       const wBox = checks('w', Geo.wilayas(), tmp.wilaya_ids, o => Geo.label(o));
       const dBox = el('div'), cBox = el('div');
       const refreshD = () => {
@@ -118,7 +158,6 @@
           sort: sort.value, order: order.value, delivery: dl.checked, verified_only: vf.checked, attrs: {}
         };
         attrsBox.querySelectorAll('[data-attr]').forEach(i => { const v = Sanitize.cleanText(i.value, 30); if (v) next.attrs[i.dataset.attr] = v; });
-        // "الأقرب مني" يتطلب صلاحية الموقع، وإن رُفضت لا يُفعَّل الفلتر
         if (next.sort === 'near') {
           const c = await ensureLocation();
           if (!c) { UI.toastKey('geo.locate_denied', 'error'); return; }

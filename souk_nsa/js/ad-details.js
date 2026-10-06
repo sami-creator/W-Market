@@ -1,4 +1,4 @@
-/* ad-details.js — صفحة الإعلان: معرض، سعر، ناشرة، تواصل، أسئلة شائعة، تقييمات */
+/* ad-details.js — صفحة الإعلان: معرض، سعر، ناشرة، تواصل، أسئلة شائعة، تقييمات، منتجات مشابهة، مشاركة */
 (function () {
   'use strict';
   const el = Utils.el, t = k => I18n.t(k), R = window.CONFIG.ROUTES;
@@ -6,6 +6,50 @@
   const ONLINE_MS = 5 * 60 * 1000;
 
   function safeLink(u) { try { const x = new URL(u); return x.protocol === 'https:' ? x.toString() : null; } catch { return null; } }
+
+  // زر المشاركة: نسخ الرابط أو Web Share API
+  function shareAd(ad) {
+    const url = location.href;
+    const text = ad.title + ' — souk nsa';
+    if (navigator.share) {
+      navigator.share({ title: text, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url).then(() => UI.toastKey('ad.link_copied', 'success')).catch(() => {
+        prompt(t('ad.copy_link'), url);
+      });
+    }
+  }
+
+  // بناء قسم المنتجات المشابهة
+  async function renderSimilar(ad, container) {
+    try {
+      const { data } = await SB.db.from('ads_feed')
+        .select(Ads.LIST_COLS)
+        .eq('status', 'active')
+        .eq('category_id', ad.category_id)
+        .neq('id', ad.id)
+        .limit(6);
+      if (!data || !data.length) return;
+      const section = el('div', { class: 'similar-section' });
+      section.append(el('h3', { text: t('ad.similar') }));
+      const grid = el('div', { class: 'similar-grid' });
+      data.forEach(a => {
+        const p = Price.display(a);
+        const card = el('div', { class: 'similar-card' });
+        card.append(
+          el('img', { src: Utils.imgUrl(a.thumb_path, 'thumb'), alt: a.title, loading: 'lazy' }),
+          el('div', { class: 'similar-card__body' }, [
+            el('div', { class: 'similar-card__title', text: a.title }),
+            el('div', { class: 'similar-card__price', text: p.text })
+          ])
+        );
+        card.addEventListener('click', () => Utils.go(R.AD, { id: a.id }));
+        grid.append(card);
+      });
+      section.append(grid);
+      container.append(section);
+    } catch (e) { console.warn('[Similar]', e); }
+  }
 
   App.pages['ad-details'] = async function () {
     await App.boot();
@@ -30,6 +74,7 @@
     const badges = el('div', { class: 'row', style: 'flex-wrap:wrap' }, [
       p.pct > 0 ? el('span', { class: 'badge badge--sale', text: '-' + p.pct + '%' }) : null,
       ad.negotiable ? el('span', { class: 'badge badge--nego', text: t('ad.negotiable') }) : null,
+      ad.negotiable === false ? el('span', { class: 'badge badge--fixed', text: t('ad.fixed_price') }) : null,
       ad.is_edited ? el('span', { class: 'badge badge--edited', text: t('ad.edited') }) : null,
       ad.delivery ? el('span', { class: 'badge badge--nego', text: t('ad.delivery_yes') }) : null,
       sold ? el('span', { class: 'badge badge--sale', text: t('ad.sold') }) : null
@@ -56,9 +101,14 @@
       Utils.go(R.CHAT, { c: data });
     });
     const report = el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => Reports.openMenu(ad.id, ad.user_id) }, t('report.title'));
+
+    // زر المشاركة
+    const shareBtn = el('button', { class: 'share-btn', type: 'button' }, '↗ ' + t('ad.share'));
+    shareBtn.addEventListener('click', () => shareAd(ad));
+
     const actions = el('div', { class: 'detail-actions' }, mine
-      ? [el('a', { class: 'btn btn--primary', href: R.POST + '?id=' + ad.id, text: t('ad.edit') }), el('a', { class: 'btn btn--ghost', href: R.STATS + '?id=' + ad.id, text: t('ad.stats') })]
-      : (sold || paused) ? [report] : [chatBtn, orderBtn, like, report]);
+      ? [el('a', { class: 'btn btn--primary', href: R.POST + '?id=' + ad.id, text: t('ad.edit') }), el('a', { class: 'btn btn--ghost', href: R.STATS + '?id=' + ad.id, text: t('ad.stats') }), shareBtn]
+      : (sold || paused) ? [report, shareBtn] : [chatBtn, orderBtn, like, report, shareBtn]);
 
     // الناشرة والتواصل
     const online = seller.last_seen && (Date.now() - new Date(seller.last_seen).getTime() < ONLINE_MS);
@@ -92,6 +142,9 @@
       el('div', { class: 'hint', text: t('ad.published_on') + ' ' + Utils.formatDate(ad.created_at) }),
       sellerCard].filter(Boolean));
     Likes.load().then(() => Likes.paint(info));
+
+    // المنتجات المشابهة تحت الإعلان
+    await renderSimilar(ad, info);
 
     // التقييمات: للإعلان وللناشرة
     if (!sold) {

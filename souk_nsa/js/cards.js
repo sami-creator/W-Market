@@ -16,6 +16,8 @@
       const card = el('article', { class: 'card', 'data-id': ad.id });
       const badges = el('div', { class: 'card__badges' });
       if (p.pct > 0) badges.append(el('span', { class: 'badge badge--sale', text: '-' + p.pct + '%' }));
+      // سعر ثابت بدل "غير قابل للتفاوض"
+      if (ad.negotiable === false) badges.append(el('span', { class: 'badge badge--fixed', text: t('ad.fixed_price') }));
       if (ad.negotiable) badges.append(el('span', { class: 'badge badge--nego', text: t('ad.negotiable') }));
       if (ad.is_edited) badges.append(el('span', { class: 'badge badge--edited', text: t('ad.edited') }));
 
@@ -36,16 +38,31 @@
         el('span', { 'data-likes': ad.id, text: '♥ ' + (ad.likes_count || 0) })
       ]);
       const priceRow = el('div', {}, [el('span', { class: 'card__price', text: p.text }), p.old ? el('span', { class: 'card__old', text: p.oldText }) : null]);
+
+      // الولاية والمسافة في البطاقة
+      const locationParts = [];
+      if (ad.wilaya_id && window.Geo) {
+        const w = Geo.wilaya(ad.wilaya_id);
+        if (w) locationParts.push(el('span', { class: 'wilaya', text: Geo.label(w) }));
+      }
+      if (ad.distance_km != null) {
+        locationParts.push(el('span', { text: '· ' + Math.round(ad.distance_km) + ' ' + t('ad.km') }));
+      }
+      const locationRow = locationParts.length ? el('div', { class: 'card__location' }, locationParts) : null;
+
       const body = el('div', { class: 'card__body' }, [
-        el('div', { class: 'card__title', text: ad.title }), priceRow, user, meta,
-        ad.distance_km != null ? el('div', { class: 'hint', text: t('ad.distance_km').replace('{n}', Math.round(ad.distance_km)) }) : null
-      ]);
+        el('div', { class: 'card__title', text: ad.title }),
+        priceRow,
+        user,
+        meta,
+        locationRow
+      ].filter(Boolean));
+
       card.append(top, body);
       card.addEventListener('click', () => {
         if (window.Tracking) Tracking.click(ad);
         Utils.go(window.CONFIG.ROUTES.AD, { id: ad.id });
       });
-      // أول ظهور: قلب أحمر ممتلئ إن كان معجَبًا به
       if (window.Likes && Likes.has(ad.id)) like.classList.add('liked');
       return card;
     },

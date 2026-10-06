@@ -19,12 +19,22 @@
       LANG: 'sn_lang', THEME: 'sn_theme', COLOR: 'sn_color', FONT: 'sn_font',
       SESSION_HINT: 'sn_session_hint', PROFILE_STATE: 'sn_profile_state',
       LIKE_TOAST: 'sn_like_toast_seen', DRAFT: 'sn_ad_draft', DEVICE: 'sn_device_id',
-      CACHE_PREFIX: 'sn_cache_'
+      CACHE_PREFIX: 'sn_cache_',
+      FILTERS_STATE: 'sn_filters_state',
+      SEARCH_QUERY: 'sn_search_query'
     },
-    DEFAULTS: { LANG: 'ar', THEME: 'light', COLOR: 'rose', FONT: 'cairo' },
+    DEFAULTS: { LANG: 'ar', THEME: 'dark', COLOR: 'rose', FONT: 'cairo' },
     LANGS: ['ar', 'fr', 'en'],
-    COLORS: ['rose', 'beige', 'gold', 'cream'],
-    FONTS: { cairo: 'Cairo', tajawal: 'Tajawal', almarai: 'Almarai', system: 'system-ui' },
+    COLORS: ['rose', 'beige', 'gold', 'cream', 'purple', 'teal', 'coral', 'indigo', 'emerald', 'ruby', 'sky', 'amber', 'slate'],
+    FONTS: {
+      cairo: 'Cairo',
+      tajawal: 'Tajawal',
+      almarai: 'Almarai',
+      scheherazade: 'Scheherazade New',
+      lateef: 'Lateef',
+      system: 'system-ui',
+      times: '"Times New Roman", Times, serif'
+    },
     INTEREST_POINTS: { click: 1, like: 3, message: 5, buy_or_rate: 8 },
     CLICK_RAW_DAYS: 30,
     SUPPORT: { WHATSAPP: '', TELEGRAM: '' },

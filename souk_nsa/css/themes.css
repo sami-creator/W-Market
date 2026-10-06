@@ -1,8 +1,18 @@
-/* themes.css — ألوان دافئة قابلة للتبديل (اللون × الوضع) */
-:root, :root[data-color="rose"] { --c-primary:#c2607a; --c-primary-2:#a44a63; --c-soft:#fbe8ec; --c-accent:#d4a24c; }
-:root[data-color="beige"] { --c-primary:#a67c52; --c-primary-2:#8a6540; --c-soft:#f5ebdd; --c-accent:#c2607a; }
-:root[data-color="gold"]  { --c-primary:#c9962e; --c-primary-2:#a87a1f; --c-soft:#fbf1d8; --c-accent:#c2607a; }
-:root[data-color="cream"] { --c-primary:#8f7a6b; --c-primary-2:#6f5c50; --c-soft:#f6f0ea; --c-accent:#d4a24c; }
+/* themes.css — ألوان قابلة للتبديل (اللون × الوضع) */
+:root, :root[data-color="rose"]   { --c-primary:#c2607a; --c-primary-2:#a44a63; --c-soft:#fbe8ec; --c-accent:#d4a24c; }
+:root[data-color="beige"]  { --c-primary:#a67c52; --c-primary-2:#8a6540; --c-soft:#f5ebdd; --c-accent:#c2607a; }
+:root[data-color="gold"]   { --c-primary:#c9962e; --c-primary-2:#a87a1f; --c-soft:#fbf1d8; --c-accent:#c2607a; }
+:root[data-color="cream"]  { --c-primary:#8f7a6b; --c-primary-2:#6f5c50; --c-soft:#f6f0ea; --c-accent:#d4a24c; }
+:root[data-color="purple"] { --c-primary:#8b5cf6; --c-primary-2:#7c3aed; --c-soft:#ede9fe; --c-accent:#d4a24c; }
+:root[data-color="teal"]   { --c-primary:#0d9488; --c-primary-2:#0f766e; --c-soft:#ccfbf1; --c-accent:#c2607a; }
+:root[data-color="coral"]  { --c-primary:#f97316; --c-primary-2:#ea580c; --c-soft:#fff7ed; --c-accent:#8b5cf6; }
+:root[data-color="indigo"] { --c-primary:#4f46e5; --c-primary-2:#4338ca; --c-soft:#eef2ff; --c-accent:#f97316; }
+:root[data-color="emerald"]{ --c-primary:#059669; --c-primary-2:#047857; --c-soft:#d1fae5; --c-accent:#c2607a; }
+:root[data-color="ruby"]   { --c-primary:#dc2626; --c-primary-2:#b91c1c; --c-soft:#fee2e2; --c-accent:#d4a24c; }
+:root[data-color="sky"]    { --c-primary:#0284c7; --c-primary-2:#0369a1; --c-soft:#e0f2fe; --c-accent:#c2607a; }
+:root[data-color="amber"]  { --c-primary:#d97706; --c-primary-2:#b45309; --c-soft:#fef3c7; --c-accent:#8b5cf6; }
+:root[data-color="slate"]  { --c-primary:#475569; --c-primary-2:#334155; --c-soft:#f1f5f9; --c-accent:#c2607a; }
+
 :root, :root[data-theme="light"] {
   --bg:#fffaf5; --surface:#ffffff; --surface-2:#f8f1ea; --text:#2b2320; --muted:#7d6f68;
   --border:#eadfd6; --danger:#c0392b; --ok:#2e8b57; --star:#f1b21c; --shadow:0 2px 10px rgba(80,50,30,.08);
@@ -12,3 +22,12 @@
   --border:#3a302c; --danger:#e57366; --ok:#5cc08a; --star:#f1b21c; --shadow:0 2px 10px rgba(0,0,0,.4);
 }
 :root[data-theme="dark"][data-color] { --c-soft:#3a2a30; }
+:root[data-theme="dark"][data-color="purple"] { --c-soft:#2d1f4e; }
+:root[data-theme="dark"][data-color="teal"]   { --c-soft:#1a3330; }
+:root[data-theme="dark"][data-color="coral"]  { --c-soft:#3a2010; }
+:root[data-theme="dark"][data-color="indigo"] { --c-soft:#1e1b4b; }
+:root[data-theme="dark"][data-color="emerald"]{ --c-soft:#1a3028; }
+:root[data-theme="dark"][data-color="ruby"]   { --c-soft:#3a1515; }
+:root[data-theme="dark"][data-color="sky"]    { --c-soft:#0c2233; }
+:root[data-theme="dark"][data-color="amber"]  { --c-soft:#3a2800; }
+:root[data-theme="dark"][data-color="slate"]  { --c-soft:#1e2530; }

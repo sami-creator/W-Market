@@ -1,0 +1,141 @@
+/* profile.js — صفحات الحساب: auth، complete-profile، profile، edit-profile */
+(function () {
+  'use strict';
+  const el = Utils.el, t = k => I18n.t(k), R = window.CONFIG.ROUTES, L = window.CONFIG.LIMITS;
+  const $ = s => document.querySelector(s);
+  const P = App.pages;
+
+  function fillYears(sel, chosen) {
+    sel.replaceChildren(new Option(t('auth.birth_year'), ''));
+    Utils.birthYears().forEach(y => sel.append(new Option(y, y)));
+    if (chosen) sel.value = chosen;
+  }
+  function showErr(input, key) {
+    input.classList.toggle('is-invalid', !!key);
+    const slot = input.parentElement.querySelector('.error-text');
+    if (slot) slot.textContent = key ? t(key) : '';
+  }
+
+  /* ---------- تسجيل الدخول ---------- */
+  P.auth = async function () {
+    const st = await App.boot();
+    if (!st) return;
+    if (st.status === 'complete') return Router.afterLogin();
+    if (st.status === 'partial') return Utils.go(R.COMPLETE);
+    const btn = $('#btn-google');
+    btn.addEventListener('click', async () => { UI.setLoading(btn, true); await Auth.signInGoogle(); UI.setLoading(btn, false); });
+  };
+
+  /* ---------- إكمال البيانات ---------- */
+  P.complete = async function () {
+    const st = await App.boot({ guard: true, complete: false });
+    if (!st) return;
+    if (st.status === 'complete') return Utils.go(R.PROFILE);
+    const f = { name: $('#name'), gender: $('#gender'), year: $('#year'), w: $('#wilaya'), d: $('#daira'), c: $('#commune') };
+    f.name.value = st.profile.name || ''; f.name.maxLength = L.NAME;
+    fillYears(f.year);
+    await Geo.bindCascade(f.w, f.d, f.c);
+
+    $('#form-complete').addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = $('#btn-save'); UI.setLoading(btn, true);
+      const r = await Auth.completeProfile(Object.assign({ name: f.name.value, gender: f.gender.value, birth_year: f.year.value }, Geo.values(f.w, f.d, f.c)));
+      UI.setLoading(btn, false);
+      if (r.error) return UI.toastKey(r.error, 'error');
+      // استبيان اختياري بعد أول تسجيل
+      $('#form-complete').hidden = true; $('#survey').hidden = false;
+    });
+    const done = () => Router.afterLogin();
+    $('#btn-survey-skip').addEventListener('click', done);
+    $('#btn-survey-send').addEventListener('click', async () => {
+      const sel = document.querySelector('input[name="src"]:checked');
+      if (sel) {
+        const other = Sanitize.cleanText($('#src-other').value, 100);
+        await SB.db.from('onboarding_survey').insert({ user_id: Auth.uid(), source: sel.value === 'other' && other ? other : sel.value });
+      }
+      done();
+    });
+  };
+
+  /* ---------- حسابي ---------- */
+  P.profile = async function () {
+    const st = await App.boot({ guard: true });
+    if (!st) return;
+    const p = st.profile;
+    $('#p-avatar').src = Utils.imgUrl(p.avatar_url || 'assets/images/avatar.svg', 'medium');
+    $('#p-avatar').addEventListener('error', e => { e.target.src = 'assets/images/avatar.svg'; }, { once: true });
+    $('#p-name').textContent = p.name || '';
+    $('#p-tick').hidden = !p.is_verified;
+    const { data } = await SB.db.rpc('profile_stats', { p_user: p.id });
+    const s = (data && data[0]) || {};
+    $('#s-followers').textContent = s.followers || 0;
+    $('#s-ads').textContent = s.ads_count || 0;
+    $('#s-rating').textContent = Number(s.rating_avg || 0).toFixed(1) + ' (' + (s.rating_count || 0) + ')';
+    $('#verify-label').textContent = p.is_verified ? t('profile.verified') : t('profile.verify');
+
+    const sub = $('#ads-sub'); $('#btn-ads').addEventListener('click', () => { sub.hidden = !sub.hidden; });
+    $('#btn-upgrade').addEventListener('click', () => {
+      const ov = el('div', { class: 'modal-overlay' }), box = el('div', { class: 'modal' });
+      const C = window.CONFIG.SUPPORT;
+      box.append(el('p', { text: t('profile.upgrade_text') }), el('div', { class: 'contact-links' }, [
+        C.WHATSAPP ? el('a', { href: 'https://wa.me/' + encodeURIComponent(C.WHATSAPP), target: '_blank', rel: 'noopener noreferrer', text: 'WhatsApp' }) : null,
+        C.TELEGRAM ? el('a', { href: 'https://t.me/' + encodeURIComponent(C.TELEGRAM), target: '_blank', rel: 'noopener noreferrer', text: 'Telegram' }) : null
+      ]), el('div', { class: 'modal__row' }, [el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => ov.remove() }, t('common.close'))]));
+      ov.append(box); ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); }); document.body.append(ov);
+    });
+    $('#btn-logout').addEventListener('click', () => Auth.signOut());
+  };
+
+  /* ---------- تعديل المعلومات ---------- */
+  P['edit-profile'] = async function () {
+    const st = await App.boot({ guard: true });
+    if (!st) return;
+    const p = st.profile;
+    const f = { name: $('#name'), gender: $('#gender'), year: $('#year'), w: $('#wilaya'), d: $('#daira'), c: $('#commune'), avatar: $('#avatar-file'), show: $('#show-phone'), phone: $('#phone') };
+    const links = ['facebook', 'instagram', 'tiktok', 'telegram'].map(k => ({ k, i: $('#l-' + k) }));
+    const maps = $('#l-maps');
+    f.name.value = p.name || ''; f.name.maxLength = L.NAME; f.gender.value = p.gender || '';
+    fillYears(f.year, p.birth_year);
+    await Geo.bindCascade(f.w, f.d, f.c, p);
+    links.forEach(x => { x.i.value = p[x.k] || ''; x.i.maxLength = 300; }); maps.value = p.maps_url || ''; maps.maxLength = 300;
+    f.phone.value = p.phone || ''; f.phone.maxLength = 16; f.phone.disabled = !!p.is_verified;
+    f.show.checked = !!p.show_phone;
+    $('#avatar-prev').src = Utils.imgUrl(p.avatar_url || 'assets/images/avatar.svg', 'thumb');
+
+    let newAvatar = null;
+    f.avatar.addEventListener('change', async () => {
+      const file = f.avatar.files[0]; const v = await Upload.validate(file);
+      if (!v.ok) { f.avatar.value = ''; return UI.toastKey(v.error, 'error'); }
+      newAvatar = file; $('#avatar-prev').src = URL.createObjectURL(file);
+    });
+
+    $('#form-edit').addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = $('#btn-save'); UI.setLoading(btn, true);
+      try {
+        const name = Sanitize.validateText(f.name.value, { max: L.NAME, min: 2 });
+        if (!name.ok) return UI.toastKey(name.error, 'error');
+        if (!Auth.validateBirthYear(f.year.value)) return UI.toastKey('err.age_min', 'error');
+        const g = Geo.values(f.w, f.d, f.c);
+        if (!g.wilaya_id || !g.daira_id || !g.commune_id) return UI.toastKey('err.location_required', 'error');
+        const rawPhone = Sanitize.toLatinDigits(f.phone.value).replace(/[\s.\-()]/g, '');
+        if (!p.is_verified && rawPhone && !/^(?:\+213|0)[567]\d{8}$/.test(rawPhone)) return UI.toastKey('verify.bad_phone', 'error');
+        const phoneNow = p.is_verified ? p.phone : (rawPhone || null);
+        const patch = { name: name.value, gender: f.gender.value, birth_year: Number(f.year.value), show_phone: f.show.checked && !!phoneNow };
+        if (!p.is_verified) patch.phone = phoneNow;
+        Object.assign(patch, g);
+        for (const x of links) { const v = Sanitize.validateUrl(x.i.value, x.k); if (!v.ok) { showErr(x.i, v.error); return UI.toastKey(v.error, 'error'); } showErr(x.i, null); patch[x.k] = v.value || null; }
+        const m = Sanitize.validateUrl(maps.value, 'maps'); if (!m.ok) return UI.toastKey(m.error, 'error'); patch.maps_url = m.value || null;
+        if (newAvatar) {
+          const blobs = await Upload.compress(newAvatar); const path = `${Auth.uid()}/avatar.webp`;
+          const up = await SB.db.storage.from('avatars').upload(path, blobs.medium, { contentType: blobs.medium.type, upsert: true });
+          if (up.error) throw up.error; patch.avatar_url = SB.db.storage.from('avatars').getPublicUrl(path).data.publicUrl + '?v=' + Date.now();
+        }
+        const { error } = await SB.db.from('users').update(patch).eq('id', Auth.uid());
+        if (error) throw error;
+        UI.toastKey('edit.saved', 'success'); setTimeout(() => Utils.go(R.PROFILE), 700);
+      } catch (err) { console.error('[Edit]', err); UI.toastKey(UI.errKey(err), 'error'); }
+      finally { UI.setLoading(btn, false); }
+    });
+  };
+})();

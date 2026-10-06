@@ -111,3 +111,29 @@ body[data-page="chat"] main{flex:1;min-height:0;display:flex;flex-direction:colu
 .topbar__row,.bottom-nav{direction:rtl}
 .grid .empty{grid-column:1/-1}
 .topbar__row .avatar-btn{margin-inline-start:0}
+
+/* زر الفلاتر النشطة */
+#btn-filters.has-active{background:var(--c-primary);color:#fff;border-color:var(--c-primary)}
+
+/* بطاقة: الولاية + المسافة */
+.card__location{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--muted);margin-top:2px}
+.card__location .wilaya{font-weight:600;color:var(--c-primary-2)}
+
+/* سعر ثابت */
+.badge--fixed{background:var(--surface-2);color:var(--muted);font-size:10px}
+
+/* منتجات مشابهة */
+.similar-section{margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.similar-section h3{font-size:15px;font-weight:700;margin:0 0 10px}
+.similar-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media(min-width:480px){.similar-grid{grid-template-columns:repeat(3,1fr)}}
+.similar-card{background:var(--surface-2);border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .15s}
+.similar-card:active{transform:scale(.96)}
+.similar-card img{width:100%;aspect-ratio:1/1;object-fit:cover}
+.similar-card__body{padding:6px 8px}
+.similar-card__title{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.similar-card__price{font-size:12px;font-weight:700;color:var(--c-primary)}
+
+/* زر المشاركة في تفاصيل الإعلان */
+.share-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--border);border-radius:10px;background:var(--surface);font-size:13px;font-weight:600}
+.share-btn:active{background:var(--surface-2)}
