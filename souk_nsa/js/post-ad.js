@@ -1,9 +1,12 @@
-/* post-ad.js — نشر/تعديل إعلان بـ4 خطوات، مسودة تلقائية، والتحقق يتكرر في Edge Function (submit-ad) */
+/* post-ad.js — نشر/تعديل إعلان بـ4 خطوات، مسودة تلقائية، والتحقق يتكرر في Edge Function (submit-ad)
+   + حالة المنتج (جديد/مستعمل) ونوع الإعلان (بيع/كراء/كلاهما) ومقاسات وألوان موسّعة؛ التوصيل "غير متوفر" افتراضيًا */
 (function () {
   'use strict';
   const el = Utils.el, t = k => I18n.t(k), L = window.CONFIG.LIMITS, R = window.CONFIG.ROUTES;
   const $ = s => document.querySelector(s);
-  const TOTAL = 4;
+  const TOTAL = 4, C = window.CONFIG;
+  const T = (ar, fr, en) => ({ ar, fr, en }[I18n.lang] || ar);
+  const GENERIC = ['condition', 'listing_type'];
 
   App.pages['post-ad'] = async function () {
     const st = await App.boot({ guard: true });
@@ -12,13 +15,13 @@
     const root = $('#wizard'), stepper = $('#stepper'), label = $('#step-label');
     const editId = Utils.qs('id');
     const verified = !!st.profile.is_verified;
-    const S = { category_id: '', subcategory_id: '', attrs: {}, title: '', description: '', price: '', discount_pct: 0, negotiable: false, delivery: null, show_phone: false, video_url: '', faq: [], lat: null, lng: null, wilaya_id: st.profile.wilaya_id, daira_id: st.profile.daira_id, commune_id: st.profile.commune_id };
+    const S = { category_id: '', subcategory_id: '', attrs: {}, title: '', description: '', price: '', discount_pct: 0, negotiable: false, delivery: false, condition: C.DEFAULTS.CONDITION, listing_type: C.DEFAULTS.LISTING, show_phone: false, video_url: '', faq: [], lat: null, lng: null, wilaya_id: st.profile.wilaya_id, daira_id: st.profile.daira_id, commune_id: st.profile.commune_id };
     let files = [], step = 1, orig = null, keepImages = false, existing = 0;
 
     if (editId) {
       orig = await Ads.get(editId);
       if (!orig || orig.user_id !== Auth.uid() || orig.status === 'deleted') return Utils.go(R.MY_ADS);
-      Object.assign(S, { category_id: orig.category_id, subcategory_id: orig.subcategory_id, attrs: orig.attrs || {}, title: orig.title, description: orig.description, price: orig.price, discount_pct: orig.discount_pct || 0, negotiable: !!orig.negotiable, delivery: !!orig.delivery, show_phone: !!orig.show_phone, video_url: orig.video_url || '', faq: orig.faq || [], wilaya_id: orig.wilaya_id, daira_id: orig.daira_id, commune_id: orig.commune_id });
+      Object.assign(S, { category_id: orig.category_id, subcategory_id: orig.subcategory_id, attrs: Object.fromEntries(Object.entries(orig.attrs || {}).filter(([k]) => !GENERIC.includes(k))), condition: (orig.attrs || {}).condition || C.DEFAULTS.CONDITION, listing_type: (orig.attrs || {}).listing_type || C.DEFAULTS.LISTING, title: orig.title, description: orig.description, price: orig.price, discount_pct: orig.discount_pct || 0, negotiable: !!orig.negotiable, delivery: !!orig.delivery, show_phone: !!orig.show_phone, video_url: orig.video_url || '', faq: orig.faq || [], wilaya_id: orig.wilaya_id, daira_id: orig.daira_id, commune_id: orig.commune_id });
       existing = (await Ads.images(orig.id)).length; keepImages = existing > 0;
     } else {
       const d = Utils.Store.get(window.CONFIG.STORAGE_KEYS.DRAFT); if (d) Object.assign(S, d);
@@ -41,7 +44,7 @@
         attrs.replaceChildren();
         Categories.filtersFor(s.value).forEach(f => {
           const i = f.type === 'select' ? el('select', { class: 'input' }) : el('input', { class: 'input', maxlength: f.max || 30 });
-          if (f.type === 'select') { i.append(new Option('—', '')); f.options.forEach(o => i.append(new Option(o, o))); }
+          if (f.type === 'select') { i.append(new Option('—', '')); Categories.optionsFor(f, c.value).forEach(o => i.append(new Option(o, o))); }
           i.value = S.attrs[f.key] || '';
           i.addEventListener('input', () => { const v = Sanitize.cleanText(i.value, 30); v ? S.attrs[f.key] = v : delete S.attrs[f.key]; saveDraft(); });
           attrs.append(field(f.key, i));
@@ -70,7 +73,20 @@
       const mk = (val, key) => { const i = el('input', { type: 'radio', name: 'dl' }); i.checked = S.delivery === val; i.addEventListener('change', () => { S.delivery = val; saveDraft(); }); return el('label', { class: 'row' }, [i, t(key)]); };
       const sp = el('input', { type: 'checkbox' }); sp.checked = S.show_phone;
       sp.addEventListener('change', () => { S.show_phone = sp.checked; saveDraft(); });
-      return [field(t('ad.price'), pr, hint), field(t('ad.discount'), dc), el('label', { class: 'row' }, [ng, t('ad.negotiable')]),
+      // اختيار واحد من قائمة (أزرار)
+      const choice = (list, key) => {
+        const box = el('div', { class: 'row', style: 'flex-wrap:wrap' });
+        const paint = () => box.querySelectorAll('button').forEach(b => b.classList.toggle('btn--primary', b.dataset.v === S[key]));
+        list.forEach(o => {
+          const b = el('button', { class: 'btn btn--ghost', type: 'button', 'data-v': o.id, text: o.label[I18n.lang] || o.label.ar });
+          b.addEventListener('click', () => { S[key] = o.id; paint(); saveDraft(); });
+          box.append(b);
+        });
+        paint(); return box;
+      };
+      return [field(T('نوع الإعلان', "Type d'annonce", 'Listing type'), choice(C.LISTING_TYPES, 'listing_type')),
+        field(T('حالة المنتج', 'État du produit', 'Condition'), choice(C.CONDITIONS, 'condition')),
+        field(t('ad.price'), pr, hint), field(t('ad.discount'), dc), el('label', { class: 'row' }, [ng, t('ad.negotiable')]),
         el('div', { class: 'field' }, [el('label', { text: t('ad.delivery') }), mk(true, 'ad.delivery_yes'), mk(false, 'ad.delivery_no')]),
         el('label', { class: 'row' }, [sp, t('ad.show_phone')])];
     }
@@ -78,7 +94,7 @@
       const v = Price.validate(S.price, S.category_id, S.subcategory_id);
       if (!v.ok) return v.vars ? t(v.error).replace('{min}', v.vars.min).replace('{max}', v.vars.max) : v.error;
       S.price = v.value;
-      if (S.delivery === null) return 'err.delivery_required';
+      if (S.delivery === null || S.delivery === undefined) S.delivery = false;
       if (orig && Number(S.price) !== Number(orig.price)) {
         const left = Price.editsLeft(orig);
         if (left <= 0) return 'err.price_edits_max';
@@ -137,7 +153,14 @@
       Geo.bindCascade(sw, sd, sc, { wilaya_id: S.wilaya_id, daira_id: S.daira_id, commune_id: S.commune_id });
       const gps = el('button', { class: 'btn btn--ghost', type: 'button' }, S.lat ? t('ad.gps_done') : t('ad.use_gps'));
       gps.addEventListener('click', () => navigator.geolocation && navigator.geolocation.getCurrentPosition(p => { S.lat = p.coords.latitude; S.lng = p.coords.longitude; gps.textContent = t('ad.gps_done'); saveDraft(); }, () => UI.toastKey('geo.locate_denied', 'error'), { timeout: 8000 }));
-      return [field(t('geo.wilaya'), sw), field(t('geo.daira'), sd), field(t('geo.commune'), sc), gps];
+      const m = Categories.main(S.category_id), sb = Categories.sub(S.category_id, S.subcategory_id);
+      const sum = el('div', { class: 'card-box' }, [
+        el('b', { text: T('مراجعة قبل النشر', 'Aperçu avant publication', 'Review before publishing') }),
+        el('div', { text: S.title }),
+        el('div', { class: 'hint', text: Categories.label(m) + ' ← ' + Categories.label(sb) }),
+        el('div', { class: 'hint', text: Utils.formatPrice(Number(S.price) || 0) })
+      ]);
+      return [field(t('geo.wilaya'), sw), field(t('geo.daira'), sd), field(t('geo.commune'), sc), gps, sum];
     }
     function check4() {
       const g = Geo.values(sw, sd, sc); if (!g.wilaya_id || !g.daira_id || !g.commune_id) return 'err.location_required';
@@ -164,7 +187,7 @@
         const id = editId || Utils.uuid();
         let images = null;
         if (files.length) { UI.toast(t('ad.uploading'), 'info', 1500); images = await Upload.putAdImages(id, files); }
-        const ad = { category_id: S.category_id, subcategory_id: S.subcategory_id, attrs: S.attrs, title: S.title, description: S.description, price: S.price, discount_pct: S.discount_pct, negotiable: S.negotiable, delivery: S.delivery, show_phone: S.show_phone, video_url: S.video_url, faq: S.faq, wilaya_id: S.wilaya_id, daira_id: S.daira_id, commune_id: S.commune_id, lat: S.lat, lng: S.lng };
+        const ad = { category_id: S.category_id, subcategory_id: S.subcategory_id, attrs: Object.assign({ condition: S.condition, listing_type: S.listing_type }, S.attrs), title: S.title, description: S.description, price: S.price, discount_pct: S.discount_pct, negotiable: S.negotiable, delivery: S.delivery, show_phone: S.show_phone, video_url: S.video_url, faq: S.faq, wilaya_id: S.wilaya_id, daira_id: S.daira_id, commune_id: S.commune_id, lat: S.lat, lng: S.lng };
         const { data, error } = await SB.fn('submit-ad', { mode: editId ? 'update' : 'create', id, ad, images });
         if (error || (data && data.error)) throw error || new Error(data.error);
         Utils.Store.remove(window.CONFIG.STORAGE_KEYS.DRAFT);

@@ -1,38 +1,9 @@
-/* filters.js — حالة الفلاتر + اللوحة المنبثقة + شارات الفلاتر النشطة (قابلة للإزالة)
-   + حفظ الحالة عبر الصفحات + زر الفلاتر يتلوّن عند وجود فلتر + ولايات مرقّمة + حالة المنتج/نوع الإعلان + مقاسات وألوان موسّعة */
+/* filters.js — حالة الفلاتر + اللوحة المنبثقة + شارات الفلاتر النشطة (قابلة للإزالة) */
 (function () {
   'use strict';
-  const el = Utils.el, t = k => I18n.t(k), C = window.CONFIG;
-  const T = (ar, fr, en) => ({ ar, fr, en }[I18n.lang] || ar);
+  const el = Utils.el, t = k => I18n.t(k);
   const EMPTY = () => ({ q: '', category_id: '', subcategory_id: '', wilaya_ids: [], daira_ids: [], commune_ids: [], min_price: null, max_price: null, sort: '', order: 'desc', delivery: false, verified_only: false, attrs: {} });
-  // مفاتيح عامة في attrs لا ترتبط بصنف فرعي معيّن (تبقى عند تغيير الصنف)
-  const GENERIC = ['condition', 'listing_type'];
-
-  /* ===== حفظ/استعادة الحالة (sessionStorage) ===== */
-  function load() {
-    try {
-      const s = JSON.parse(sessionStorage.getItem(C.STORAGE_KEYS.FILTERS) || 'null');
-      if (!s || typeof s !== 'object') return EMPTY();
-      const st = Object.assign(EMPTY(), s);
-      ['wilaya_ids', 'daira_ids', 'commune_ids'].forEach(k => { if (!Array.isArray(st[k])) st[k] = []; });
-      if (!st.attrs || typeof st.attrs !== 'object') st.attrs = {};
-      return st;
-    } catch (e) { return EMPTY(); }
-  }
-  function save() { try { sessionStorage.setItem(C.STORAGE_KEYS.FILTERS, JSON.stringify(state)); } catch (e) { /* ignore */ } }
-
-  let state = load(), cb = () => {};
-
-  // زر الفلاتر يتغيّر لونه عند وجود أي فلتر مفعّل (غير نص البحث)
-  function hasActive() {
-    const d = EMPTY(); d.q = state.q;
-    return JSON.stringify(state) !== JSON.stringify(d);
-  }
-  function paintButton() {
-    const b = document.getElementById('btn-filters');
-    if (b) b.classList.toggle('has-active', hasActive());
-  }
-  const fire = () => { save(); paintButton(); cb(state); };
+  let state = EMPTY(), cb = () => {};
 
   async function ensureLocation() {
     return new Promise(res => {
@@ -53,30 +24,21 @@
     return box;
   }
   const picked = box => [...box.querySelectorAll('input:checked')].map(i => Number(i.value));
-  const optLabel = (list, id) => { const o = list.find(x => x.id === id); return o ? (o.label[I18n.lang] || o.label.ar) : id; };
-  const attrTagText = (k, v) => k === 'condition' ? optLabel(C.CONDITIONS, v) : k === 'listing_type' ? optLabel(C.LISTING_TYPES, v) : v;
 
   const Filters = {
     get() { return state; },
-    set(patch) { state = Object.assign(state, patch); fire(); },
-    reset() { state = EMPTY(); fire(); },
-    onChange(fn) { cb = fn; paintButton(); },
+    set(patch) { state = Object.assign(state, patch); cb(state); },
+    reset() { state = EMPTY(); cb(state); },
+    onChange(fn) { cb = fn; },
     isDefault() { return JSON.stringify(state) === JSON.stringify(EMPTY()); },
     async location() { return ensureLocation(); },
-    // خصائص الصنف الفرعي تُمسح عند تغيير الصنف، أما حالة المنتج ونوع الإعلان فتبقى
-    baseAttrs(src) {
-      const a = {}; const from = src || state.attrs;
-      GENERIC.forEach(k => { if (from[k]) a[k] = from[k]; });
-      return a;
-    },
-    paintButton,
 
     // شارات الفلاتر النشطة مع زر إزالة لكل فلتر
     renderTags(container) {
       container.replaceChildren();
-      const add = (text, clear) => container.append(el('span', { class: 'tag' }, [text, el('button', { type: 'button', 'aria-label': t('filters.remove'), onclick: () => { clear(); fire(); Filters.renderTags(container); } }, '×')]));
-      if (state.category_id) add(Categories.label(Categories.main(state.category_id)), () => { state.category_id = ''; state.subcategory_id = ''; state.attrs = Filters.baseAttrs(); });
-      if (state.subcategory_id) { const s = Categories.findSub(state.subcategory_id); add(Categories.label(s && s.sub), () => { state.subcategory_id = ''; state.attrs = Filters.baseAttrs(); }); }
+      const add = (text, clear) => container.append(el('span', { class: 'tag' }, [text, el('button', { type: 'button', 'aria-label': t('filters.remove'), onclick: () => { clear(); cb(state); Filters.renderTags(container); } }, '×')]));
+      if (state.category_id) add(Categories.label(Categories.main(state.category_id)), () => { state.category_id = ''; state.subcategory_id = ''; state.attrs = {}; });
+      if (state.subcategory_id) { const s = Categories.findSub(state.subcategory_id); add(Categories.label(s && s.sub), () => { state.subcategory_id = ''; state.attrs = {}; }); }
       state.wilaya_ids.forEach(id => add(Geo.label(Geo.wilaya(id)), () => { state.wilaya_ids = state.wilaya_ids.filter(x => x !== id); }));
       state.daira_ids.forEach(id => add(Geo.label(Geo.daira(id)), () => { state.daira_ids = state.daira_ids.filter(x => x !== id); }));
       state.commune_ids.forEach(id => add(Geo.label(Geo.commune(id)), () => { state.commune_ids = state.commune_ids.filter(x => x !== id); }));
@@ -85,7 +47,7 @@
       if (state.delivery) add(t('filters.delivery'), () => { state.delivery = false; });
       if (state.verified_only) add(t('filters.verified'), () => { state.verified_only = false; });
       if (state.sort) add(t('filters.sort') + ': ' + t('filters.sort_' + (state.sort === 'near' ? 'near' : state.sort)), () => { state.sort = ''; });
-      Object.entries(state.attrs).forEach(([k, v]) => add(attrTagText(k, v), () => { delete state.attrs[k]; }));
+      Object.entries(state.attrs).forEach(([k, v]) => add(v, () => { delete state.attrs[k]; }));
     },
 
     async openPanel() {
@@ -96,7 +58,7 @@
 
       const selCat = el('select', { class: 'input' });
       selCat.append(new Option(t('common.all'), ''));
-      Categories.all().forEach(c => selCat.append(new Option(Categories.labelWithIcon(c), c.id)));
+      Categories.all().forEach(c => selCat.append(new Option(Categories.label(c), c.id)));
       selCat.value = tmp.category_id;
       const selSub = el('select', { class: 'input' });
       const attrsBox = el('div');
@@ -106,35 +68,24 @@
         (m ? m.sub : []).forEach(s => selSub.append(new Option(Categories.label(s), s.id)));
         selSub.value = tmp.subcategory_id || ''; fillAttrs();
       };
-      // فلاتر خاصة بالصنف الفرعي فقط، وتظهر عند اختياره (المقاسات والألوان من القوائم الموسّعة)
+      // فلاتر خاصة بالصنف الفرعي فقط، وتظهر عند اختياره
       const fillAttrs = () => {
         attrsBox.replaceChildren();
         Categories.filtersFor(selSub.value).forEach(f => {
           if (f.type === 'select') {
             const s = el('select', { class: 'input', 'data-attr': f.key }); s.append(new Option(t('common.all'), ''));
-            Categories.optionsFor(f, selCat.value).forEach(o => s.append(new Option(o, o))); s.value = tmp.attrs[f.key] || '';
+            f.options.forEach(o => s.append(new Option(o, o))); s.value = tmp.attrs[f.key] || '';
             attrsBox.append(field(f.key, s));
           } else {
             attrsBox.append(field(f.key, el('input', { class: 'input', 'data-attr': f.key, maxlength: f.max || 30, value: tmp.attrs[f.key] || '' })));
           }
         });
       };
-      selCat.addEventListener('change', () => { tmp.subcategory_id = ''; tmp.attrs = Filters.baseAttrs(tmp.attrs); fillSub(); });
-      selSub.addEventListener('change', () => { tmp.attrs = Filters.baseAttrs(tmp.attrs); fillAttrs(); });
+      selCat.addEventListener('change', () => { tmp.subcategory_id = ''; fillSub(); });
+      selSub.addEventListener('change', () => { tmp.attrs = {}; fillAttrs(); });
       fillSub();
 
-      // حالة المنتج + نوع الإعلان
-      const cond = el('select', { class: 'input' });
-      cond.append(new Option(t('common.all'), ''));
-      C.CONDITIONS.forEach(o => cond.append(new Option(o.label[I18n.lang] || o.label.ar, o.id))); cond.value = tmp.attrs.condition || '';
-      const ltype = el('select', { class: 'input' });
-      ltype.append(new Option(t('common.all'), ''));
-      C.LISTING_TYPES.forEach(o => ltype.append(new Option(o.label[I18n.lang] || o.label.ar, o.id))); ltype.value = tmp.attrs.listing_type || '';
-
-      // الولايات مرتّبة بالرقم: "1. أدرار"
-      const wil = Geo.wilayas().slice().sort((a, b) => Number(a.id) - Number(b.id));
-      const wBox = checks('w', wil, tmp.wilaya_ids, o => o.id + '. ' + Geo.label(o));
-      wBox.classList.add('wilaya-grid');
+      const wBox = checks('w', Geo.wilayas(), tmp.wilaya_ids, o => Geo.label(o));
       const dBox = el('div'), cBox = el('div');
       const refreshD = () => {
         const w = picked(wBox); dBox.replaceChildren(); cBox.replaceChildren();
@@ -166,15 +117,13 @@
           min_price: Number(pMin.value) || null, max_price: Number(pMax.value) || null,
           sort: sort.value, order: order.value, delivery: dl.checked, verified_only: vf.checked, attrs: {}
         };
-        if (cond.value) next.attrs.condition = cond.value;
-        if (ltype.value) next.attrs.listing_type = ltype.value;
         attrsBox.querySelectorAll('[data-attr]').forEach(i => { const v = Sanitize.cleanText(i.value, 30); if (v) next.attrs[i.dataset.attr] = v; });
         // "الأقرب مني" يتطلب صلاحية الموقع، وإن رُفضت لا يُفعَّل الفلتر
         if (next.sort === 'near') {
           const c = await ensureLocation();
           if (!c) { UI.toastKey('geo.locate_denied', 'error'); return; }
           next.coords = c;
-        } else { delete state.coords; }
+        }
         Filters.set(next); ov.remove();
       });
       reset.addEventListener('click', () => { Filters.reset(); ov.remove(); });
@@ -183,7 +132,6 @@
       sheet.append(
         el('h3', { text: t('filters.title') }),
         field(t('filters.category'), selCat), field(t('filters.subcategory'), selSub), attrsBox,
-        el('div', { class: 'row' }, [field(T('حالة المنتج', 'État', 'Condition'), cond), field(T('نوع الإعلان', "Type d'annonce", 'Listing type'), ltype)]),
         field(t('geo.wilaya'), wBox), field(t('geo.daira'), dBox), field(t('geo.commune'), cBox),
         el('div', { class: 'row' }, [field(t('filters.price_from'), pMin), field(t('filters.price_to'), pMax)]),
         el('div', { class: 'row' }, [field(t('filters.sort'), sort), field('', order)]),
@@ -195,7 +143,4 @@
     }
   };
   window.Filters = Filters;
-
-  // تلوين زر الفلاتر عند تحميل الصفحة (إن كانت الحالة مستعادة)
-  document.addEventListener('DOMContentLoaded', paintButton);
 })();

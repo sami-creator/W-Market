@@ -1,9 +1,11 @@
-/* ad-details.js — صفحة الإعلان: معرض، سعر، ناشرة، تواصل، أسئلة شائعة، تقييمات */
+/* ad-details.js — صفحة الإعلان: معرض، سعر، ناشرة، تواصل، أسئلة شائعة، تقييمات، مشاركة، إعلانات مشابهة */
 (function () {
   'use strict';
   const el = Utils.el, t = k => I18n.t(k), R = window.CONFIG.ROUTES;
   const $ = s => document.querySelector(s);
   const ONLINE_MS = 5 * 60 * 1000;
+  const T = (ar, fr, en) => ({ ar, fr, en }[I18n.lang] || ar);
+  const lbl = (list, id) => { const o = list.find(x => x.id === id); return o ? (o.label[I18n.lang] || o.label.ar) : ''; };
 
   function safeLink(u) { try { const x = new URL(u); return x.protocol === 'https:' ? x.toString() : null; } catch { return null; } }
 
@@ -32,6 +34,9 @@
       ad.negotiable ? el('span', { class: 'badge badge--nego', text: t('ad.negotiable') }) : null,
       ad.is_edited ? el('span', { class: 'badge badge--edited', text: t('ad.edited') }) : null,
       ad.delivery ? el('span', { class: 'badge badge--nego', text: t('ad.delivery_yes') }) : null,
+      ad.negotiable ? null : el('span', { class: 'badge badge--nego', text: T('سعر ثابت', 'Prix fixe', 'Fixed price') }),
+      (ad.attrs || {}).condition ? el('span', { class: 'badge badge--used', text: lbl(window.CONFIG.CONDITIONS, ad.attrs.condition) }) : null,
+      (ad.attrs || {}).listing_type ? el('span', { class: 'badge badge--rent', text: lbl(window.CONFIG.LISTING_TYPES, ad.attrs.listing_type) }) : null,
       sold ? el('span', { class: 'badge badge--sale', text: t('ad.sold') }) : null
     ]);
     const priceLine = el('div', { class: 'price-line' }, [
@@ -39,7 +44,7 @@
       el('span', { class: 'hint', text: p.santim })
     ]);
     const oldPrices = hist.length ? el('div', {}, [el('b', { text: t('ad.old_prices') }), el('ul', { class: 'price-hist' }, hist.map(h => el('li', { text: Utils.formatPrice(h.old_price) + ' → ' + Utils.formatPrice(h.new_price) + ' · ' + Utils.formatDate(h.changed_at) })))]) : null;
-    const attrs = Object.entries(ad.attrs || {}).map(([k, v]) => el('span', { class: 'tag', text: k + ': ' + v }));
+    const attrs = Object.entries(ad.attrs || {}).filter(([k]) => !['condition', 'listing_type'].includes(k)).map(([k, v]) => el('span', { class: 'tag', text: k + ': ' + v }));
     const loc = [ad.wilaya_id && Geo.label(Geo.wilaya(ad.wilaya_id)), ad.daira_id && Geo.label(Geo.daira(ad.daira_id)), ad.commune_id && Geo.label(Geo.commune(ad.commune_id))].filter(Boolean).join(' · ');
 
     // أزرار الإجراءات
@@ -55,10 +60,18 @@
       await SB.db.from('messages').insert({ conversation_id: data, sender_id: Auth.uid(), content: t('ad.order_msg') });
       Utils.go(R.CHAT, { c: data });
     });
+    const share = el('button', { class: 'btn btn--ghost', type: 'button', text: '⤴ ' + T('مشاركة', 'Partager', 'Share') });
+    share.addEventListener('click', async () => {
+      const url = location.href;
+      try {
+        if (navigator.share) await navigator.share({ title: ad.title, url });
+        else { await navigator.clipboard.writeText(url); UI.toast(T('تم نسخ الرابط', 'Lien copié', 'Link copied'), 'success'); }
+      } catch (e) { /* ألغى المستخدم المشاركة */ }
+    });
     const report = el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => Reports.openMenu(ad.id, ad.user_id) }, t('report.title'));
     const actions = el('div', { class: 'detail-actions' }, mine
       ? [el('a', { class: 'btn btn--primary', href: R.POST + '?id=' + ad.id, text: t('ad.edit') }), el('a', { class: 'btn btn--ghost', href: R.STATS + '?id=' + ad.id, text: t('ad.stats') })]
-      : (sold || paused) ? [report] : [chatBtn, orderBtn, like, report]);
+      : (sold || paused) ? [share, report] : [chatBtn, orderBtn, like, share, report]);
 
     // الناشرة والتواصل
     const online = seller.last_seen && (Date.now() - new Date(seller.last_seen).getTime() < ONLINE_MS);
@@ -98,6 +111,18 @@
       Ratings.mount($('#ratings-ad'), { type: 'ad', id: ad.id, ownerId: ad.user_id });
       Ratings.mount($('#ratings-user'), { type: 'user', id: ad.user_id, ownerId: ad.user_id });
     }
+    // إعلانات مشابهة (نفس الصنف الفرعي)
+    try {
+      const sim = $('#similar');
+      const { items } = await Ads.list({ category_id: ad.category_id, subcategory_id: ad.subcategory_id }, 0);
+      const list = (items || []).filter(x => x.id !== ad.id).slice(0, 6);
+      if (sim && list.length) {
+        const grid = el('div', { class: 'grid' });
+        Cards.renderList(grid, list);
+        sim.replaceChildren(el('h3', { text: T('إعلانات مشابهة', 'Annonces similaires', 'Similar ads') }), grid);
+        sim.hidden = false;
+      }
+    } catch (e) { console.error('[AdDetails] similar', e); }
     console.log('[AdDetails] ready', id);
   };
 })();
