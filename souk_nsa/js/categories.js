@@ -14,7 +14,7 @@
       } catch (e) { console.error('[Categories] ranges', e); }
       loaded = true; return cats;
     },
-    all() { return cats; },
+    all() { return cats || []; },
     main(id) { return cats.find(c => c.id === id); },
     sub(mainId, subId) { const m = this.main(mainId); return m ? m.sub.find(s => s.id === subId) : null; },
     findSub(subId) { for (const m of cats) { const s = m.sub.find(x => x.id === subId); if (s) return { main: m, sub: s }; } return null; },
