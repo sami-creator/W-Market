@@ -1,7 +1,7 @@
-/* router.js — تنقل بلا إعادة تحميل غير ضرورية + حراسة الصفحات + حفظ حالة التنقل (صنف/بحث/فلاتر/موضع التمرير) */
+/* router.js — تنقل بلا إعادة تحميل غير ضرورية + حراسة الصفحات */
 (function () {
   'use strict';
-  const R = window.CONFIG.ROUTES, NAV_KEY = window.CONFIG.STORAGE_KEYS.NAV_STATE, FILT_KEY = window.CONFIG.STORAGE_KEYS.FILTERS;
+  const R = window.CONFIG.ROUTES;
 
   function currentRoute() {
     const p = location.pathname.split('/').pop();
@@ -44,21 +44,6 @@
       sessionStorage.removeItem('sn_return');
       if (back && /^[a-z0-9\-]+(\.html)?(\?[^\s]*)?$/i.test(back)) location.href = back;
       else Utils.go(R.PROFILE);
-    },
-
-    /* ===== حفظ حالة التنقل (sessionStorage يبقى طوال النافذة) ===== */
-    state() {
-      try { return JSON.parse(sessionStorage.getItem(NAV_KEY) || '{}') || {}; } catch (e) { return {}; }
-    },
-    saveState(patch) {
-      try { sessionStorage.setItem(NAV_KEY, JSON.stringify(Object.assign(this.state(), patch))); } catch (e) { /* ignore */ }
-    },
-    // عند تسجيل الخروج أو "إعادة الضبط"
-    clearState() {
-      try { sessionStorage.removeItem(NAV_KEY); sessionStorage.removeItem(FILT_KEY); } catch (e) { /* ignore */ }
-    },
-    back() {
-      if (history.length > 1) history.back(); else Utils.go(R.HOME);
     }
   };
   window.Router = Router;

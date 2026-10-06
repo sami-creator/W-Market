@@ -1,13 +1,13 @@
-/* settings.js — الإعدادات: اللغة، الوضع الليلي، اللون (15)، الخط، الدعم، الخصوصية، الإبلاغ عن خطأ */
+/* settings.js — الإعدادات: اللغة، الوضع الليلي، اللون، الخط، الدعم، الخصوصية، الإبلاغ عن خطأ */
 (function () {
   'use strict';
   const el = Utils.el, t = k => I18n.t(k), C = window.CONFIG;
+  const COLOR_HEX = { rose: '#c2607a', beige: '#a67c52', gold: '#c9962e', cream: '#8f7a6b' };
 
   const Settings = {
     render(root) {
       root.replaceChildren();
       const row = (label, ctrl) => el('div', { class: 'settings-row' }, [el('span', { text: label }), ctrl]);
-      const block = (label, ctrl) => el('div', { class: 'settings-row', style: 'flex-direction:column;align-items:stretch' }, [el('span', { text: label }), ctrl]);
 
       const lang = el('select', { class: 'input', style: 'width:auto' });
       [['ar', 'العربية'], ['fr', 'Français'], ['en', 'English']].forEach(([v, n]) => lang.append(new Option(n, v)));
@@ -16,30 +16,17 @@
       const dark = el('button', { class: 'switch', role: 'switch', type: 'button', 'aria-checked': document.documentElement.dataset.theme === 'dark' });
       dark.addEventListener('click', () => { Theme.toggleMode(); dark.setAttribute('aria-checked', document.documentElement.dataset.theme === 'dark'); });
 
-      // شبكة الألوان (15 لونًا)
-      const grid = el('div', { class: 'color-grid' });
+      const sw = el('div', { class: 'swatches' });
       C.COLORS.forEach(c => {
-        const b = el('button', {
-          class: 'color-chip' + (document.documentElement.dataset.color === c ? ' sel' : ''), type: 'button',
-          style: 'background:' + C.COLOR_HEX[c], title: C.COLOR_LABELS[c] || c, 'aria-label': C.COLOR_LABELS[c] || c
-        });
-        b.addEventListener('click', () => { Theme.setColor(c); grid.querySelectorAll('.color-chip').forEach(x => x.classList.remove('sel')); b.classList.add('sel'); });
-        grid.append(b);
+        const b = el('button', { class: 'swatch' + (document.documentElement.dataset.color === c ? ' active' : ''), type: 'button', style: 'background:' + COLOR_HEX[c], 'aria-label': c });
+        b.addEventListener('click', () => { Theme.setColor(c); sw.querySelectorAll('.swatch').forEach(x => x.classList.remove('active')); b.classList.add('active'); });
+        sw.append(b);
       });
 
-      // قائمة الخطوط (كل خط يُعرض بشكله)
-      const fonts = el('div');
-      const cur = () => document.documentElement.dataset.font || C.DEFAULTS.FONT;
-      Object.entries(C.FONTS).forEach(([k, n]) => {
-        const mark = el('span', { text: cur() === k ? '✓' : '' });
-        const b = el('button', { class: 'font-option' + (cur() === k ? ' sel' : ''), type: 'button', style: 'font-family:' + C.FONT_STACKS[k] + ';width:100%' }, [el('span', { text: n }), mark]);
-        b.addEventListener('click', () => {
-          Theme.setFont(k);
-          fonts.querySelectorAll('.font-option').forEach(x => { x.classList.remove('sel'); x.lastChild.textContent = ''; });
-          b.classList.add('sel'); mark.textContent = '✓';
-        });
-        fonts.append(b);
-      });
+      const font = el('select', { class: 'input', style: 'width:auto' });
+      Object.entries(C.FONTS).forEach(([k, n]) => font.append(new Option(n, k)));
+      font.value = document.documentElement.dataset.font || C.DEFAULTS.FONT;
+      font.addEventListener('change', () => Theme.setFont(font.value));
 
       const wa = C.SUPPORT.WHATSAPP ? 'https://wa.me/' + encodeURIComponent(C.SUPPORT.WHATSAPP) : null;
       const tg = C.SUPPORT.TELEGRAM ? 'https://t.me/' + encodeURIComponent(C.SUPPORT.TELEGRAM) : null;
@@ -50,7 +37,7 @@
 
       root.append(
         row(t('settings.language'), lang), row(t('settings.dark'), dark),
-        block(t('settings.color'), grid), block(t('settings.font'), fonts),
+        row(t('settings.color'), sw), row(t('settings.font'), font),
         row(t('settings.support'), support),
         el('div', { class: 'settings-row' }, [el('a', { href: C.ROUTES.PRIVACY, text: t('settings.privacy') })]),
         el('div', { class: 'settings-row' }, [el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => this.reportBug(), text: t('settings.report_bug') })])
