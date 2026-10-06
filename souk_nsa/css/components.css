@@ -508,3 +508,13 @@ body[data-page="chat"] main{flex:1;min-height:0;display:flex;flex-direction:colu
 /* الناشر في الأعلى RTL */
 .topbar__row,.bottom-nav{direction:rtl}
 .topbar__row .avatar-btn{margin-inline-start:0}
+
+/* ===== قواعد من المشروع الأصلي غير موجودة في الـ patch (للحفاظ على تنسيق بقية الصفحات) ===== */
+.avatar{width:84px;height:84px;border-radius:50%;object-fit:cover;background:var(--surface-2)}
+.searchbar .input{padding-inline-end:12px}
+.badge--trust{color:#1d9bf0}
+
+/* زر الفلاتر الملوّن عند وجود فلتر نشط + شارات حالة/كراء */
+.icon-btn.has-active,#btn-filters.has-active{background:var(--c-primary);border-color:var(--c-primary);color:#fff}
+.badge--used,.badge--rent{background:var(--c-soft);color:var(--c-primary)}
+.card__prix-fixe{font-size:11px;color:var(--muted)}

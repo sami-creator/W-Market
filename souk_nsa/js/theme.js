@@ -1,142 +1,69 @@
-/* theme.js — إدارة الثيم: وضع ليلي افتراضي، ألوان، خطوط */
-'use strict';
-(function(){
+/* theme.js — الوضع الليلي/النهاري + لون التصميم (15 لونًا) + الخط (Times New Roman افتراضي) + زر العودة للأعلى */
+(function () {
+  'use strict';
+  const C = window.CONFIG, K = C.STORAGE_KEYS;
   const ROOT = document.documentElement;
-  const STORE_THEME = 'snsa_theme';
-  const STORE_COLOR = 'snsa_color';
-  const STORE_FONT  = 'snsa_font';
 
-  /* ===== تطبيق الوضع (light/dark) ===== */
-  function applyTheme(t){
-    ROOT.dataset.theme = t;
-    localStorage.setItem(STORE_THEME, t);
+  // تخزين آمن (لا يعتمد على تحميل Utils قبله)
+  const store = {
+    get(key, fb) { try { const v = localStorage.getItem(key); return v === null ? fb : JSON.parse(v); } catch (e) { return fb; } },
+    set(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* ignore */ } }
+  };
+
+  function loadFont(f) {
+    const q = C.FONT_GF && C.FONT_GF[f];
+    if (!q || document.getElementById('font-' + f)) return;
+    const l = document.createElement('link');
+    l.id = 'font-' + f; l.rel = 'stylesheet';
+    l.href = 'https://fonts.googleapis.com/css2?family=' + q + '&display=swap';
+    document.head.append(l);
   }
 
-  /* ===== تطبيق لون التطبيق ===== */
-  function applyColor(c){
-    ROOT.dataset.color = c;
-    localStorage.setItem(STORE_COLOR, c);
-  }
+  const Theme = {
+    init() {
+      this.setMode(store.get(K.THEME, C.DEFAULTS.THEME), false);
+      this.setColor(store.get(K.COLOR, C.DEFAULTS.COLOR), false);
+      this.setFont(store.get(K.FONT, C.DEFAULTS.FONT), false);
+    },
+    setMode(m, save = true) {
+      m = m === 'light' ? 'light' : 'dark';
+      ROOT.dataset.theme = m;
+      if (save) store.set(K.THEME, m);
+    },
+    toggleMode() { this.setMode(ROOT.dataset.theme === 'dark' ? 'light' : 'dark'); },
+    setColor(c, save = true) {
+      if (!C.COLORS.includes(c)) c = C.DEFAULTS.COLOR;
+      ROOT.dataset.color = c;
+      if (save) store.set(K.COLOR, c);
+    },
+    setFont(f, save = true) {
+      if (!C.FONTS[f]) f = C.DEFAULTS.FONT;
+      loadFont(f);
+      ROOT.dataset.font = f;
+      ROOT.style.setProperty('--font', C.FONT_STACKS[f]);
+      if (save) store.set(K.FONT, f);
+    },
 
-  /* ===== تطبيق الخط ===== */
-  function applyFont(id){
-    const f = (window.APP?.FONTS || []).find(x=>x.id===id);
-    if(!f) return;
-    ROOT.style.setProperty('--font', f.stack);
-    localStorage.setItem(STORE_FONT, id);
-  }
+    // زر العودة للأعلى: يُنشأ تلقائيًا في كل الصفحات ويظهر بعد التمرير 300px
+    initScrollTop() {
+      if (this._scrollInit) return; this._scrollInit = true;
+      let btn = document.getElementById('scroll-top-btn');
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'scroll-top-btn'; btn.type = 'button'; btn.textContent = '↑';
+        btn.setAttribute('aria-label', 'top');
+        document.body.append(btn);
+      }
+      const onScroll = () => btn.classList.toggle('visible', (window.scrollY || document.documentElement.scrollTop) > 300);
+      window.addEventListener('scroll', onScroll, { passive: true });
+      btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+      onScroll();
+    }
+  };
+  window.Theme = Theme;
 
-  /* ===== تحميل مبكر (قبل رسم الصفحة لتفادي الوميض) ===== */
-  (function earlyInit(){
-    applyTheme(localStorage.getItem(STORE_THEME) || 'dark');
-    applyColor(localStorage.getItem(STORE_COLOR) || 'rose');
-    const savedFont = localStorage.getItem(STORE_FONT) || 'times';
-    // تطبيق الخط مبكراً بدون انتظار APP.FONTS
-    const FONT_MAP = {
-      times:       "'Times New Roman','Georgia',serif",
-      scheherazade:"'Scheherazade New','Times New Roman',serif",
-      amiri:       "'Amiri','Times New Roman',serif",
-      noto:        "'Noto Serif Arabic','Times New Roman',serif",
-      playfair:    "'Playfair Display','Times New Roman',serif",
-      lora:        "'Lora','Times New Roman',serif",
-    };
-    if(FONT_MAP[savedFont]) ROOT.style.setProperty('--font', FONT_MAP[savedFont]);
-  })();
-
-  /* ===== تهيئة الصفحة بعد التحميل ===== */
-  function init(){
-    renderColorGrid();
-    renderFontList();
-    bindToggle();
-    initScrollTop();
-  }
-
-  /* ===== شبكة الألوان في الإعدادات ===== */
-  function renderColorGrid(){
-    const grid = document.getElementById('color-grid');
-    if(!grid) return;
-    grid.innerHTML = '';
-    const cur = localStorage.getItem(STORE_COLOR) || 'rose';
-    (window.APP?.COLORS || []).forEach(c=>{
-      const btn = document.createElement('button');
-      btn.className = 'color-chip' + (c.id===cur?' sel':'');
-      btn.style.background = c.hex;
-      btn.title = c.label;
-      btn.setAttribute('aria-label', c.label);
-      btn.addEventListener('click',()=>{
-        applyColor(c.id);
-        grid.querySelectorAll('.color-chip').forEach(b=>b.classList.remove('sel'));
-        btn.classList.add('sel');
-      });
-      grid.appendChild(btn);
-    });
-  }
-
-  /* ===== قائمة الخطوط في الإعدادات ===== */
-  function renderFontList(){
-    const list = document.getElementById('font-list');
-    if(!list) return;
-    list.innerHTML = '';
-    const cur = localStorage.getItem(STORE_FONT) || 'times';
-    (window.APP?.FONTS || []).forEach(f=>{
-      const btn = document.createElement('button');
-      btn.className = 'font-option' + (f.id===cur?' sel':'');
-      btn.style.fontFamily = f.stack;
-      btn.innerHTML = `<span>${f.label}</span><span style="font-size:13px">${f.id===cur?'✓':''}</span>`;
-      btn.addEventListener('click',()=>{
-        applyFont(f.id);
-        list.querySelectorAll('.font-option').forEach(b=>{
-          b.classList.remove('sel');
-          b.querySelector('span:last-child').textContent='';
-        });
-        btn.classList.add('sel');
-        btn.querySelector('span:last-child').textContent='✓';
-      });
-      list.appendChild(btn);
-    });
-  }
-
-  /* ===== زر تبديل الوضع ===== */
-  function bindToggle(){
-    document.querySelectorAll('[data-toggle-theme]').forEach(el=>{
-      el.addEventListener('click',()=>{
-        const next = ROOT.dataset.theme==='dark'?'light':'dark';
-        applyTheme(next);
-        el.textContent = next==='dark'?'🌙':'☀️';
-      });
-      const cur = localStorage.getItem(STORE_THEME)||'dark';
-      el.textContent = cur==='dark'?'🌙':'☀️';
-    });
-
-    // checkbox style toggle in settings
-    document.querySelectorAll('[data-theme-check]').forEach(el=>{
-      el.checked = (localStorage.getItem(STORE_THEME)||'dark')==='dark';
-      el.addEventListener('change',()=>{
-        applyTheme(el.checked?'dark':'light');
-      });
-    });
-  }
-
-  /* ===== زر العودة للأعلى ===== */
-  function initScrollTop(){
-    const btn = document.getElementById('scroll-top-btn');
-    if(!btn) return;
-    const scroller = document.querySelector('main') || window;
-    const onScroll = ()=>{
-      const y = scroller===window?window.scrollY:scroller.scrollTop;
-      btn.classList.toggle('visible', y>300);
-    };
-    scroller.addEventListener('scroll', onScroll, {passive:true});
-    btn.addEventListener('click',()=>{
-      scroller===window
-        ? window.scrollTo({top:0,behavior:'smooth'})
-        : scroller.scrollTo({top:0,behavior:'smooth'});
-    });
-  }
-
-  /* ===== API عامة ===== */
-  window.THEME = { applyTheme, applyColor, applyFont };
-
-  if(document.readyState!=='loading') init();
-  else document.addEventListener('DOMContentLoaded', init);
+  // تطبيق مبكر لتفادي وميض الألوان قبل اكتمال التحميل
+  Theme.init();
+  if (document.readyState !== 'loading') Theme.initScrollTop();
+  else document.addEventListener('DOMContentLoaded', () => Theme.initScrollTop());
 })();

@@ -90,3 +90,6 @@ textarea.input{min-height:100px;resize:vertical}
 }
 #scroll-top-btn.visible{opacity:1;pointer-events:auto}
 #scroll-top-btn:active{transform:scale(.9)}
+
+/* ===== قواعد من المشروع الأصلي غير موجودة في الـ patch (للحفاظ على تنسيق بقية الصفحات) ===== */
+

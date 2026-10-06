@@ -1,127 +1,47 @@
-/* categories.js — هيكل الأصناف مع الفروع المتعددة المستويات */
-'use strict';
-(function(){
+/* categories.js — الأصناف والأصناف الفرعية وفلاتر كل صنف + نطاقات الأسعار من قاعدة البيانات
+   (معرّفات الأصناف هي نفسها في قاعدة البيانات وفي submit-ad: لا تُغيَّر) */
+(function () {
+  'use strict';
+  let cats = [], ranges = {}, loaded = false;
 
-  const lang = document.documentElement.lang||'ar';
-  const L=(ar,fr,en)=>({ar,fr,en}[lang]||ar);
-
-  /* ===== شجرة الأصناف ===== */
-  const TREE = [
-    {
-      id:'wedding', label:L('ملابس أعراس','Robes de mariage','Wedding clothes'),
-      icon:'💍',
-      children:[
-        { id:'karako',    label:L('كراكو','Karakou','Karakou') },
-        { id:'gandoura',  label:L('قندورة','Gandoura','Gandoura') },
-        { id:'kaftan',    label:L('قفطان','Caftan','Kaftan') },
-        { id:'takchita',  label:L('تكشيطة','Takchita','Takchita') },
-        { id:'hayek',     label:L('حايك','Haïk','Haik') },
-        { id:'evening',   label:L('فساتين سهرة','Robes de soirée','Evening dresses') },
-        { id:'burnous',   label:L('برنوس','Burnous','Burnous') },
-        { id:'other_wed', label:L('أخرى','Autres','Other') },
-      ]
+  const Categories = {
+    async load() {
+      if (loaded) return cats;
+      try { cats = await (await fetch('data/categories.json')).json(); } catch (e) { console.error('[Categories]', e); cats = []; }
+      try {
+        const { data } = await SB.db.from('categories').select('id,min_price,max_price');
+        (data || []).forEach(r => { ranges[r.id] = { min: r.min_price, max: r.max_price }; });
+      } catch (e) { console.error('[Categories] ranges', e); }
+      loaded = true; return cats;
     },
-    {
-      id:'clothing', label:L('ملابس يومية','Vêtements quotidiens','Daily clothing'),
-      icon:'👗',
-      children:[
-        { id:'tops',     label:L('بلوزات وتشيرتات','Hauts','Tops') },
-        { id:'pants',    label:L('بنطلونات','Pantalons','Pants') },
-        { id:'abayas',   label:L('عبايات','Abayas','Abayas') },
-        { id:'jilbab',   label:L('جلباب','Jilbab','Jilbab') },
-        { id:'sport',    label:L('ملابس رياضية','Sportswear','Sportswear') },
-        { id:'kids',     label:L('ملابس أطفال','Vêtements enfants','Kids clothes') },
-        { id:'other_cl', label:L('أخرى','Autres','Other') },
-      ]
+    all() { return cats; },
+    main(id) { return cats.find(c => c.id === id); },
+    sub(mainId, subId) { const m = this.main(mainId); return m ? m.sub.find(s => s.id === subId) : null; },
+    findSub(subId) { for (const m of cats) { const s = m.sub.find(x => x.id === subId); if (s) return { main: m, sub: s }; } return null; },
+    label(o) { return o ? (o[I18n.lang] || o.ar) : ''; },
+    icon(o) { return (o && o.icon) || ''; },
+    // اسم الصنف مع أيقونته (للشرائح)
+    labelWithIcon(o) { return (this.icon(o) ? this.icon(o) + ' ' : '') + this.label(o); },
+    path(mainId, subId) {
+      const m = this.main(mainId), s = m && m.sub.find(x => x.id === subId);
+      return [m, s].filter(Boolean).map(x => this.label(x)).join(' ← ');
     },
-    {
-      id:'shoes', label:L('أحذية','Chaussures','Shoes'),
-      icon:'👠',
-      children:[
-        { id:'heels',      label:L('كعب عالي','Talons hauts','High heels') },
-        { id:'flat',       label:L('مسطحة','Plates','Flat shoes') },
-        { id:'boots',      label:L('بوط','Bottes','Boots') },
-        { id:'sandals',    label:L('صنادل','Sandales','Sandals') },
-        { id:'sneakers',   label:L('رياضية','Baskets','Sneakers') },
-        { id:'wedding_sh', label:L('أحذية عرس','Chaussures mariage','Wedding shoes') },
-        { id:'slippers',   label:L('شباط منزلي','Pantoufles','Slippers') },
-        { id:'other_sh',   label:L('أخرى','Autres','Other') },
-      ]
+    filtersFor(subId) { const f = this.findSub(subId); return f ? f.sub.filters || [] : []; },
+    // خيارات فلتر معيّن: المقاسات والألوان من القوائم الموسّعة في config.js، وغيرها كما في ملف الأصناف
+    // (القيم المحفوظة نصوص ≤ 30 حرفًا لتقبلها submit-ad، وتُطابق بالتساوي في فلاتر البحث)
+    optionsFor(filter, mainId) {
+      const C = window.CONFIG;
+      if (!filter) return [];
+      if (filter.key === 'shoe_size') return C.SHOE_SIZES.slice();
+      if (filter.key === 'size') return (mainId === 'shoes' ? C.SHOE_SIZES : C.CLOTHING_SIZES).slice();
+      if (filter.key === 'color') return C.ITEM_COLORS.map(c => c.label);
+      return filter.options || [];
     },
-    {
-      id:'beauty', label:L('تجميل وعناية','Beauté & soins','Beauty & care'),
-      icon:'💄',
-      children:[
-        { id:'skincare',    label:L('عناية بالبشرة','Soins du visage','Skincare') },
-        { id:'haircare',    label:L('عناية بالشعر','Soins capillaires','Hair care') },
-        { id:'makeup',      label:L('مكياج','Maquillage','Makeup') },
-        { id:'perfumes',    label:L('عطور','Parfums','Perfumes') },
-        { id:'wigs',        label:L('شعر مستعار','Perruques','Wigs') },
-        { id:'nails',       label:L('أظافر','Ongles','Nails') },
-        { id:'other_be',    label:L('أخرى','Autres','Other') },
-      ]
-    },
-    {
-      id:'accessories', label:L('إكسسوارات','Accessoires','Accessories'),
-      icon:'👜',
-      children:[
-        { id:'bags',     label:L('حقائب','Sacs','Bags') },
-        { id:'jewelry',  label:L('مجوهرات','Bijoux','Jewelry') },
-        { id:'belts',    label:L('أحزمة','Ceintures','Belts') },
-        { id:'scarves',  label:L('أوشحة وحجاب','Foulards','Scarves') },
-        { id:'watches',  label:L('ساعات','Montres','Watches') },
-        { id:'glasses',  label:L('نظارات','Lunettes','Glasses') },
-        { id:'other_ac', label:L('أخرى','Autres','Other') },
-      ]
-    },
-    {
-      id:'services', label:L('خدمات','Services','Services'),
-      icon:'✂️',
-      children:[
-        { id:'sewing',    label:L('خياطة وتفصيل','Couture','Sewing') },
-        { id:'makeup_sv', label:L('مكياج أعراس','Maquillage mariée','Wedding makeup') },
-        { id:'hair_sv',   label:L('تسريحات','Coiffure','Hairstyling') },
-        { id:'henna',     label:L('حناء','Henné','Henna') },
-        { id:'sweets',    label:L('حلويات','Pâtisseries','Sweets') },
-        { id:'photo',     label:L('تصوير','Photographie','Photography') },
-        { id:'deco',      label:L('ديكور أعراس','Décoration','Decoration') },
-        { id:'other_sv',  label:L('أخرى','Autres','Other') },
-      ]
-    },
-  ];
-
-  /* ===== API ===== */
-  window.CATEGORIES = {
-    all(){ return TREE; },
-
-    find(id){ return TREE.find(c=>c.id===id); },
-
-    byCat(catId){
-      const cat=TREE.find(c=>c.id===catId);
-      return cat?.children||[];
-    },
-
-    label(id){
-      for(const c of TREE){
-        if(c.id===id) return c.label;
-        const sub=(c.children||[]).find(s=>s.id===id);
-        if(sub) return sub.label;
-      }
-      return id;
-    },
-
-    /* شرائح الأصناف الرئيسية */
-    renderChips(container, activeId=''){
-      if(!container) return;
-      container.innerHTML='';
-      TREE.forEach(c=>{
-        const btn=document.createElement('button');
-        btn.className='chip'+(c.id===activeId?' active':'');
-        btn.dataset.cat=c.id;
-        btn.innerHTML=`${c.icon||''} ${c.label}`;
-        container.appendChild(btn);
-      });
-    },
+    // النطاق: الصنف الفرعي أولًا ثم الرئيسي
+    range(mainId, subId) {
+      const r = ranges[subId] || ranges[mainId];
+      return r && (r.min != null || r.max != null) ? r : null;
+    }
   };
-
+  window.Categories = Categories;
 })();

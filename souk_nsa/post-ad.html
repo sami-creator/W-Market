@@ -1,221 +1,54 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>نشر إعلان — سوق نسا</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>post — souk nsa</title>
 <link rel="stylesheet" href="css/themes.css">
 <link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/rtl.css">
 <link rel="stylesheet" href="css/components.css">
 <link rel="stylesheet" href="css/pages.css">
-<link rel="stylesheet" href="css/rtl.css">
 </head>
-<body data-page="post-ad.html">
-
-<div id="site-banner" class="site-banner" hidden></div>
-
-<header class="topbar">
-  <div class="topbar__row">
-    <button class="icon-btn" onclick="history.back()" aria-label="رجوع">‹</button>
-    <h1 class="grow" style="font-size:17px;margin:0;text-align:center" id="post-page-title">نشر إعلان</h1>
-    <span style="width:42px"></span>
-  </div>
-  <!-- شريط التقدم -->
-  <div class="stepper" id="stepper" style="margin-top:10px">
-    <span class="on current"></span>
-    <span></span>
-    <span></span>
-    <span></span>
-  </div>
-  <p class="step-label" id="step-label">الخطوة 1 من 4</p>
-</header>
-
-<main id="post-ad-form" class="post-ad-page" style="padding:12px 14px">
-
-  <!-- ===== الخطوة 1: المعلومات الأساسية ===== -->
-  <section data-step="1">
-    <h2 class="step-title"><span class="step-number">1</span> المعلومات الأساسية</h2>
-
-    <div class="field">
-      <label for="f-cat">الصنف <span style="color:var(--danger)">*</span></label>
-      <select class="input" id="f-cat">
-        <option value="">اختر الصنف</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label for="f-sub">الصنف الفرعي</label>
-      <p class="optional-hint">اختياري</p>
-      <select class="input" id="f-sub">
-        <option value="">اختر الصنف الفرعي</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label for="f-title">عنوان الإعلان <span style="color:var(--danger)">*</span></label>
-      <input class="input" type="text" id="f-title" placeholder="مثال: كراكو عاصمي مطرز بالذهب" maxlength="100">
-    </div>
-
-    <div class="field">
-      <label for="f-desc">الوصف</label>
-      <p class="optional-hint">اختياري — المزيد من التفاصيل = عرض أفضل</p>
-      <textarea class="input" id="f-desc" rows="4" placeholder="اكتبي وصفاً تفصيلياً للمنتج..." maxlength="2000"></textarea>
-    </div>
-
-    <div class="field">
-      <label for="f-price">السعر (دج) <span style="color:var(--danger)">*</span></label>
-      <input class="input" type="number" id="f-price" placeholder="مثال: 1200000" min="0" step="100">
-    </div>
-
-    <div class="field">
-      <label for="f-old-price">السعر القديم / قبل التخفيض</label>
-      <p class="optional-hint">اختياري</p>
-      <input class="input" type="number" id="f-old-price" placeholder="مثال: 1500000" min="0" step="100">
-    </div>
-
-    <!-- نوع الإعلان -->
-    <div class="field">
-      <label>نوع الإعلان</label>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
-        <button type="button" class="chip active" data-listing-type="sale">بيع فقط</button>
-        <button type="button" class="chip" data-listing-type="both">بيع أو كراء</button>
-        <button type="button" class="chip" data-listing-type="rent">كراء فقط</button>
-      </div>
-    </div>
-
-    <div class="field" id="rent-price-wrap" hidden>
-      <label for="f-rent-price">سعر الكراء (دج/شهر)</label>
-      <input class="input" type="number" id="f-rent-price" placeholder="مثال: 50000" min="0">
-    </div>
-
-    <!-- تفاوض -->
-    <div class="field">
-      <label class="check-list">
-        <input type="checkbox" id="f-negotiable"> السعر قابل للتفاوض
-      </label>
-      <label class="check-list" style="margin-top:4px">
-        <input type="checkbox" id="f-delivery"> التوصيل متوفر
-        <small style="color:var(--muted);margin-inline-start:6px">(افتراضياً: غير متوفر)</small>
-      </label>
-    </div>
-
-    <!-- حالة المنتج -->
-    <div class="field">
-      <label>حالة المنتج</label>
-      <div style="display:flex;gap:8px;margin-top:4px">
-        <button type="button" class="chip active" data-condition="new">جديد (افتراضي)</button>
-        <button type="button" class="chip" data-condition="used">مستعمل</button>
-      </div>
-      <div id="condition-score-wrap" hidden style="margin-top:10px">
-        <label for="f-condition-score">الحالة من 10 <span class="muted">(9/10 = جيدة جداً)</span></label>
-        <input class="input" type="range" id="f-condition-score" min="1" max="10" value="10"
-          style="width:100%;accent-color:var(--c-primary)">
-        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)">
-          <span>1 (سيئة)</span><span>10 (مثالية)</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== الخطوة 2: الصور والتفاصيل ===== -->
-  <section data-step="2" hidden>
-    <h2 class="step-title"><span class="step-number">2</span> الصور</h2>
-
-    <div class="img-upload-grid" id="img-upload-grid"></div>
-    <input type="file" id="f-img-input" accept="image/*" multiple hidden>
-    <p class="hint">يمكنك إضافة حتى 8 صور. الصورة الأولى ستكون الغلاف.</p>
-
-    <!-- ألوان -->
-    <div class="field" id="color-field">
-      <label>الألوان المتوفرة</label>
-      <p class="optional-hint">اختياري — يمكن اختيار أكثر من لون</p>
-      <div class="color-options" id="color-pick"></div>
-    </div>
-
-    <!-- مقاسات -->
-    <div class="field" id="size-wrap">
-      <label>المقاسات المتوفرة</label>
-      <p class="optional-hint">اختياري — يمكن اختيار أكثر من مقاس</p>
-      <div class="size-options" id="size-pick"></div>
-    </div>
-  </section>
-
-  <!-- ===== الخطوة 3: الموقع والتواصل ===== -->
-  <section data-step="3" hidden>
-    <h2 class="step-title"><span class="step-number">3</span> الموقع والتواصل</h2>
-    <p class="optional-hint" style="margin-bottom:12px">هذه الخطوة اختيارية لكنها تساعد المشترين على إيجادك</p>
-
-    <div class="field">
-      <label for="f-wilaya">الولاية</label>
-      <select class="input" id="f-wilaya">
-        <option value="">اختر الولاية</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label for="f-municipality">البلدية</label>
-      <input class="input" type="text" id="f-municipality" placeholder="اسم البلدية">
-    </div>
-
-    <div class="field">
-      <label for="f-map-url">رابط Google Maps</label>
-      <p class="optional-hint">اختياري — الصق رابط الموقع من خرائط Google</p>
-      <input class="input" type="url" id="f-map-url" placeholder="https://maps.google.com/...">
-    </div>
-
-    <div class="field">
-      <label for="f-location-label">وصف الموقع</label>
-      <p class="optional-hint">اختياري — مثال: بالقرب من السوق المركزي</p>
-      <input class="input" type="text" id="f-location-label" placeholder="وصف مختصر للموقع">
-    </div>
-
-    <div class="field">
-      <label for="f-phone">رقم الهاتف</label>
-      <p class="optional-hint">مسبق التعبئة من إعداداتك — يمكنك تغييره</p>
-      <input class="input" type="tel" id="f-phone" placeholder="0555 000 000" maxlength="10">
-    </div>
-
-    <div class="field">
-      <label for="f-phone2">رقم هاتف 2</label>
-      <p class="optional-hint">اختياري</p>
-      <input class="input" type="tel" id="f-phone2" placeholder="0555 000 000" maxlength="10">
-    </div>
-
-    <div class="field">
-      <label for="f-phone3">رقم هاتف 3</label>
-      <p class="optional-hint">اختياري</p>
-      <input class="input" type="tel" id="f-phone3" placeholder="0555 000 000" maxlength="10">
-    </div>
-  </section>
-
-  <!-- ===== الخطوة 4: مراجعة ونشر ===== */
-  <section data-step="4" hidden>
-    <h2 class="step-title"><span class="step-number">4</span> مراجعة ونشر</h2>
-    <div id="review-summary" class="card-box">
-      <p style="color:var(--muted)">سيتم عرض ملخص الإعلان هنا قبل النشر...</p>
-    </div>
-    <p class="hint" style="text-align:center;margin:10px 0">
-      بالنشر توافقين على <a href="terms.html" style="color:var(--c-primary)">شروط الاستخدام</a>
-    </p>
-  </section>
-
+<body class="is-gated" data-page="post-ad">
+<main class="container post-ad-page">
+  <h1 class="page-title" data-i18n="ad.add"></h1>
+  <div id="stepper" class="stepper"></div>
+  <p id="step-label" class="step-label"></p>
+  <section id="wizard" class="card-box"></section>
+  <div class="step-nav"><button id="btn-back" class="btn btn--ghost" type="button" data-i18n="common.back" hidden></button><button id="btn-next" class="btn btn--primary grow" type="button"></button></div>
 </main>
-
-<!-- أزرار التنقل بين الخطوات (ثابتة في الأسفل) -->
-<div class="step-nav">
-  <button class="btn btn--ghost" id="step-prev" hidden>‹ السابق</button>
-  <button class="btn btn-next--not-ready grow" id="step-next">التالي ›</button>
-</div>
-
-<div id="toast-host"></div>
-
+<script src="js/env.js"></script>
 <script src="js/config.js"></script>
+<script src="js/console-logger.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/sanitize.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/theme.js"></script>
 <script src="js/router.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/supabase.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/geo.js"></script>
 <script src="js/categories.js"></script>
+<script src="js/price.js"></script>
+<script src="js/ads.js"></script>
+<script src="js/cards.js"></script>
+<script src="js/filters.js"></script>
+<script src="js/search.js"></script>
+<script src="js/offline-cache.js"></script>
+<script src="js/fingerprint.js"></script>
+<script src="js/interests.js"></script>
+<script src="js/likes.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/alerts.js"></script>
+<script src="js/tracking.js"></script>
+<script src="js/banners.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/app.js"></script>
+<script src="js/upload.js"></script>
 <script src="js/post-ad.js"></script>
-</body>
-</html>
+<script src="js/logger.js"></script>
+</body></html>
