@@ -14,7 +14,14 @@
     if (f.max_price) q = q.lte('price', f.max_price);
     if (f.delivery) q = q.eq('delivery', true);
     if (f.verified_only) q = q.eq('is_verified', true);
-    if (f.attrs && Object.keys(f.attrs).length) q = q.contains('attrs', f.attrs);
+    if (f.attrs) {
+      Object.entries(f.attrs).forEach(([k, v]) => {
+        const vals = [].concat(v).map(x => String(x).replace(/[,()*%.\\"]/g, '')).filter(Boolean);
+        if (!vals.length || !/^[a-z_]{1,20}$/.test(k)) return;
+        // القيمة قد تكون مفردة (إعلان قديم) أو مرمّزة "/أ/ب/" (إعلان بعدة ألوان/مقاسات)
+        q = q.or(vals.map(x => 'attrs->>' + k + '.eq.' + x + ',attrs->>' + k + '.ilike.*/' + x + '/*').join(','));
+      });
+    }
     return q;
   }
 
@@ -63,6 +70,7 @@
 
     // الأقرب مني عبر Edge Function (PostGIS من جهة الخادم، الإحداثيات لا تُكشف)
     async nearby(coords, f = {}, page = 0) {
+      f = Object.assign({}, f, { attrs: Object.fromEntries(Object.entries(f.attrs || {}).map(([k, v]) => [k, [].concat(v)[0]])) });
       const { data, error } = await SB.fn('nearby-ads', { lat: coords.lat, lng: coords.lng, page, filters: f });
       if (error || !data) throw error || new Error('nearby failed');
       return { items: data.items || [], hasMore: !!data.hasMore };

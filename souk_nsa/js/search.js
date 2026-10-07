@@ -1,8 +1,7 @@
-/* search.js — خانة البحث: placeholder ذكي، اقتراحات، "هل تقصد"، بحث AI */
+/* search.js — خانة البحث: placeholder ذكي، اقتراحات، "هل تقصد"، بحث AI مع تراجع فوري */
 (function () {
   'use strict';
   const el = Utils.el, t = k => I18n.t(k);
-  const SK_Q = window.CONFIG.STORAGE_KEYS.SEARCH_QUERY;
   let box, input, sugBox, dymBox, onSearch = () => {};
 
   const Search = {
@@ -11,28 +10,26 @@
       input.maxLength = 100;
       const setPh = () => { input.placeholder = t('search.placeholder_example'); };
       setPh(); document.addEventListener('langchange', setPh);
-
-      // استعادة نص البحث المحفوظ
-      const savedQ = sessionStorage.getItem(SK_Q) || '';
-      if (savedQ) { input.value = savedQ; }
-
+      // استعادة آخر بحث (لا يضيع عند الرجوع من الإعلان أو التنقل بين الصفحات)
+      const saved = window.Filters && Filters.get().q;
+      if (saved && saved !== input.placeholder) input.value = saved;
       input.addEventListener('input', Utils.debounce(() => this.suggest(), window.CONFIG.LIMITS.SEARCH_DEBOUNCE_MS));
       input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); this.submit(); } });
       if (button) button.addEventListener('click', () => this.submit());
       document.addEventListener('click', e => { if (!sugBox.contains(e.target) && e.target !== input) sugBox.hidden = true; });
     },
 
+    // بحث فارغ = البحث بنص placeholder نفسه
     async submit() {
       sugBox.hidden = true;
       let q = Sanitize.cleanText(input.value, 100) || input.placeholder;
-      // حفظ نص البحث
-      try { sessionStorage.setItem(SK_Q, input.value); } catch (e) {}
       if (Sanitize.containsBadWords(q)) { UI.toastKey('err.bad_words', 'error'); return; }
       const filters = await this.interpret(q);
       onSearch(filters);
       this.didYouMean(q);
     },
 
+    // Mistral عبر Edge Function، وعند الفشل: بحث نصي عادي فورًا مع رسالة قصيرة
     async interpret(q) {
       const base = { q };
       try {
@@ -71,11 +68,6 @@
       const s = data && data[0] && data[0].term;
       if (!s || s === q) return;
       dymBox.append(t('search.did_you_mean') + ' ', el('button', { type: 'button', onclick: () => { input.value = s; this.submit(); } }, s));
-    },
-
-    // مسح البحث المحفوظ
-    clearSaved() {
-      try { sessionStorage.removeItem(SK_Q); } catch (e) {}
     }
   };
   window.Search = Search;

@@ -1,4 +1,4 @@
-/* banners.js — المساحة القابلة للاستبدال من admin.html (تبقى صورة الحساب على اليمين) */
+/* banners.js — البانر العلوي يظهر فقط إذا فعّله الأدمن، وعندها تنزل الصفحة كلها قليلًا */
 (function () {
   'use strict';
   let timer = null;
@@ -8,8 +8,7 @@
   const Banners = {
     async mount(slot) {
       if (!slot) return;
-      const fallback = () => { slot.replaceChildren(document.createTextNode(I18n.t('app.name'))); };
-      fallback();
+      slot.hidden = true; slot.replaceChildren();
       let list = OfflineCache.get('banners');
       if (!list) {
         const { data } = await SB.db.from('banners').select('id,image_url,link,text,sort_order').eq('active', true).order('sort_order');
@@ -22,9 +21,9 @@
         const href = b.link ? safeHref(b.link) : null;
         const node = document.createElement(href ? 'a' : 'div');
         if (href) { node.href = href; node.target = '_blank'; node.rel = 'noopener noreferrer'; }
-        if (b.image_url) { const im = document.createElement('img'); im.alt = ''; im.src = b.image_url; im.addEventListener('error', fallback); node.append(im); }
-        else node.textContent = b.text || I18n.t('app.name');
-        slot.append(node); i++;
+        if (b.image_url) { const im = document.createElement('img'); im.alt = ''; im.src = b.image_url; im.addEventListener('error', () => { slot.hidden = true; }); node.append(im); }
+        else node.textContent = b.text || '';
+        slot.append(node); slot.hidden = false; i++;
       };
       show();
       if (timer) clearInterval(timer);

@@ -58,8 +58,44 @@
   };
 
   /* ---------- حسابي ---------- */
+  // صفحة ناشرة أخرى (?u=): اسمها، تقييمها، روابطها وإعلاناتها النشطة
+  async function publicProfile(uid) {
+    $('#own-actions').hidden = true; $('#own-menu').hidden = true;
+    const { data: sp } = await SB.db.from('seller_public').select('*').eq('id', uid).maybeSingle();
+    if (!sp) return Utils.go(R.HOME);
+    $('#p-avatar').src = Utils.imgUrl(sp.avatar_url || 'assets/images/avatar.svg', 'medium');
+    $('#p-avatar').addEventListener('error', e => { e.target.src = 'assets/images/avatar.svg'; }, { once: true });
+    $('#p-name').textContent = sp.name || ''; $('#p-tick').hidden = !sp.is_verified;
+    const { data } = await SB.db.rpc('profile_stats', { p_user: uid });
+    const s = (data && data[0]) || {};
+    $('#s-followers').textContent = s.followers || 0;
+    $('#s-rating').textContent = Number(sp.rating_avg || s.rating_avg || 0).toFixed(1) + ' (' + (s.rating_count || sp.rating_count || 0) + ')';
+    const links = [];
+    const safe = u => { try { const x = new URL(u); return x.protocol === 'https:' ? x.toString() : null; } catch { return null; } };
+    if (sp.phone && sp.show_phone) {
+      const d = sp.phone.replace(/\D/g, '');
+      links.push(el('a', { href: 'tel:' + sp.phone.replace(/[^\d+]/g, ''), text: '📞 ' + sp.phone }));
+      links.push(el('a', { href: 'https://wa.me/' + (d.startsWith('0') ? '213' + d.slice(1) : d), target: '_blank', rel: 'noopener noreferrer', text: 'WhatsApp' }));
+    }
+    [['facebook', 'Facebook'], ['instagram', 'Instagram'], ['tiktok', 'TikTok'], ['telegram', 'Telegram'], ['maps_url', 'Maps']].forEach(([k, n]) => { const u = sp[k] && safe(sp[k]); if (u) links.push(el('a', { href: u, target: '_blank', rel: 'noopener noreferrer', text: n })); });
+    if (links.length) { $('#public-links').append(...links); $('#public-links').hidden = false; }
+    await Promise.all([Categories.load(), Geo.load()]);
+    const grid = $('#grid'); $('#user-ads').hidden = false; grid.replaceChildren(UI.skeletonCards(4));
+    const { data: ads, error } = await SB.db.from('ads_feed').select(Ads.LIST_COLS).eq('user_id', uid).eq('status', 'active').order('created_at', { ascending: false }).limit(40);
+    grid.replaceChildren();
+    $('#s-ads').textContent = (ads || []).length;
+    if (error || !(ads || []).length) return UI.emptyState(grid, 'ad.no_ads', 'empty.sub');
+    Cards.renderList(grid, ads); Likes.paint(grid);
+  }
+
   P.profile = async function () {
-    const st = await App.boot({ guard: true });
+    const uParam = Utils.qs('u');
+    if (uParam && /^[0-9a-f-]{36}$/i.test(uParam)) {
+      const st0 = await App.boot();
+      if (!st0) return;
+      if (!Auth.isLogged() || Auth.uid() !== uParam) return publicProfile(uParam);
+    }
+    const st = uParam ? await Auth.ready() : await App.boot({ guard: true });
     if (!st) return;
     const p = st.profile;
     $('#p-avatar').src = Utils.imgUrl(p.avatar_url || 'assets/images/avatar.svg', 'medium');

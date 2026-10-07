@@ -1,4 +1,4 @@
-/* ui.js — Toast، Skeleton، الحالة الفارغة، النوافذ، التحميل الجزئي + زر العودة لأعلى */
+/* ui.js — Toast، Skeleton، الحالة الفارغة، النوافذ، التحميل الجزئي */
 (function () {
   'use strict';
   const t = k => (window.I18n ? I18n.t(k) : k);
@@ -28,6 +28,7 @@
     return f;
   }
 
+  // رسمة لطيفة بدل الصفحة الفارغة
   function emptyState(container, titleKey = 'empty.title', subKey = 'empty.sub') {
     container.replaceChildren();
     const d = document.createElement('div'); d.className = 'empty';
@@ -59,6 +60,7 @@
     btn.classList.toggle('is-loading', !!on);
   }
 
+  // إخفاء المحتوى حتى تتحقق الحالة (لتفادي وميض زر تسجيل الدخول)
   function gate(el, ready) { if (el) el.hidden = !ready; document.body.classList.toggle('is-gated', !ready); }
 
   function fadeEdge(scroller) {
@@ -71,6 +73,7 @@
     scroller.addEventListener('scroll', upd, { passive: true }); upd();
   }
 
+  // ترجمة أكواد أخطاء الخادم (RPC/RLS) إلى مفاتيح i18n
   function errKey(error) {
     const m = String((error && (error.message || error.details || error.hint)) || error || '');
     if (/DEVICE_DONE|ALREADY/i.test(m)) return 'rate.device_done';
@@ -83,21 +86,5 @@
     return 'err.generic';
   }
 
-  // ===== زر العودة لأعلى الصفحة =====
-  function mountBackToTop() {
-    if (document.getElementById('back-to-top')) return;
-    const btn = document.createElement('button');
-    btn.id = 'back-to-top';
-    btn.setAttribute('aria-label', 'العودة لأعلى');
-    btn.textContent = '↑';
-    btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-    document.body.append(btn);
-    const onScroll = () => btn.classList.toggle('show', window.scrollY > 300);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-  }
-
-  document.addEventListener('DOMContentLoaded', mountBackToTop);
-
-  window.UI = { errKey, toast, toastKey, skeletonCards, emptyState, confirmDialog, setLoading, gate, fadeEdge, mountBackToTop };
+  window.UI = { errKey, toast, toastKey, skeletonCards, emptyState, confirmDialog, setLoading, gate, fadeEdge };
 })();

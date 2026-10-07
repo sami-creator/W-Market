@@ -10,6 +10,8 @@
 
   const Router = {
     current: currentRoute,
+    // رجوع آمن: التاريخ إن وُجد، وإلا الرئيسية (الفلاتر والبحث محفوظة في Filters فلا تضيع)
+    back() { if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) history.back(); else Utils.go(R.HOME); },
     // الضغط على رابط صفحة أنت عليها لا يعيد التحميل
     bindNav(root = document) {
       const cur = currentRoute();

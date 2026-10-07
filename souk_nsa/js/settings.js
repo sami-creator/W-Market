@@ -1,8 +1,8 @@
-/* settings.js — الإعدادات: اللغة، الوضع الليلي، اللون، الخط، الدعم، الخصوصية، الإبلاغ عن خطأ */
+/* settings.js — الإعدادات: اللغة، الوضع الليلي، 14 لونًا، الخطوط، الدعم، الخصوصية، الإبلاغ عن خطأ (التنبيهات المخصصة انتقلت لصفحة الإشعارات) */
 (function () {
   'use strict';
   const el = Utils.el, t = k => I18n.t(k), C = window.CONFIG;
-  const COLOR_HEX = { rose: '#c2607a', beige: '#a67c52', gold: '#c9962e', cream: '#8f7a6b' };
+  const COLOR_HEX = C.COLOR_HEX;
 
   const Settings = {
     render(root) {
@@ -16,7 +16,7 @@
       const dark = el('button', { class: 'switch', role: 'switch', type: 'button', 'aria-checked': document.documentElement.dataset.theme === 'dark' });
       dark.addEventListener('click', () => { Theme.toggleMode(); dark.setAttribute('aria-checked', document.documentElement.dataset.theme === 'dark'); });
 
-      const sw = el('div', { class: 'swatches' });
+      const sw = el('div', { class: 'swatches', style: 'flex-wrap:wrap;justify-content:flex-end;max-width:210px' });
       C.COLORS.forEach(c => {
         const b = el('button', { class: 'swatch' + (document.documentElement.dataset.color === c ? ' active' : ''), type: 'button', style: 'background:' + COLOR_HEX[c], 'aria-label': c });
         b.addEventListener('click', () => { Theme.setColor(c); sw.querySelectorAll('.swatch').forEach(x => x.classList.remove('active')); b.classList.add('active'); });
@@ -42,10 +42,6 @@
         el('div', { class: 'settings-row' }, [el('a', { href: C.ROUTES.PRIVACY, text: t('settings.privacy') })]),
         el('div', { class: 'settings-row' }, [el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => this.reportBug(), text: t('settings.report_bug') })])
       );
-      if (Auth.isLogged()) {
-        const box = el('div', { class: 'card-box', style: 'margin-top:14px' }, [el('h3', { text: t('notif.alerts') })]);
-        const inner = el('div'); box.append(inner); root.append(box); Alerts.render(inner);
-      }
     },
 
     reportBug() {

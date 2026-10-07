@@ -18,11 +18,15 @@
     daira(id) { return D.find(d => String(d.id) === String(id)); },
     commune(id) { return M.find(m => String(m.id) === String(id)); },
     label(o) { return o ? (o[I18n.lang] || o.ar) : ''; },
+    // الولايات تُعرض دائمًا مرتبة ومرقمة: 1. أدرار ... 58. المنيعة
+    wlabel(o) { return o ? o.id + '. ' + Geo.label(o) : ''; },
+    sortedWilayas() { return W.slice().sort((a, b) => Number(a.id) - Number(b.id)); },
 
     fill(select, items, placeholderKey) {
       select.replaceChildren();
       if (placeholderKey) select.append(new Option(I18n.t(placeholderKey), ''));
-      items.forEach(o => select.append(new Option(Geo.label(o), o.id)));
+      const isW = items === W;
+      (isW ? Geo.sortedWilayas() : items).forEach(o => select.append(new Option(isW ? Geo.wlabel(o) : Geo.label(o), o.id)));
     },
 
     // ربط ثلاث قوائم متسلسلة (اختيار واحد) — للتسجيل ونشر الإعلان

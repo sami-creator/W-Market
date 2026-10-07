@@ -31,8 +31,26 @@
 
     async open(convId, container) {
       const msgs = el('div', { class: 'chat-msgs' }), foot = el('div');
-      const box = el('div', { class: 'chat-box' }, [msgs, foot]);
+      const adSlot = el('div'), presetSlot = el('div');
+      const box = el('div', { class: 'chat-box' }, [adSlot, msgs, presetSlot, foot]);
       container.replaceChildren(box);
+
+      // بطاقة الإعلان أعلى المحادثة (تظهر للمشتري والناشر ليفهم كل طرف عن أي إعلان يتحدثان)
+      let conv = null;
+      try {
+        const { data: c } = await SB.db.from('conversations').select('ad_id,buyer_id,seller_id').eq('id', convId).maybeSingle();
+        conv = c;
+        if (c && c.ad_id) {
+          const { data: ad } = await SB.db.from('ads_feed').select(Ads.LIST_COLS).eq('id', c.ad_id).maybeSingle();
+          if (ad) {
+            const im = el('img', { src: Utils.imgUrl(ad.thumb_path, 'thumb'), alt: '' });
+            im.addEventListener('error', () => { im.src = 'assets/images/placeholder.svg'; }, { once: true });
+            const card = el('div', { class: 'chat-ad', role: 'link' }, [im, el('div', { class: 'grow' }, [el('b', { text: ad.title }), el('div', { class: 'p', text: Price.display(ad).text })])]);
+            card.addEventListener('click', () => Utils.go(window.CONFIG.ROUTES.AD, { id: ad.id }));
+            adSlot.append(card);
+          }
+        }
+      } catch (e) { console.warn('[Chat] ad card', e); }
 
       const { data: st } = await SB.db.rpc('block_status', { p_conv: convId });
       const status = (st && st[0]) || {};
@@ -65,13 +83,19 @@
         await SB.db.from('blocks').insert({ blocker_id: Auth.uid(), blocked_id: status.other_id }); this.open(convId, container);
       } }, t('chat.block'));
 
-      const submit = async () => {
-        const v = Sanitize.validateText(input.value, { max: MAX(), min: 1 });
+      const sendText = async raw => {
+        const v = Sanitize.validateText(raw, { max: MAX(), min: 1 });
         if (!v.ok) return UI.toastKey(v.error, 'error');
-        input.value = ''; renderMsg({ sender_id: Auth.uid(), content: v.value, created_at: new Date().toISOString() });
+        presetSlot.replaceChildren();
+        renderMsg({ sender_id: Auth.uid(), content: v.value, created_at: new Date().toISOString() });
         const { error } = await SB.db.from('messages').insert({ conversation_id: convId, sender_id: Auth.uid(), content: v.value });
         if (error) UI.toastKey(UI.errKey(error), 'error');
       };
+      const submit = async () => { const v = input.value; input.value = ''; await sendText(v); };
+      // رسائل جاهزة للمشتري قبل أول رسالة
+      if (conv && conv.buyer_id === Auth.uid() && !(data || []).length) {
+        presetSlot.append(el('div', { class: 'presets' }, ['chat.preset_buy', 'chat.preset_available'].map(k => el('button', { type: 'button', onclick: () => sendText(t(k)) }, t(k)))));
+      }
       send.addEventListener('click', submit);
       input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
       foot.append(el('div', { class: 'chat-input' }, [input, send, blockBtn]));

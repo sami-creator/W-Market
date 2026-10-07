@@ -23,6 +23,17 @@
       return [m, s].filter(Boolean).map(x => this.label(x)).join(' ← ');
     },
     filtersFor(subId) { const f = this.findSub(subId); return f ? f.sub.filters || [] : []; },
+    // مفاتيح تقبل اختيار عدة قيم في إعلان واحد (ألوان/مقاسات)
+    MULTI: ['color', 'size', 'shoe_size'],
+    isMulti(key) { return this.MULTI.includes(key); },
+    keyLabel(key) { const m = { color: 'اللون', size: 'المقاس', shoe_size: 'المقاس', fabric: 'القماش', age: 'العمر', loreal_no: 'الرقم' }; const fr = { color: 'Couleur', size: 'Taille', shoe_size: 'Pointure', fabric: 'Tissu', age: 'Âge', loreal_no: 'N°' }; return I18n.lang === 'fr' ? (fr[key] || key) : (m[key] || key); },
+    // نقطة لونية بجانب اسم اللون
+    COLOR_HEX: { 'أبيض': '#ffffff', 'أسود': '#111111', 'أحمر': '#e53935', 'وردي': '#f48fb1', 'ذهبي': '#d4af37', 'أزرق': '#1e88e5', 'أخضر': '#43a047', 'بيج': '#d9c3a0', 'فضي': '#c0c0c0', 'بنفسجي': '#8e24aa', 'برتقالي': '#fb8c00', 'أصفر': '#fdd835', 'بني': '#6d4c41', 'رمادي': '#9e9e9e', 'كحلي': '#1a237e', 'تركوازي': '#00acc1', 'عنابي': '#7b1fa2', 'زهري فاتح': '#f8bbd0', 'سماوي': '#4fc3f7', 'كاكي': '#8d8a4f' },
+    optLabel(key, o) { return o; },
+    // ترميز القيم المتعددة داخل attrs: "/أحمر/أزرق/" (حد الخادم 30 حرفًا لكل قيمة)
+    ATTR_MAX: 30,
+    encodeMulti(list) { return list.length ? '/' + list.join('/') + '/' : ''; },
+    decodeMulti(v) { return String(v || '').split('/').map(x => x.trim()).filter(Boolean); },
     // النطاق: الصنف الفرعي أولًا ثم الرئيسي
     range(mainId, subId) {
       const r = ranges[subId] || ranges[mainId];

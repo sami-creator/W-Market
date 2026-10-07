@@ -1,23 +1,22 @@
-/* filters.js — حالة الفلاتر + حفظها عند التنقل + لوحة الفلاتر + شارات الفلاتر */
+/* filters.js — حالة الفلاتر (محفوظة تلقائيًا) + اللوحة المنبثقة + شارات الفلاتر النشطة */
 (function () {
   'use strict';
-  const el = Utils.el, t = k => I18n.t(k);
-  const SK_FILTERS = window.CONFIG.STORAGE_KEYS.FILTERS_STATE;
+  const el = Utils.el, t = k => I18n.t(k), KEY = window.CONFIG.STORAGE_KEYS.FILTERS;
   const EMPTY = () => ({ q: '', category_id: '', subcategory_id: '', wilaya_ids: [], daira_ids: [], commune_ids: [], min_price: null, max_price: null, sort: '', order: 'desc', delivery: false, verified_only: false, attrs: {} });
+  // مفاتيح تقبل اختيار أكثر من قيمة (ألوان / مقاسات)
+  const MULTI = ['color', 'size', 'shoe_size'];
 
-  // تحميل حالة الفلاتر المحفوظة أو البدء من الصفر
-  function loadSaved() {
-    try {
-      const raw = sessionStorage.getItem(SK_FILTERS);
-      if (raw) return Object.assign(EMPTY(), JSON.parse(raw));
-    } catch (e) {}
-    return EMPTY();
+  function load() {
+    const saved = Utils.Store.get(KEY, null), base = EMPTY();
+    if (!saved || typeof saved !== 'object') return base;
+    const s = Object.assign(base, saved);
+    ['wilaya_ids', 'daira_ids', 'commune_ids'].forEach(k => { if (!Array.isArray(s[k])) s[k] = []; });
+    if (!s.attrs || typeof s.attrs !== 'object') s.attrs = {};
+    return s;
   }
-  function saveCurrent() {
-    try { sessionStorage.setItem(SK_FILTERS, JSON.stringify(state)); } catch (e) {}
-  }
-
-  let state = loadSaved(), cb = () => {};
+  let state = load(), cb = () => {};
+  const save = () => Utils.Store.set(KEY, state);
+  const arr = v => (Array.isArray(v) ? v : (v ? [v] : []));
 
   async function ensureLocation() {
     return new Promise(res => {
@@ -28,58 +27,34 @@
     });
   }
 
-  function checks(name, items, selected, labelFn) {
-    const box = el('div', { class: 'multi' });
-    // ترتيب الولايات 1-58
-    const sorted = [...items].sort((a, b) => (a.id || 0) - (b.id || 0));
-    sorted.forEach(o => {
-      const cb = el('input', { type: 'checkbox', value: o.id, name });
-      cb.checked = selected.map(String).includes(String(o.id));
-      box.append(el('label', {}, [cb, labelFn(o)]));
+  function checks(name, items, selected, labelFn, cls) {
+    const box = el('div', { class: 'multi' + (cls ? ' ' + cls : '') });
+    items.forEach(o => {
+      const c = el('input', { type: 'checkbox', value: o.id, name });
+      c.checked = selected.map(String).includes(String(o.id));
+      box.append(el('label', {}, [c, el('span', { text: labelFn(o) })]));
     });
     return box;
   }
   const picked = box => [...box.querySelectorAll('input:checked')].map(i => Number(i.value));
 
-  // تحديث لون زر الفلاتر حسب حالة النشاط
-  function updateFilterBtn() {
-    const btn = document.getElementById('btn-filters');
-    if (!btn) return;
-    const active = !Filters.isDefault();
-    btn.classList.toggle('has-active', active);
-  }
-
   const Filters = {
     get() { return state; },
-    set(patch) {
-      state = Object.assign(state, patch);
-      saveCurrent();
-      updateFilterBtn();
-      cb(state);
-    },
-    reset() {
-      state = EMPTY();
-      saveCurrent();
-      updateFilterBtn();
-      cb(state);
-    },
+    set(patch) { state = Object.assign(state, patch); save(); cb(state); },
+    reset() { state = EMPTY(); save(); cb(state); },
     onChange(fn) { cb = fn; },
     isDefault() { return JSON.stringify(state) === JSON.stringify(EMPTY()); },
+    // هل هناك أي فلتر مفعّل (البحث النصي وحده لا يُحسب فلترًا)
+    hasActive() { return JSON.stringify(Object.assign({}, state, { q: '' })) !== JSON.stringify(EMPTY()); },
     async location() { return ensureLocation(); },
-
-    // إعادة تطبيق حالة الفلاتر المحفوظة عند العودة (للبحث أيضاً)
-    restore() {
-      state = loadSaved();
-      updateFilterBtn();
-      return state;
-    },
 
     renderTags(container) {
       container.replaceChildren();
-      const add = (text, clear) => container.append(el('span', { class: 'tag' }, [text, el('button', { type: 'button', 'aria-label': t('filters.remove'), onclick: () => { clear(); saveCurrent(); updateFilterBtn(); cb(state); Filters.renderTags(container); } }, '×')]));
+      const done = () => { save(); cb(state); Filters.renderTags(container); };
+      const add = (text, clear) => container.append(el('span', { class: 'tag' }, [text, el('button', { type: 'button', 'aria-label': t('filters.remove'), onclick: () => { clear(); done(); } }, '×')]));
       if (state.category_id) add(Categories.label(Categories.main(state.category_id)), () => { state.category_id = ''; state.subcategory_id = ''; state.attrs = {}; });
       if (state.subcategory_id) { const s = Categories.findSub(state.subcategory_id); add(Categories.label(s && s.sub), () => { state.subcategory_id = ''; state.attrs = {}; }); }
-      state.wilaya_ids.forEach(id => add(Geo.label(Geo.wilaya(id)), () => { state.wilaya_ids = state.wilaya_ids.filter(x => x !== id); }));
+      state.wilaya_ids.forEach(id => add(Geo.wlabel(Geo.wilaya(id)), () => { state.wilaya_ids = state.wilaya_ids.filter(x => x !== id); }));
       state.daira_ids.forEach(id => add(Geo.label(Geo.daira(id)), () => { state.daira_ids = state.daira_ids.filter(x => x !== id); }));
       state.commune_ids.forEach(id => add(Geo.label(Geo.commune(id)), () => { state.commune_ids = state.commune_ids.filter(x => x !== id); }));
       if (state.min_price) add(t('filters.price_from') + ' ' + Utils.formatNumber(state.min_price), () => { state.min_price = null; });
@@ -87,7 +62,10 @@
       if (state.delivery) add(t('filters.delivery'), () => { state.delivery = false; });
       if (state.verified_only) add(t('filters.verified'), () => { state.verified_only = false; });
       if (state.sort) add(t('filters.sort') + ': ' + t('filters.sort_' + (state.sort === 'near' ? 'near' : state.sort)), () => { state.sort = ''; });
-      Object.entries(state.attrs).forEach(([k, v]) => add(v, () => { delete state.attrs[k]; }));
+      Object.entries(state.attrs).forEach(([k, v]) => arr(v).forEach(x => add(x, () => {
+        const left = arr(state.attrs[k]).filter(y => y !== x);
+        if (left.length) state.attrs[k] = left; else delete state.attrs[k];
+      })));
     },
 
     async openPanel() {
@@ -108,24 +86,31 @@
         (m ? m.sub : []).forEach(s => selSub.append(new Option(Categories.label(s), s.id)));
         selSub.value = tmp.subcategory_id || ''; fillAttrs();
       };
+      // فلاتر الصنف الفرعي: الألوان والمقاسات متعددة الاختيار (مثال: أزرق/أحمر + 34/36)
       const fillAttrs = () => {
         attrsBox.replaceChildren();
         Categories.filtersFor(selSub.value).forEach(f => {
-          if (f.type === 'select') {
-            const s = el('select', { class: 'input', 'data-attr': f.key }); s.append(new Option(t('common.all'), ''));
-            f.options.forEach(o => s.append(new Option(o, o))); s.value = tmp.attrs[f.key] || '';
-            attrsBox.append(field(f.key, s));
+          if (f.type !== 'select') { attrsBox.append(field(f.key, el('input', { class: 'input', 'data-attr': f.key, maxlength: f.max || 30, value: arr(tmp.attrs[f.key])[0] || '' }))); return; }
+          if (MULTI.includes(f.key)) {
+            const sel = arr(tmp.attrs[f.key]).map(String), box = el('div', { class: 'multi', 'data-multi': f.key });
+            f.options.forEach(o => {
+              const c = el('input', { type: 'checkbox', value: o }); c.checked = sel.includes(o);
+              box.append(el('label', {}, [c, el('span', { text: Categories.optLabel(f.key, o) })]));
+            });
+            attrsBox.append(field(Categories.keyLabel(f.key), box));
           } else {
-            attrsBox.append(field(f.key, el('input', { class: 'input', 'data-attr': f.key, maxlength: f.max || 30, value: tmp.attrs[f.key] || '' })));
+            const s = el('select', { class: 'input', 'data-attr': f.key }); s.append(new Option(t('common.all'), ''));
+            f.options.forEach(o => s.append(new Option(o, o))); s.value = arr(tmp.attrs[f.key])[0] || '';
+            attrsBox.append(field(Categories.keyLabel(f.key), s));
           }
         });
       };
-      selCat.addEventListener('change', () => { tmp.subcategory_id = ''; fillSub(); });
+      selCat.addEventListener('change', () => { tmp.subcategory_id = ''; tmp.attrs = {}; fillSub(); });
       selSub.addEventListener('change', () => { tmp.attrs = {}; fillAttrs(); });
       fillSub();
 
-      // الولايات مرتبة 1-58
-      const wBox = checks('w', Geo.wilayas(), tmp.wilaya_ids, o => Geo.label(o));
+      // الولايات: مصغّرة، مرتبة ومرقمة 1 → 58
+      const wBox = checks('w', Geo.sortedWilayas(), tmp.wilaya_ids, o => Geo.wlabel(o), 'multi--compact');
       const dBox = el('div'), cBox = el('div');
       const refreshD = () => {
         const w = picked(wBox); dBox.replaceChildren(); cBox.replaceChildren();
@@ -157,6 +142,10 @@
           min_price: Number(pMin.value) || null, max_price: Number(pMax.value) || null,
           sort: sort.value, order: order.value, delivery: dl.checked, verified_only: vf.checked, attrs: {}
         };
+        attrsBox.querySelectorAll('[data-multi]').forEach(b => {
+          const v = [...b.querySelectorAll('input:checked')].map(i => i.value);
+          if (v.length) next.attrs[b.dataset.multi] = v;
+        });
         attrsBox.querySelectorAll('[data-attr]').forEach(i => { const v = Sanitize.cleanText(i.value, 30); if (v) next.attrs[i.dataset.attr] = v; });
         if (next.sort === 'near') {
           const c = await ensureLocation();

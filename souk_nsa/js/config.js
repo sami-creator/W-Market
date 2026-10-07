@@ -18,23 +18,14 @@
     STORAGE_KEYS: {
       LANG: 'sn_lang', THEME: 'sn_theme', COLOR: 'sn_color', FONT: 'sn_font',
       SESSION_HINT: 'sn_session_hint', PROFILE_STATE: 'sn_profile_state',
-      LIKE_TOAST: 'sn_like_toast_seen', DRAFT: 'sn_ad_draft', DEVICE: 'sn_device_id',
-      CACHE_PREFIX: 'sn_cache_',
-      FILTERS_STATE: 'sn_filters_state',
-      SEARCH_QUERY: 'sn_search_query'
+      LIKE_TOAST: 'sn_like_toast_seen', DRAFT: 'sn_ad_draft', DEVICE: 'sn_device_id', FILTERS: 'sn_filters', RECENT: 'sn_recent_ads',
+      CACHE_PREFIX: 'sn_cache_'
     },
-    DEFAULTS: { LANG: 'ar', THEME: 'dark', COLOR: 'rose', FONT: 'cairo' },
+    DEFAULTS: { LANG: 'ar', THEME: 'dark', COLOR: 'rose', FONT: 'proto' },
     LANGS: ['ar', 'fr', 'en'],
-    COLORS: ['rose', 'beige', 'gold', 'cream', 'purple', 'teal', 'coral', 'indigo', 'emerald', 'ruby', 'sky', 'amber', 'slate'],
-    FONTS: {
-      cairo: 'Cairo',
-      tajawal: 'Tajawal',
-      almarai: 'Almarai',
-      scheherazade: 'Scheherazade New',
-      lateef: 'Lateef',
-      system: 'system-ui',
-      times: '"Times New Roman", Times, serif'
-    },
+    COLORS: ['rose', 'fuchsia', 'red', 'orange', 'gold', 'green', 'teal', 'sky', 'blue', 'indigo', 'violet', 'brown', 'beige', 'slate'],
+    COLOR_HEX: { rose: '#F472B6', fuchsia: '#D946EF', red: '#EF4444', orange: '#F97316', gold: '#D4A017', green: '#16A34A', teal: '#0D9488', sky: '#0EA5E9', blue: '#2563EB', indigo: '#4F46E5', violet: '#8B5CF6', brown: '#92613A', beige: '#B89B72', slate: '#475569' },
+    FONTS: { proto: 'Poppins', times: 'Times New Roman', cairo: 'Cairo', tajawal: 'Tajawal', almarai: 'Almarai', amiri: 'Amiri', plex: 'IBM Plex Sans Arabic', system: 'system-ui' },
     INTEREST_POINTS: { click: 1, like: 3, message: 5, buy_or_rate: 8 },
     CLICK_RAW_DAYS: 30,
     SUPPORT: { WHATSAPP: '', TELEGRAM: '' },

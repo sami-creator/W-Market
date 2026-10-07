@@ -12,7 +12,7 @@
 </head>
 <body class="is-gated" data-page="profile">
 <main class="container">
-  <div class="profile-top-actions">
+  <div class="profile-top-actions" id="own-actions">
     <span></span>
     <div class="row">
       <a class="icon-btn" href="chat.html" data-i18n-aria="profile.messages">✉</a>
@@ -28,7 +28,8 @@
       <div><b id="s-rating">0.0</b><span data-i18n="profile.rating"></span></div>
     </div>
   </section>
-  <nav class="menu-list">
+  <div id="public-links" class="contact-links" style="justify-content:center;margin-bottom:12px" hidden></div>
+  <nav class="menu-list" id="own-menu">
     <a href="favorites.html"><span data-i18n="profile.prefs"></span><span>♥</span></a>
     <button id="btn-ads" type="button"><span data-i18n="profile.ads"></span><span>▾</span></button>
     <div id="ads-sub" class="menu-list" hidden>
@@ -40,6 +41,10 @@
     <button id="btn-upgrade" type="button"><span data-i18n="profile.upgrade"></span></button>
     <button id="btn-logout" type="button"><span data-i18n="auth.logout"></span></button>
   </nav>
+  <section id="user-ads" class="user-ads" hidden>
+    <h3 data-i18n="profile.ads"></h3>
+    <div id="grid" class="grid"></div>
+  </section>
 </main>
 <script src="js/env.js"></script>
 <script src="js/config.js"></script>

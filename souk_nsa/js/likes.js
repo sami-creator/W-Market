@@ -36,7 +36,7 @@
       }
       document.querySelectorAll('[data-likes="' + ad.id + '"]').forEach(s => {
   const n = Math.max(0, (parseInt(s.textContent.replace(/\D/g, '')) || 0) + (was ? -1 : 1));
-  s.textContent = '♥ ' + n;});
+  s.textContent = s.hasAttribute('data-plain') ? n : '♥ ' + n;});
       document.dispatchEvent(new CustomEvent('likechange', { detail: { id: ad.id, liked: !was } }));
     },
 
