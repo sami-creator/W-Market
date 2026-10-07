@@ -6,7 +6,8 @@
 .banner-slot{height:44px;border-radius:14px;overflow:hidden;background:var(--c-soft);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--c-primary);margin-bottom:10px}
 .banner-slot img{width:100%;height:100%;object-fit:cover}
 .banner-slot a,.banner-slot button,.banner-slot div{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:none;border:0;color:inherit;font-weight:700}
-.search-row{display:flex;align-items:center;gap:10px;position:relative}
+.top-bar{max-width:100%;overflow:visible}
+.search-row{min-width:0;display:flex;align-items:center;gap:10px;position:relative}
 .filter-btn{order:0;flex:none;width:46px;height:46px;border-radius:14px;background:var(--c-primary);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 16px color-mix(in srgb,var(--c-primary) 35%,transparent);cursor:pointer;transition:transform .15s,background .2s;border:none;position:relative}
 .filter-btn:active{transform:scale(.92)}
 .filter-btn.has-filters{background:var(--c-accent);box-shadow:0 8px 16px rgba(16,185,129,.35)}
@@ -23,7 +24,7 @@
 .did-you-mean button{background:none;border:0;color:var(--c-primary);font-weight:700;text-decoration:underline}
 
 /* ===== التبويبات (الأصناف) ===== */
-.chips-wrap{position:relative;margin-top:10px}
+.chips-wrap{position:relative;margin-top:10px;min-width:0;max-width:100%;overflow:hidden}
 .chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;padding:8px 18px;border-radius:14px;font-size:13px;font-weight:600;color:var(--muted);background:var(--surface-2);border:0;white-space:nowrap;cursor:pointer;transition:all .2s;user-select:none;display:flex;align-items:center;gap:4px}
@@ -54,9 +55,10 @@
 .multi--swatch i{width:12px;height:12px;border-radius:50%;border:1px solid var(--border);display:inline-block}
 
 /* ===== شبكة الإعلانات والبطاقة ===== */
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:12px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:12px;width:100%}
+.grid>*{min-width:0}
 @media(max-width:360px){.grid{gap:10px}}
-.card{background:var(--surface);border-radius:20px;padding:12px 12px 14px;box-shadow:var(--shadow);border:1px solid var(--border);position:relative;cursor:pointer;transition:transform .15s,box-shadow .15s;display:block;overflow:visible}
+.card{min-width:0;max-width:100%;background:var(--surface);border-radius:20px;padding:12px 12px 14px;box-shadow:var(--shadow);border:1px solid var(--border);position:relative;cursor:pointer;transition:transform .15s,box-shadow .15s;display:block;overflow:visible}
 .card:active{transform:scale(.97)}
 .card .img-wrap{width:100%;aspect-ratio:10/12;border-radius:14px;overflow:hidden;background:var(--surface-2);margin-bottom:10px;position:relative}
 .card .img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
