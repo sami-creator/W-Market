@@ -17,7 +17,7 @@
     function cover(adId) {
       const img = el('img', { alt: '', loading: 'lazy', src: 'assets/images/placeholder.svg', style: 'width:100%;height:100%;object-fit:cover;display:block' });
       Ads.images(adId).then(list => {
-        if (list && list[0]) img.src = Utils.imgUrl(list[0].path_thumb || list[0].path_medium, 'thumb');
+        if (list && list[0]) img.src = Utils.imgUrl(list[0].path_medium || list[0].path_large || list[0].path_thumb, 'medium');
       }).catch(() => {});
       img.addEventListener('error', () => { img.src = 'assets/images/placeholder.svg'; }, { once: true });
       return el('div', { style: 'width:100%;aspect-ratio:16/10;border-radius:14px;overflow:hidden;background:var(--surface-2);margin-bottom:10px' }, [img]);
