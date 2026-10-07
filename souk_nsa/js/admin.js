@@ -89,7 +89,7 @@
         const mn = el('input', { class: 'input', type: 'number', min: 0, value: (cur[c.id] || {}).min_price ?? '' });
         const mx = el('input', { class: 'input', type: 'number', min: 0, value: (cur[c.id] || {}).max_price ?? '' });
         return [(parent ? '— ' : '') + Categories.label(c), mn, mx, btn(t('common.save'), async () => {
-          const { error } = await SB.db.from('categories').upsert({ id: c.id, parent_id: parent, name_ar: c.ar, name_fr: c.fr, name_en: c.en, min_price: mn.value === '' ? null : Number(mn.value), max_price: mx.value === '' ? null : Number(mx.value) });
+          const { error } = await SB.db.from('categories').update({ min_price: mn.value === '' ? null : Number(mn.value), max_price: mx.value === '' ? null : Number(mx.value) }).eq('id', c.id);
           UI.toast(error ? 'ERR' : 'OK', error ? 'error' : 'success');
         })];
       })));
