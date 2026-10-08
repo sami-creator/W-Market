@@ -79,32 +79,6 @@
     }
     [['facebook', 'Facebook'], ['instagram', 'Instagram'], ['tiktok', 'TikTok'], ['telegram', 'Telegram'], ['maps_url', 'Maps']].forEach(([k, n]) => { const u = sp[k] && safe(sp[k]); if (u) links.push(el('a', { href: u, target: '_blank', rel: 'noopener noreferrer', text: n })); });
     if (links.length) { $('#public-links').append(...links); $('#public-links').hidden = false; }
-
-    // زر المتابعة
-    if (Auth.isLogged() && Auth.uid() !== uid) {
-      const { data: existingFollow } = await SB.db.from('follows').select('follower_id').eq('follower_id', Auth.uid()).eq('following_id', uid).maybeSingle();
-      let isFollowing = !!existingFollow;
-      const btnFollow = el('button', { class: 'btn btn--primary', type: 'button' });
-      const updateBtn = () => { btnFollow.textContent = isFollowing ? t('profile.unfollow') : t('profile.follow'); };
-      updateBtn();
-      btnFollow.addEventListener('click', async () => {
-        UI.setLoading(btnFollow, true);
-        if (isFollowing) {
-          await SB.db.from('follows').delete().eq('follower_id', Auth.uid()).eq('following_id', uid);
-          isFollowing = false;
-          $('#s-followers').textContent = Math.max(0, Number($('#s-followers').textContent) - 1);
-        } else {
-          await SB.db.from('follows').insert({ follower_id: Auth.uid(), following_id: uid });
-          isFollowing = true;
-          $('#s-followers').textContent = Number($('#s-followers').textContent) + 1;
-        }
-        updateBtn();
-        UI.setLoading(btnFollow, false);
-      });
-      $('#own-actions').hidden = false;
-      $('#own-actions').replaceChildren(btnFollow);
-    }
-
     await Promise.all([Categories.load(), Geo.load()]);
     const grid = $('#grid'); $('#user-ads').hidden = false; grid.replaceChildren(UI.skeletonCards(4));
     const { data: ads, error } = await SB.db.from('ads_feed').select(Ads.LIST_COLS).eq('user_id', uid).eq('status', 'active').order('created_at', { ascending: false }).limit(40);
