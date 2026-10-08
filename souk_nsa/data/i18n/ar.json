@@ -218,6 +218,8 @@
  "survey.opt_friend": "صديقة",
  "survey.opt_other": "أخرى",
  "profile.messages": "الرسائل",
+ "profile.follow": "متابعة",
+ "profile.unfollow": "إلغاء المتابعة",
  "ad.use_gps": "استخدام موقعي الدقيق (اختياري)",
  "ad.gps_done": "تم تحديد موقعك ✓",
  "ad.published": "تم نشر الإعلان",

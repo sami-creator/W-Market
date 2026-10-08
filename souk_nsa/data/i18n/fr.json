@@ -218,6 +218,8 @@
  "survey.opt_friend": "Une amie",
  "survey.opt_other": "Autre",
  "profile.messages": "Messages",
+ "profile.follow": "Suivre",
+ "profile.unfollow": "Ne plus suivre",
  "ad.use_gps": "Utiliser ma position (optionnel)",
  "ad.gps_done": "Position définie ✓",
  "ad.published": "Annonce publiée",
