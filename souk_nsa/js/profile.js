@@ -101,7 +101,9 @@
         updateBtn();
         UI.setLoading(btnFollow, false);
       });
-      $('#public-links').before(btnFollow);
+      btnFollow.style.display = 'block';
+      btnFollow.style.margin = '12px auto 0';
+$('.profile-stats').after(btnFollow);
     }
 
     await Promise.all([Categories.load(), Geo.load()]);
