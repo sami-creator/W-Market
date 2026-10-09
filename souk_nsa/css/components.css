@@ -17,7 +17,7 @@
 .search-box input::placeholder{color:var(--muted);opacity:.8;font-weight:500}
 .settings-btn{order:2;flex:none;width:46px;height:46px;border-radius:14px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;border:none;transition:transform .15s,background .15s}
 .settings-btn:active{transform:scale(.92)}
-.settings-btn svg{width:20px;height:20px;stroke:var(--text);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.settings-btn{font-size:26px;line-height:1}
 .suggest{position:absolute;inset-inline:0;top:100%;background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-top:6px;z-index:40;box-shadow:var(--shadow);overflow:hidden}
 .suggest button{display:block;width:100%;text-align:start;padding:10px 12px;background:none;border:0;border-bottom:1px solid var(--border)}
 .did-you-mean{font-size:13px;margin:8px 0}
