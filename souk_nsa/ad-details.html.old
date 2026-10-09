@@ -15,8 +15,8 @@
 <main class="container">
   <section id="gallery"></section>
   <section id="info"></section>
-  <section class="reviews-section" id="sec-ratings-ad" hidden><h3 data-i18n="ad.rate_ad"></h3><div id="ratings-ad"></div></section>
-  <section class="reviews-section" id="sec-ratings-user" hidden><h3 data-i18n="ad.rate_seller"></h3><div id="ratings-user"></div></section>
+  <section class="reviews-section"><h3 data-i18n="ad.rate_ad"></h3><div id="ratings-ad"></div></section>
+  <section class="reviews-section"><h3 data-i18n="ad.rate_seller"></h3><div id="ratings-user"></div></section>
   <section id="similar" class="similar-section" hidden></section>
 </main>
 <div id="detail-footer" class="detail-footer" hidden></div>
