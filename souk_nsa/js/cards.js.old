@@ -7,7 +7,6 @@
   const HEART = 'M12 21s-6.7-4.35-9.33-8.02C.86 10.6 1.2 7.3 3.6 5.4 5.8 3.66 8.9 4.1 10.6 6.1L12 7.7l1.4-1.6c1.7-2 4.8-2.44 7-.7 2.4 1.9 2.74 5.2 0.93 7.58C18.7 16.65 12 21 12 21z';
   const STAR = 'M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z';
   const seen = new Map(); // user_id -> last_seen
-  const EAGER_COUNT = 4; // عدد البطاقات التي تظهر في الشاشة الأولى على الجوال (عمودان × صفان)
 
   function svg(path, size, attrs) {
     const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -17,31 +16,24 @@
     return s;
   }
 
-  // opts.kind: 'thumb' | 'avatar' — opts.eager: تحميل فوري (أول الشاشة) — opts.high: أولوية عالية (أكبر صورة LCP)
-  function img(src, alt, cls, opts) {
-    const o = opts || {}, kind = o.kind || 'thumb';
-    const attrs = { class: cls, alt: alt || '', loading: o.eager ? 'eager' : 'lazy', decoding: 'async', src: Utils.imgUrl(src, kind) };
-    if (o.high) attrs.fetchpriority = 'high';
-    else if (kind === 'avatar') attrs.fetchpriority = 'low'; // الأفاتار صغير ولا يجب أن ينافس صور الإعلانات
-    const i = el('img', attrs);
+  function img(src, alt, cls) {
+    const i = el('img', { class: cls, alt: alt || '', loading: 'lazy', decoding: 'async', src: Utils.imgUrl(src, 'thumb') });
     i.addEventListener('error', () => { if (!i.dataset.fb) { i.dataset.fb = '1'; i.src = FALLBACK; } });
     return i;
   }
 
   const Cards = {
-    // pos: ترتيب البطاقة في أول عرض للقائمة (0 = الأولى)؛ undefined = بطاقة عادية (تحميل كسول)
-    render(ad, pos) {
-      const first = typeof pos === 'number' && pos < EAGER_COUNT;
+    render(ad) {
       const p = Price.display(ad), sold = ad.status === 'sold';
       const card = el('article', { class: 'card', 'data-id': ad.id, 'data-uid': ad.user_id });
 
-      const wrap = el('div', { class: 'img-wrap' }, [img(ad.thumb_path, ad.title, '', { eager: first, high: first && pos === 0 })]);
+      const wrap = el('div', { class: 'img-wrap' }, [img(ad.thumb_path, ad.title, '')]);
       if (sold) card.append(el('div', { class: 'badge-sold', text: t('ad.sold') }));
       if (p.pct > 0) card.append(el('div', { class: 'badge-discount', text: '-' + p.pct + '%' }));
 
       const dot = el('div', { class: 'mini-dot', 'data-presence': ad.user_id });
       const seller = el('div', { class: 'seller-row' }, [
-        el('div', { class: 'seller-avatar' }, [img(ad.user_avatar || 'assets/images/avatar.svg', ad.user_name, '', { kind: 'avatar' }), dot]),
+        el('div', { class: 'seller-avatar' }, [img(ad.user_avatar || 'assets/images/avatar.svg', ad.user_name, ''), dot]),
         el('div', { class: 'seller' }, [ad.user_name || '', ad.is_verified ? el('span', { class: 'seller-verified', text: ' ✓' }) : null])
       ]);
 
@@ -73,10 +65,8 @@
 
     renderList(container, items, { append = false } = {}) {
       if (!append) container.replaceChildren();
-      // أول بطاقات تظهر في الشاشة الأولى تُحمّل فورًا (وليس بكسل)، ما دامت القائمة فارغة قبل هذا العرض
-      const base = container.querySelector('.card') ? -1 : 0;
       const f = document.createDocumentFragment();
-      items.forEach((a, i) => f.append(this.render(a, base === 0 ? i : undefined)));
+      items.forEach(a => f.append(this.render(a)));
       container.append(f);
       this.presence(container, items);
     },

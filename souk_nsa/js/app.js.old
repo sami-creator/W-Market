@@ -31,6 +31,7 @@
       Banners.mount($('#banner-slot'));
       document.addEventListener('langchange', () => I18n.apply());
       document.body.classList.remove('is-gated');
+      console.log('[App] ready:', Router.current(), st.status);
       return st;
     },
 
@@ -99,7 +100,7 @@
     paintAccount(st) {
       const img = $('#btn-account img'), dot = $('#btn-account .nav-dot');
       if (dot) dot.classList.toggle('off', !Auth.isLogged());
-      if (img && st.profile && st.profile.avatar_url) { img.src = Utils.imgUrl(st.profile.avatar_url, 'avatar'); img.addEventListener('error', () => { img.src = 'assets/images/avatar.svg'; }, { once: true }); }
+      if (img && st.profile && st.profile.avatar_url) { img.src = Utils.imgUrl(st.profile.avatar_url, 'thumb'); img.addEventListener('error', () => { img.src = 'assets/images/avatar.svg'; }, { once: true }); }
     },
 
     pages: {}
@@ -108,13 +109,9 @@
   /* ===== الصفحة الرئيسية ===== */
   App.pages.home = async function () {
     await App.boot();
+    await Promise.all([Categories.load(), Geo.load()]);
     const grid = $('#grid'), tags = $('#active-tags'), chips = $('#chips'), subWrap = $('#sub-wrap'), sub = $('#sub-chips');
     let page = 0, loading = false, done = false, token = 0;
-    // نبدأ جلب الإعلانات فورًا بالتوازي مع تحميل الأصناف والولايات (بدل الانتظار حتى تنتهي)
-    grid.replaceChildren(UI.skeletonCards(6));
-    let prefetch = { key: JSON.stringify(Filters.get()), promise: Ads.feed(Filters.get(), 0) };
-    prefetch.promise.catch(() => { /* يُعالَج الخطأ داخل load() */ });
-    await Promise.all([Categories.load(), Geo.load()]);
     // آخر صنف/صنف فرعي مفعّل (محفوظ) يظهر مفتوحًا عند الدخول
     let subOpen = Filters.get().subcategory_id ? Filters.get().category_id : null;
 
@@ -147,12 +144,13 @@
 
     async function load(reset) {
       if (loading && !reset) return;
-      if (reset) { page = 0; done = false; token++; if (!prefetch) grid.replaceChildren(UI.skeletonCards(6)); }
+      if (reset) { page = 0; done = false; token++; grid.replaceChildren(UI.skeletonCards(6)); }
       loading = true; const my = token, f = Filters.get();
-      // استخدام نتيجة الجلب المبكر مرة واحدة فقط وإن بقيت الفلاتر كما هي
-      const pf = prefetch; prefetch = null;
       try {
-        const res = (page === 0 && pf && pf.key === JSON.stringify(f)) ? await pf.promise : await Ads.feed(f, page);
+        let res;
+        if (f.sort === 'near' && f.coords) res = await Ads.nearby(f.coords, f, page);
+        else if (Filters.isDefault()) res = await Ads.home(page);
+        else res = await Ads.list(f, page);
         if (my !== token) return;
         if (reset) grid.replaceChildren();
         Cards.renderList(grid, res.items, { append: true }); Likes.paint(grid);

@@ -68,13 +68,6 @@
       return { items: data || [], hasMore: (data || []).length >= PS() };
     },
 
-    // نقطة دخول واحدة لجلب صفحة من الخلاصة حسب الفلاتر (تسمح للصفحة الرئيسية ببدء الجلب مبكرًا)
-    async feed(f = {}, page = 0) {
-      if (f.sort === 'near' && f.coords) return this.nearby(f.coords, f, page);
-      if (window.Filters && Filters.isDefault()) return this.home(page);
-      return this.list(f, page);
-    },
-
     // الأقرب مني عبر Edge Function (PostGIS من جهة الخادم، الإحداثيات لا تُكشف)
     async nearby(coords, f = {}, page = 0) {
       f = Object.assign({}, f, { attrs: Object.fromEntries(Object.entries(f.attrs || {}).map(([k, v]) => [k, [].concat(v)[0]])) });

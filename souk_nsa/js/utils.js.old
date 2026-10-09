@@ -107,20 +107,11 @@
     return n;
   }
 
-  // عرض الصورة المطلوب من ImageKit بالبكسل (ضعف العرض المعروض تقريبًا للشاشات عالية الدقة)
-  const IK_W = { thumb: 300, avatar: 90 };
-  const IK_HOST = /^https:\/\/ik\.imagekit\.io\//i;
-
   function imgUrl(path, size) {
     if (!path) return 'assets/images/placeholder.svg';
-    if (/^https?:/i.test(path)) {
-      // روابط ImageKit المطلقة: نطلب نسخة مصغّرة بدل الصورة الأصلية (إن لم يكن الرابط يحمل tr مسبقًا)
-      const iw = IK_W[size];
-      if (iw && IK_HOST.test(path) && !/[?&]tr=/.test(path)) return path + (path.includes('?') ? '&' : '?') + 'tr=w-' + iw;
-      return path;
-    }
+    if (/^https?:/i.test(path)) return path;
     const base = (window.__ENV__ && window.__ENV__.IMAGE_CDN_BASE) || '';
-    const w = window.CONFIG.UPLOAD.SIZES[size] || IK_W[size] || '';
+    const w = window.CONFIG.UPLOAD.SIZES[size] || '';
     if (base) return `${base}/${path}${w ? '?tr=w-' + w : ''}`;
     const sb = (window.__ENV__ && window.__ENV__.SUPABASE_URL) || '';
     return sb && !/^(assets|data|css|js)\//.test(path) ? `${sb}/storage/v1/object/public/ad-images/${path}` : path;

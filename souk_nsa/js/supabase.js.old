@@ -19,6 +19,7 @@
         auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
       });
       this.ready = true;
+      console.log('[Supabase] جاهز');
       return this.client;
     },
     get db() { return this.init(); },
