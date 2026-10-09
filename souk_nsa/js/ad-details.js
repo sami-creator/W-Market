@@ -146,7 +146,10 @@
       links.push(brandBtn('phone', { href: 'tel:' + seller.phone.replace(/[^\d+]/g, '') }, t('ad.phone')));
     }
     [['facebook', 'Facebook'], ['instagram', 'Instagram'], ['tiktok', 'TikTok'], ['telegram', 'Telegram'], ['maps_url', 'Maps']].forEach(([k, n]) => {
-      const u = seller[k] && safeLink(seller[k]); if (u) links.push(brandBtn(k === 'maps_url' ? 'maps' : k, { href: u, target: '_blank', rel: 'noopener noreferrer' }, n));
+      const u = k === 'maps_url' ?
+  (ad.lat && ad.lng ? `https://www.google.com/maps?q=${ad.lat},${ad.lng}` : seller[k] && safeLink(seller[k])) :
+  seller[k] && safeLink(seller[k]);
+  if (u) links.push(brandBtn(k === 'maps_url' ? 'maps' : k, { href: u, target: '_blank', rel: 'noopener noreferrer' }, n));
     });
     const contactRow = links.length ? el('div', { class: 'detail-contact-row' }, links) : null;
     const phones = showPhone ? el('div', { class: 'phones' }, [
