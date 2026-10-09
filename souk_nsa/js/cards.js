@@ -56,7 +56,7 @@
 
       card.append(wrap,
         el('h3', { text: ad.title }), seller,
-        wil ? el('div', { class: 'loc', text: '📍 ' + Geo.label(wil) }) : null,
+        wil ? el('div', { class: 'loc' }, [el('img', { src: 'assets/images/map-pin.svg', style: 'width:14px;height:14px;vertical-align:middle;margin-left:3px' }), ' ' + Geo.label(wil)]) : null,
         el('div', { class: 'nego-tag' + (ad.negotiable ? '' : ' fixed'), text: ad.negotiable ? t('ad.negotiable') : t('ad.fixed_price') }),
         priceEl,
         el('div', { class: 'card-footer' }, [el('div', { class: 'rating' }, [star, Number(ad.rating_avg || 0).toFixed(1)]), heartBtn]),
