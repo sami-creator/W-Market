@@ -101,8 +101,7 @@
         updateBtn();
         UI.setLoading(btnFollow, false);
       });
-      $('#own-actions').hidden = false;
-      $('#own-actions').replaceChildren(btnFollow);
+      $('#public-links').before(btnFollow);
     }
 
     await Promise.all([Categories.load(), Geo.load()]);
