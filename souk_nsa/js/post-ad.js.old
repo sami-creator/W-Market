@@ -193,40 +193,14 @@
       S.faq = faq.slice(0, L.FAQ_MAX);
     }
 
-    /* ---- الخطوة 4: الموقع + وسائل التواصل الغير مضبوطة ---- */
+    /* ---- الخطوة 4: الموقع ---- */
     let sw, sd, sc;
     function step4() {
       sw = el('select', { class: 'input' }); sd = el('select', { class: 'input' }); sc = el('select', { class: 'input' });
       Geo.bindCascade(sw, sd, sc, { wilaya_id: S.wilaya_id, daira_id: S.daira_id, commune_id: S.commune_id });
       const gps = el('button', { class: 'btn btn--ghost', type: 'button' }, S.lat ? t('ad.gps_done') : t('ad.use_gps'));
       gps.addEventListener('click', () => navigator.geolocation && navigator.geolocation.getCurrentPosition(p => { S.lat = p.coords.latitude; S.lng = p.coords.longitude; gps.textContent = t('ad.gps_done'); saveDraft(); }, () => UI.toastKey('geo.locate_denied', 'error'), { timeout: 8000 }));
-
-      // وسائل التواصل الغير مضبوطة
-      const p = st.profile;
-      const SOCIAL_ICONS = { phone: '📞', facebook: 'f', instagram: '📷', tiktok: '♪', telegram: '✈', maps_url: '📍' };
-      const missing = [
-        !p.phone && 'phone',
-        !p.facebook && 'facebook',
-        !p.instagram && 'instagram',
-        !p.tiktok && 'tiktok',
-        !p.telegram && 'telegram',
-        !p.maps_url && 'maps_url',
-      ].filter(Boolean);
-
-      const contactSection = missing.length ? el('div', { class: 'card-box', style: 'margin-top:16px' }, [
-        el('div', { class: 'hint', style: 'margin-bottom:8px', text: t('ad.contact_setup') + ':' }),
-        el('div', { class: 'row', style: 'flex-wrap:wrap;gap:8px;margin-bottom:10px' },
-          missing.map(k => el('span', { class: 'badge', text: (SOCIAL_ICONS[k] || '') + ' ' + (k === 'maps_url' ? 'Maps' : k === 'phone' ? t('ad.phone') : k.charAt(0).toUpperCase() + k.slice(1)) }))
-        ),
-        el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => {
-          // حفظ مرجع الرجوع ثم الانتقال لصفحة تعديل الملف الشخصي
-          const returnUrl = location.href;
-          Utils.Store.set('post_ad_return', returnUrl);
-          Utils.go(R.EDIT_PROFILE);
-        }}, t('ad.contact_setup_go'))
-      ]) : null;
-
-      return [field(t('geo.wilaya'), sw), field(t('geo.daira'), sd), field(t('geo.commune'), sc), gps, contactSection].filter(Boolean);
+      return [field(t('geo.wilaya'), sw), field(t('geo.daira'), sd), field(t('geo.commune'), sc), gps];
     }
     const ok4 = () => !!(sw && Number(sw.value) && Number(sd.value) && Number(sc.value));
     function check4() {
@@ -293,9 +267,5 @@
     });
     render();
     if (!editId && S.title) UI.toastKey('ad.saved_draft', 'info', 1800);
-
-    // الرجوع من صفحة تعديل الملف الشخصي
-    const returnUrl = Utils.Store.get('post_ad_return');
-    if (returnUrl) { Utils.Store.remove('post_ad_return'); }
   };
 })();

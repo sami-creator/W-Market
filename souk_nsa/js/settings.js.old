@@ -59,15 +59,6 @@
       });
       box.append(el('h3', { text: t('settings.report_bug') }), ta, el('div', { class: 'modal__row' }, [send, el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => ov.remove() }, t('common.cancel'))]));
       ov.append(box); ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); }); document.body.append(ov);
-    },
-
-    // يُستدعى من profile.js بعد حفظ تعديلات الملف الشخصي
-    handlePostAdReturn() {
-      const returnUrl = Utils.Store.get('post_ad_return');
-      if (returnUrl) {
-        Utils.Store.remove('post_ad_return');
-        location.href = returnUrl;
-      }
     }
   };
   window.Settings = Settings;
