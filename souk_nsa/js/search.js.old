@@ -10,6 +10,7 @@
       input.maxLength = 100;
       const setPh = () => { input.placeholder = t('search.placeholder_example'); };
       setPh(); document.addEventListener('langchange', setPh);
+      // استعادة آخر بحث (لا يضيع عند الرجوع من الإعلان أو التنقل بين الصفحات)
       const saved = window.Filters && Filters.get().q;
       if (saved && saved !== input.placeholder) input.value = saved;
       input.addEventListener('input', Utils.debounce(() => this.suggest(), window.CONFIG.LIMITS.SEARCH_DEBOUNCE_MS));
@@ -18,6 +19,7 @@
       document.addEventListener('click', e => { if (!sugBox.contains(e.target) && e.target !== input) sugBox.hidden = true; });
     },
 
+    // بحث فارغ = البحث بنص placeholder نفسه
     async submit() {
       sugBox.hidden = true;
       let q = Sanitize.cleanText(input.value, 100) || input.placeholder;
@@ -27,35 +29,19 @@
       this.didYouMean(q);
     },
 
+    // Mistral عبر Edge Function، وعند الفشل: بحث نصي عادي فورًا مع رسالة قصيرة
     async interpret(q) {
       const base = { q };
       try {
+        const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 3500);
         const { data, error } = await SB.fn('smart-search', { q });
+        clearTimeout(to);
         if (error || !data || !data.filters) throw error || new Error('no filters');
         const f = data.filters;
-
-        // بناء attrs من الألوان والمقاسات التي أرجعها AI
-        const attrs = {};
-        if (Array.isArray(f.colors) && f.colors.length) attrs.color = f.colors;
-        if (Array.isArray(f.sizes)  && f.sizes.length)  attrs.size  = f.sizes;
-
-        // تحويل اسم البلدية إلى commune_ids إن وُجد في Geo
-        let commune_ids = [];
-        if (f.commune) {
-          const match = Geo.allCommunes && Geo.allCommunes().find(c =>
-            Geo.label(c).toLowerCase().includes(f.commune.toLowerCase())
-          );
-          if (match) commune_ids = [match.id];
-        }
-
         return Object.assign(base, {
-          category_id:    f.category    || '',
-          subcategory_id: f.subcategory || '',
-          min_price:      f.min_price   || null,
-          max_price:      f.max_price   || null,
-          wilaya_ids:     f.wilaya      ? [Number(f.wilaya)].filter(Boolean) : [],
-          commune_ids,
-          attrs,
+          category_id: f.category || '', subcategory_id: f.subcategory || '',
+          min_price: f.min_price || null, max_price: f.max_price || null,
+          wilaya_ids: f.wilaya ? [Number(f.wilaya)].filter(Boolean) : [],
           q: (f.category || f.subcategory) ? '' : (f.keywords ? Sanitize.cleanText(f.keywords, 100) : q)
         });
       } catch (e) {
