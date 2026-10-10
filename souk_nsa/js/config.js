@@ -28,7 +28,7 @@
     FONTS: { proto: 'Poppins', times: 'Times New Roman', cairo: 'Cairo', tajawal: 'Tajawal', almarai: 'Almarai', amiri: 'Amiri', plex: 'IBM Plex Sans Arabic', system: 'system-ui' },
     INTEREST_POINTS: { click: 1, like: 3, message: 5, buy_or_rate: 8 },
     CLICK_RAW_DAYS: 30,
-    SUPPORT: { WHATSAPP: '', TELEGRAM: '' },
+    SUPPORT: { WHATSAPP: '+213659088226', TELEGRAM: '' },
     ROUTES: {
       HOME: 'index.html', AUTH: 'auth.html', COMPLETE: 'complete-profile.html', PROFILE: 'profile.html',
       EDIT_PROFILE: 'edit-profile.html', VERIFY: 'verify.html', POST: 'post-ad.html', MY_ADS: 'my-ads.html',
