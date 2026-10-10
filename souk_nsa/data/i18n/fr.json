@@ -304,5 +304,21 @@
   "report.other": "Autre (à préciser)",
   "report.other_hint": "Précisez la raison du signalement",
   "ad.contact_setup": "Moyens de contact non configurés",
-  "ad.contact_setup_go": "Configurer le contact"
+  "ad.contact_setup_go": "Configurer le contact",
+  "color.أبيض": "Blanc",
+  "color.أسود": "Noir",
+  "color.أحمر": "Rouge",
+  "color.وردي": "Rose",
+  "color.ذهبي": "Doré",
+  "color.أزرق": "Bleu",
+  "color.أخضر": "Vert",
+  "color.بيج": "Beige",
+  "color.فضي": "Argenté",
+  "color.بنفسجي": "Violet",
+  "color.برتقالي": "Orange",
+  "color.أصفر": "Jaune",
+  "color.بني": "Marron",
+  "color.رمادي": "Gris",
+  "color.كحلي": "Bleu marine",
+  "color.تركوازي": "Turquoise"
 }

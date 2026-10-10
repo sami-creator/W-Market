@@ -304,5 +304,21 @@
   "report.other": "Other (write it)",
   "report.other_hint": "Write the reason",
   "ad.contact_setup": "Contact methods not set up",
-  "ad.contact_setup_go": "Set up contact"
+  "ad.contact_setup_go": "Set up contact",
+  "color.أبيض": "White",
+  "color.أسود": "Black",
+  "color.أحمر": "Red",
+  "color.وردي": "Pink",
+  "color.ذهبي": "Gold",
+  "color.أزرق": "Blue",
+  "color.أخضر": "Green",
+  "color.بيج": "Beige",
+  "color.فضي": "Silver",
+  "color.بنفسجي": "Purple",
+  "color.برتقالي": "Orange",
+  "color.أصفر": "Yellow",
+  "color.بني": "Brown",
+  "color.رمادي": "Grey",
+  "color.كحلي": "Navy",
+  "color.تركوازي": "Turquoise"
 }

@@ -29,7 +29,7 @@
     keyLabel(key) { const m = { color: 'اللون', size: 'المقاس', shoe_size: 'المقاس', fabric: 'القماش', age: 'العمر', loreal_no: 'الرقم' }; const fr = { color: 'Couleur', size: 'Taille', shoe_size: 'Pointure', fabric: 'Tissu', age: 'Âge', loreal_no: 'N°' }; return I18n.lang === 'fr' ? (fr[key] || key) : (m[key] || key); },
     // نقطة لونية بجانب اسم اللون
     COLOR_HEX: { 'أبيض': '#ffffff', 'أسود': '#111111', 'أحمر': '#e53935', 'وردي': '#f48fb1', 'ذهبي': '#d4af37', 'أزرق': '#1e88e5', 'أخضر': '#43a047', 'بيج': '#d9c3a0', 'فضي': '#c0c0c0', 'بنفسجي': '#8e24aa', 'برتقالي': '#fb8c00', 'أصفر': '#fdd835', 'بني': '#6d4c41', 'رمادي': '#9e9e9e', 'كحلي': '#1a237e', 'تركوازي': '#00acc1', 'عنابي': '#7b1fa2', 'زهري فاتح': '#f8bbd0', 'سماوي': '#4fc3f7', 'كاكي': '#8d8a4f' },
-    optLabel(key, o) { return o; },
+    optLabel(key, o) { if (key === 'color') return I18n.t('color.' + o) || o; return o; },
     // ترميز القيم المتعددة داخل attrs: "/أحمر/أزرق/" (حد الخادم 30 حرفًا لكل قيمة)
     ATTR_MAX: 30,
     encodeMulti(list) { return list.length ? '/' + list.join('/') + '/' : ''; },
