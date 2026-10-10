@@ -110,7 +110,7 @@
 
     // السعر
     const p = Price.display(ad);
-    const priceEl = el('div', { class: 'detail-price' }, [p.old ? el('span', { class: 'old-price', text: p.oldText }) : null, p.text, p.pct > 0 ? el('span', { class: 'pct', text: ' -' + p.pct + '%' }) : null]);
+    const priceEl = el('div', { class: 'detail-price' }, [p.old ? el('span', { class: 'old-price', text: p.oldText }) : null, p.text, p.pct > 0 ? el('span', { class: 'pct', text: ' -' + p.pct + '%' }) : null, el('div', { class: 'price-santim', text: p.santim })]);
     const nego = el('div', { class: 'nego-detail' + (ad.negotiable ? '' : ' fixed'), text: ad.negotiable ? t('ad.negotiable') : t('ad.fixed_price') });
     const rentLine = x.deal === 'both' && x.rent ? el('div', { class: 'rent-price', text: t('ad.rent_price') + ': ' + Utils.formatPrice(x.rent) }) : null;
     const dealBadges = el('div', { class: 'row', style: 'flex-wrap:wrap;margin-bottom:8px' }, [
