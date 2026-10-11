@@ -43,7 +43,7 @@
     },
     afterLogin() {
       const fromUrl = new URLSearchParams(location.search).get('return');
-const back = fromUrl || sessionStorage.getItem('sn_return');
+      const back = fromUrl || sessionStorage.getItem('sn_return');
       sessionStorage.removeItem('sn_return');
       if (back && /^[a-z0-9\-]+(\.html)?(\?[^\s]*)?$/i.test(back)) location.href = back;
       else Utils.go(R.PROFILE);
