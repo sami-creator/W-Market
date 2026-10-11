@@ -38,13 +38,13 @@
       return st;
     },
     toLogin() {
-      sessionStorage.setItem('sn_return', location.pathname.split('/').pop() + location.search);
+      localStorage.setItem('sn_return', location.pathname.split('/').pop() + location.search);
       Utils.go(R.AUTH);
     },
     afterLogin() {
       const fromUrl = new URLSearchParams(location.search).get('return');
-      const back = fromUrl || sessionStorage.getItem('sn_return');
-      sessionStorage.removeItem('sn_return');
+      const back = fromUrl || localStorage.getItem('sn_return');
+      localStorage.removeItem('sn_return');
       if (back && /^[a-z0-9\-]+(\.html)?(\?[^\s]*)?$/i.test(back)) location.href = back;
       else Utils.go(R.PROFILE);
     }
