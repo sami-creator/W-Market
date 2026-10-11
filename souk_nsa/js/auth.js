@@ -51,7 +51,7 @@
     async signInGoogle() {
       const { error } = await SB.db.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: location.origin + location.pathname.replace(/[^/]*$/, '') + 'auth.html' }
+        options: { redirectTo: location.origin + location.pathname.replace(/[^/]*$/, '') + 'auth.html?return=' + encodeURIComponent(sessionStorage.getItem('sn_return') || '') }
       });
       if (error) { console.error('[Auth] google', error); UI.toastKey('err.login_failed', 'error'); }
     },
