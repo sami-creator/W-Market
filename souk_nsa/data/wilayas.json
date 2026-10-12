@@ -93,7 +93,7 @@
   "id": 16,
   "ar": "الجزائر",
   "fr": "Alger",
-  "en": "Alger"
+  "en": "Algiers"
  },
  {
   "id": 17,
@@ -346,5 +346,71 @@
   "ar": "المنيعة",
   "fr": "El Meniaa",
   "en": "El Meniaa"
+ },
+ {
+  "id": 59,
+  "ar": "آفلو",
+  "fr": "Aflou",
+  "en": "Aflou"
+ },
+ {
+  "id": 60,
+  "ar": "بريكة",
+  "fr": "Barika",
+  "en": "Barika"
+ },
+ {
+  "id": 61,
+  "ar": "القنطرة",
+  "fr": "El Kantara",
+  "en": "El Kantara"
+ },
+ {
+  "id": 62,
+  "ar": "بئر العاتر",
+  "fr": "Bir El Ater",
+  "en": "Bir El Ater"
+ },
+ {
+  "id": 63,
+  "ar": "العريشة",
+  "fr": "El Aricha",
+  "en": "El Aricha"
+ },
+ {
+  "id": 64,
+  "ar": "قصر الشلالة",
+  "fr": "Ksar Chellala",
+  "en": "Ksar Chellala"
+ },
+ {
+  "id": 65,
+  "ar": "عين وسارة",
+  "fr": "Aïn Oussara",
+  "en": "Ain Oussera"
+ },
+ {
+  "id": 66,
+  "ar": "مسعد",
+  "fr": "Messaad",
+  "en": "Messaad"
+ },
+ {
+  "id": 67,
+  "ar": "قصر البخاري",
+  "fr": "Ksar El Boukhari",
+  "en": "Ksar El Boukhari"
+ },
+ {
+  "id": 68,
+  "ar": "بوسعادة",
+  "fr": "Bou Saâda",
+  "en": "Bou Saada"
+ },
+ {
+  "id": 69,
+  "ar": "الأبيض سيدي الشيخ",
+  "fr": "El Abiodh Sidi Cheikh",
+  "en": "El Abiodh Sidi Cheikh"
  }
 ]
