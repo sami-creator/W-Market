@@ -79,11 +79,14 @@
           attrs.append(field(Categories.keyLabel(f.key), i, null, true));
         });
       };
-      c.addEventListener('change', () => { S.category_id = c.value; S.subcategory_id = ''; S.attrs = {}; fillSub(); saveDraft(); });
-      s.addEventListener('change', () => { S.subcategory_id = s.value; S.attrs = {}; fillAttrs(); saveDraft(); });
+      let vc = null;   // تنبيه التصنيف اللحظي (verify-category.js)
+      c.addEventListener('change', () => { S.category_id = c.value; S.subcategory_id = ''; S.attrs = {}; fillSub(); saveDraft(); if (vc) vc.refresh(); });
+      s.addEventListener('change', () => { S.subcategory_id = s.value; S.attrs = {}; fillAttrs(); saveDraft(); if (vc) vc.refresh(); });
       const ti = el('input', { class: 'input', maxlength: L.TITLE, value: S.title }); bind(ti, 'title');
       const de = el('textarea', { class: 'input', maxlength: L.DESCRIPTION }); de.value = S.description; bind(de, 'description');
       fillSub();
+      const hintT = VerifyCategory.hintEl(), hintD = VerifyCategory.hintEl();
+      vc = VerifyCategory.attach({ title: ti, desc: de, hintTitle: hintT, hintDesc: hintD, getSel: () => ({ main: S.category_id, sub: S.subcategory_id }) });
       const mic = (input, max) => (Voice.supported() ? Voice.dictateButton(input, max) : null);
       // اختيار الصنف بالصوت (مثال: "طالون" أو "قفطان")
       const catVoice = Voice.supported() ? el('button', { class: 'btn btn--ghost voice-cat', type: 'button' }, '🎙 ' + t('voice.category')) : null;
@@ -94,20 +97,27 @@
           onFinal: tx => {
             const m = Voice.matchCategory(tx);
             if (!m) return UI.toastKey('voice.no_cat', 'error');
-            c.value = m.cat; S.category_id = m.cat; S.subcategory_id = m.sub; S.attrs = {}; fillSub(); saveDraft(); refreshNext();
+            c.value = m.cat; S.category_id = m.cat; S.subcategory_id = m.sub; S.attrs = {}; fillSub(); saveDraft(); refreshNext(); if (vc) vc.refresh();
           },
           onEnd: () => catVoice.classList.remove('is-rec')
         });
       });
       return [catVoice, field(t('filters.category'), c), field(t('filters.subcategory'), s), attrs,
-        field(t('ad.title'), el('div', { class: 'row' }, [el('div', { class: 'grow' }, [ti]), mic(ti, L.TITLE)]), counter(ti, L.TITLE)),
-        field(t('ad.description'), el('div', { class: 'row', style: 'align-items:flex-start' }, [el('div', { class: 'grow' }, [de]), mic(de, L.DESCRIPTION)]), counter(de, L.DESCRIPTION))].filter(Boolean);
+        field(t('ad.title'), el('div', { class: 'row' }, [el('div', { class: 'grow' }, [ti]), mic(ti, L.TITLE)]), el('div', {}, [counter(ti, L.TITLE), hintT])),
+        field(t('ad.description'), el('div', { class: 'row', style: 'align-items:flex-start' }, [el('div', { class: 'grow' }, [de]), mic(de, L.DESCRIPTION)]), el('div', {}, [counter(de, L.DESCRIPTION), hintD]))].filter(Boolean);
     }
     const ok1 = () => !!(S.category_id && S.subcategory_id && String(S.title).trim().length >= 3 && String(S.description).trim().length >= 5);
-    function check1() {
+    async function check1() {
       if (!S.category_id || !S.subcategory_id) return 'err.category_required';
       const a = Sanitize.validateText(S.title, { max: L.TITLE, min: 3 }); if (!a.ok) return a.error; S.title = a.value;
       const b = Sanitize.validateText(S.description, { max: L.DESCRIPTION, min: 5 }); if (!b.ok) return b.error; S.description = b.value;
+      // التصنيف: يُمنع المتابعة إن بدا العنوان/الوصف خاصًا بتصنيف آخر، حتى يُصحَّح أو تعتمده المراجعة
+      const unchanged = !!(orig && orig.category_id === S.category_id && orig.subcategory_id === S.subcategory_id && orig.title === S.title && orig.description === S.description);
+      return await VerifyCategory.gate({
+        title: S.title, desc: S.description, main: S.category_id, sub: S.subcategory_id, S, unchanged,
+        apply: (m, sb) => { S.category_id = m; S.subcategory_id = sb; S.attrs = {}; saveDraft(); render(); },
+        onApproved: () => saveDraft()
+      });
     }
 
     /* ---- الخطوة 2: السعر، الحالة، بيع/كراء، التوصيل ---- */
@@ -291,6 +301,7 @@
     $('#btn-back').addEventListener('click', () => { step--; render(); });
     next.addEventListener('click', async () => {
       const err = await checks[step]();
+      if (err === 'verify.blocked') return;                    // النافذة ظاهرة للمستخدم بالفعل
       if (err) return UI.toast(t(err) === err ? err : t(err), 'error');
       if (step < TOTAL) { step++; return render(); }
       UI.setLoading(next, true);
