@@ -50,6 +50,27 @@
     const total = value / 10, millions = Math.floor(total / 1000), thousands = total % 1000, parts = [];
     if (millions > 0) {
       if (millions === 1) parts.push('مليون');
+      else if (millions === 2) parts.push('زوج ملاين');
+      else if (millions <= 10) parts.push(dUnder1000(millions) + ' ملاين');
+      else parts.push(dUnder1000(millions) + ' مليون');
+    }
+    if (thousands > 0) {
+      const th = dUnder1000(thousands);
+      if (parts.length === 0) {
+        if (thousands === 1) parts.push('ألف');
+        else if (thousands === 2) parts.push('ألفين');
+        else parts.push(th + ' ألف');
+      } else parts.push(dEndsWithHundred(th) ? th : th + ' ألف');
+    }
+    return parts.join(' و ') || 'صفر';
+  }
+  /*function toSantim(n) {
+    let value = Math.floor(Number(n || 0));
+    value = value - (value % 10);
+    if (value <= 0) return 'صفر';
+    const total = value / 10, millions = Math.floor(total / 1000), thousands = total % 1000, parts = [];
+    if (millions > 0) {
+      if (millions === 1) parts.push('مليون');
       else if (millions === 2) parts.push('اثنين ملاين');
       else if (millions <= 10) parts.push(dUnder1000(millions) + ' ملاين');
       else parts.push(dUnder1000(millions) + ' مليون');
@@ -63,7 +84,7 @@
       } else parts.push(dEndsWithHundred(th) ? th : th + ' ألف');
     }
     return parts.join(' و ') || 'صفر';
-  }
+  }*/
   function applyDiscount(price, pct) { return pct > 0 ? Math.round(price * (100 - pct) / 100) : price; }
 
   function timeAgo(iso) {
