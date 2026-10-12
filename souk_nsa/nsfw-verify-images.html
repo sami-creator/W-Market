@@ -31,6 +31,10 @@
     .badge.safe    { background: rgba(34,139,34,0.9); }
     .badge.warning { background: rgba(255,140,0,0.9); }
     .badge.unsafe  { background: rgba(200,0,0,0.9); }
+    .reason-box {
+      margin-top: 4px; font-size: 0.72rem; color: #c00;
+      text-align: center; width: 140px; word-break: break-word;
+    }
     #console {
       background: #1e1e1e; color: #d4d4d4; border-radius: 8px;
       padding: 14px; font-family: monospace; font-size: 0.82rem;
@@ -61,56 +65,74 @@
 
   <script>
     // ========== قاموس المصطلحات مع الأوزان ==========
-    const DICTIONARY = {
-      // جنسي صريح - وزن عالي جداً
-      nude: 10, nudity: 10, naked: 10, explicit: 9, pornographic: 10,
-      pornography: 10, porn: 10, genitals: 10, penis: 10, vagina: 10,
-      breast: 8, nipple: 9, topless: 9, bottomless: 9, intercourse: 10,
-      orgasm: 10, masturbation: 10, erotic: 8, sexual: 8, sex: 8,
-      lingerie: 6, bikini: 3, underwear: 5, cleavage: 6, buttocks: 7,
-      seductive: 6, provocative: 5, revealing: 5, skimpy: 5,
-
-      // مخدرات - وزن عالي
-      drug: 9, drugs: 9, cocaine: 10, heroin: 10, marijuana: 9,
-      cannabis: 9, weed: 7, meth: 10, methamphetamine: 10, crack: 8,
-      ecstasy: 9, mdma: 10, lsd: 10, overdose: 9, syringe: 7,
-      needle: 5, inject: 6, snort: 8, pill: 4, pills: 4,
-
-      // عنف - وزن متوسط إلى عالي
-      blood: 7, bloody: 7, gore: 9, wound: 6, injury: 5,
-      weapon: 7, gun: 6, knife: 6, murder: 9, kill: 7,
-      dead: 6, corpse: 9, violence: 8, brutal: 8, torture: 9,
-
-      // كحول ومواد
-      alcohol: 4, drunk: 5, intoxicated: 6, cigarette: 3, smoking: 3,
-
-      // محتوى صادم آخر
-      hate: 6, racist: 7, offensive: 5, disturbing: 6, graphic: 5,
+    const CATEGORIES = {
+      sexual: {
+        label: 'محتوى جنسي',
+        words: {
+          nude:10, nudity:10, naked:10, explicit:9, pornographic:10,
+          pornography:10, porn:10, genitals:10, penis:10, vagina:10,
+          breast:8, nipple:9, topless:9, bottomless:9, intercourse:10,
+          orgasm:10, masturbation:10, erotic:8, sexual:8, sex:8,
+          lingerie:6, bikini:3, underwear:5, cleavage:6, buttocks:7,
+          seductive:6, provocative:5, revealing:5, skimpy:5,
+        }
+      },
+      drugs: {
+        label: 'مخدرات',
+        words: {
+          drug:9, drugs:9, cocaine:10, heroin:10, marijuana:9,
+          cannabis:9, weed:7, meth:10, methamphetamine:10, crack:8,
+          ecstasy:9, mdma:10, lsd:10, overdose:9, syringe:7,
+          needle:5, inject:6, snort:8, pill:4, pills:4,
+        }
+      },
+      violence: {
+        label: 'عنف',
+        words: {
+          blood:7, bloody:7, gore:9, wound:6, injury:5,
+          weapon:7, gun:6, knife:6, murder:9, kill:7,
+          dead:6, corpse:9, violence:8, brutal:8, torture:9,
+        }
+      },
+      other: {
+        label: 'محتوى آخر ممنوع',
+        words: {
+          alcohol:4, drunk:5, intoxicated:6, cigarette:3, smoking:3,
+          hate:6, racist:7, offensive:5, disturbing:6, graphic:5,
+        }
+      }
     };
 
-    // حد النقاط للتصنيف
     const THRESHOLD_UNSAFE  = 10;
     const THRESHOLD_WARNING = 4;
 
     function analyzeText(text) {
       const lower = text.toLowerCase();
-      let score = 0;
-      const found = [];
+      let totalScore = 0;
+      const foundWords = [];
+      const reasons = [];
 
-      for (const [word, weight] of Object.entries(DICTIONARY)) {
-        const regex = new RegExp(`\\b${word}\\b`, 'gi');
-        const matches = lower.match(regex);
-        if (matches) {
-          score += weight * matches.length;
-          found.push(`${word}(${weight}×${matches.length})`);
+      for (const [catKey, cat] of Object.entries(CATEGORIES)) {
+        let catScore = 0;
+        for (const [word, weight] of Object.entries(cat.words)) {
+          const matches = lower.match(new RegExp(`\\b${word}\\b`, 'g'));
+          if (matches) {
+            const pts = weight * matches.length;
+            catScore += pts;
+            foundWords.push(`${word}(${weight}×${matches.length})`);
+          }
+        }
+        if (catScore > 0) {
+          totalScore += catScore;
+          reasons.push(`${cat.label} (${catScore} نقطة)`);
         }
       }
 
       let category = 'SAFE';
-      if (score >= THRESHOLD_UNSAFE) category = 'UNSAFE';
-      else if (score >= THRESHOLD_WARNING) category = 'WARNING';
+      if (totalScore >= THRESHOLD_UNSAFE) category = 'UNSAFE';
+      else if (totalScore >= THRESHOLD_WARNING) category = 'WARNING';
 
-      return { score, category, found };
+      return { score: totalScore, category, foundWords, reasons };
     }
 
     // ========== واجهة المستخدم ==========
@@ -163,18 +185,28 @@
         const description = data.result?.description || '';
         log(`📝 وصف: ${description}`, 'info');
 
-        const { score, category, found } = analyzeText(description);
+        const { score, category, foundWords, reasons } = analyzeText(description);
         log(`🔢 النقاط: ${score} | التصنيف: ${category}`, category === 'SAFE' ? 'ok' : 'err');
-        if (found.length > 0) log(`🔑 الكلمات: ${found.join(', ')}`, 'warn');
+        if (foundWords.length > 0) log(`🔑 الكلمات: ${foundWords.join(', ')}`, 'warn');
 
         const wrap = document.getElementById(`img-wrap-${index}`);
-        const badge = document.createElement('div');
         const cls = category === 'UNSAFE' ? 'unsafe' : category === 'WARNING' ? 'warning' : 'safe';
         const icon = category === 'UNSAFE' ? '✘' : category === 'WARNING' ? '⚠' : '✔';
-        const label = category === 'UNSAFE' ? 'محتوى ممنوع' : category === 'WARNING' ? 'مشبوه' : 'آمن';
+        const labelText = category === 'UNSAFE' ? 'ممنوع' : category === 'WARNING' ? 'مشبوه' : 'آمن';
+
+        const badge = document.createElement('div');
         badge.className = `badge ${cls}`;
-        badge.textContent = `${icon} ${label} (${score})`;
+        badge.textContent = `${icon} ${labelText} (${score})`;
         wrap.appendChild(badge);
+
+        // عرض الأسباب تحت الصورة
+        if (reasons.length > 0) {
+          const reasonBox = document.createElement('div');
+          reasonBox.className = 'reason-box';
+          reasonBox.textContent = 'بسبب: ' + reasons.join('، ');
+          wrap.appendChild(reasonBox);
+          log(`⚠ السبب: ${reasons.join(' | ')}`, 'warn');
+        }
 
       } catch (e) {
         log(`❌ استثناء: ${e.message}`, 'err');
