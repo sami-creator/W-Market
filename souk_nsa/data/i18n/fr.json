@@ -401,5 +401,21 @@
  "profile.bio_ph": "Écrivez une courte présentation (100 mots max)",
  "profile.bio_too_long": "La bio dépasse 100 mots",
  "profile.share": "Partager le profil",
- "edit.bio_unavailable": "Données enregistrées, mais la bio n’est pas encore activée"
+ "edit.bio_unavailable": "Données enregistrées, mais la bio n’est pas encore activée",
+ "verify.title_looks": "Le titre semble correspondre à ({cat})",
+"verify.desc_looks": "La description semble correspondre à ({cat})",
+"verify.dialog_title": "La catégorie est peut-être incorrecte",
+"verify.dialog_body": "{what} semble correspondre à ({cat}). Votre choix : ({cur}).",
+"verify.what_title": "Le titre",
+"verify.what_desc": "La description",
+"verify.fix": "Corriger la catégorie",
+"verify.correct": "La catégorie est correcte",
+"verify.dismiss": "Fermer l’alerte",
+"verify.fixed": "Catégorie modifiée en ({cat})",
+"verify.reviewing": "Vérification en cours...",
+"verify.review_ok": "Vérifié : la catégorie est correcte",
+"verify.review_bad": "La vérification indique ({cat}). Corrigez la catégorie pour continuer.",
+"verify.limit": "Limite de {n} vérifications par jour atteinte. Corrigez la catégorie pour continuer.",
+"verify.review_failed": "Vérification indisponible, réessayez plus tard ou corrigez la catégorie.",
+"verify.remaining": "Vérifications restantes aujourd’hui : {n}"
 }

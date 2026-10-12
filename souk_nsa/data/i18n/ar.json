@@ -401,5 +401,21 @@
  "profile.bio_ph": "اكتبي نبذة قصيرة (حتى 100 كلمة)",
  "profile.bio_too_long": "النبذة تتجاوز 100 كلمة",
  "profile.share": "مشاركة الحساب",
- "edit.bio_unavailable": "تم حفظ بياناتك، لكن حقل النبذة غير مفعّل بعد"
+ "edit.bio_unavailable": "تم حفظ بياناتك، لكن حقل النبذة غير مفعّل بعد",
+ "verify.title_looks": "عنوان الإعلان يبدو خاصًا بـ ({cat})",
+"verify.desc_looks": "وصف الإعلان يبدو خاصًا بـ ({cat})",
+"verify.dialog_title": "التصنيف قد يكون غير صحيح",
+"verify.dialog_body": "{what} يبدو خاصًا بـ ({cat}). اخترتِ حاليًا: ({cur}).",
+"verify.what_title": "عنوان الإعلان",
+"verify.what_desc": "وصف الإعلان",
+"verify.fix": "تعديل التصنيف",
+"verify.correct": "التصنيف صحيح",
+"verify.dismiss": "إزالة التنبيه",
+"verify.fixed": "تم تعديل التصنيف إلى ({cat})",
+"verify.reviewing": "جارٍ مراجعة الإعلان...",
+"verify.review_ok": "تمت المراجعة: التصنيف صحيح",
+"verify.review_bad": "المراجعة ترى أن الإعلان يبدو خاصًا بـ ({cat}). عدّلي التصنيف للمتابعة.",
+"verify.limit": "تجاوزتِ حد طلبات المراجعة اليوم ({n}). يُعتمد قرار الفحص المحلي، عدّلي التصنيف للمتابعة.",
+"verify.review_failed": "تعذرت المراجعة الآن، حاولي لاحقًا أو عدّلي التصنيف.",
+"verify.remaining": "المراجعات المتبقية اليوم: {n}"
 }

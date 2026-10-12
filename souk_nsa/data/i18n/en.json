@@ -401,5 +401,21 @@
  "profile.bio_ph": "Write a short bio (up to 100 words)",
  "profile.bio_too_long": "Bio exceeds 100 words",
  "profile.share": "Share profile",
- "edit.bio_unavailable": "Saved, but the bio field is not enabled yet"
+ "edit.bio_unavailable": "Saved, but the bio field is not enabled yet",
+ "verify.title_looks": "The title looks like it belongs to ({cat})",
+"verify.desc_looks": "The description looks like it belongs to ({cat})",
+"verify.dialog_title": "The category may be wrong",
+"verify.dialog_body": "{what} looks like ({cat}). You chose: ({cur}).",
+"verify.what_title": "The title",
+"verify.what_desc": "The description",
+"verify.fix": "Fix category",
+"verify.correct": "Category is correct",
+"verify.dismiss": "Dismiss",
+"verify.fixed": "Category changed to ({cat})",
+"verify.reviewing": "Reviewing your ad...",
+"verify.review_ok": "Reviewed: the category is correct",
+"verify.review_bad": "The review says it looks like ({cat}). Fix the category to continue.",
+"verify.limit": "Daily review limit ({n}) reached. Fix the category to continue.",
+"verify.review_failed": "Review unavailable right now. Try later or fix the category.",
+"verify.remaining": "Reviews left today: {n}"
 }
