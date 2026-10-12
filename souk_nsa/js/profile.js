@@ -189,10 +189,28 @@ $('.profile-stats').after(btnFollow);
     $('#avatar-prev').src = Utils.imgUrl(p.avatar_url || 'assets/images/avatar.svg', 'thumb');
 
     let newAvatar = null;
+    let _avatarBlocked = false;   // true إن كانت الصورة UNSAFE
+
     f.avatar.addEventListener('change', async () => {
-      const file = f.avatar.files[0]; const v = await Upload.validate(file);
+      const file = f.avatar.files[0];
+      const v = await Upload.validate(file);
       if (!v.ok) { f.avatar.value = ''; return UI.toastKey(v.error, 'error'); }
-      newAvatar = file; $('#avatar-prev').src = URL.createObjectURL(file);
+      newAvatar = file; _avatarBlocked = false;
+      $('#avatar-prev').src = URL.createObjectURL(file);
+
+      /* فحص في الخلفية فور الاختيار */
+      UI.toastKey('ad.images_reviewing', 'info', 3000);
+      const { promise } = Upload.startModeration([file], (i, f2, res) => {
+        if (!res.ok) {
+          _avatarBlocked = res.verdict === 'UNSAFE';
+          Upload.showModerationWarning(
+            f2.name, res.verdict, res.reasons,
+            () => { _avatarBlocked = false; },   // متابعة
+            () => { newAvatar = null; _avatarBlocked = false; f.avatar.value = ''; $('#avatar-prev').src = p.avatar_url || 'assets/images/avatar.svg'; }
+          );
+        }
+      });
+      promise.catch(() => { _avatarBlocked = false; /* fail-open */ });
     });
 
     $('#form-edit').addEventListener('submit', async e => {
@@ -217,6 +235,7 @@ $('.profile-stats').after(btnFollow);
         for (const x of links) { const v = Sanitize.validateUrl(x.i.value, x.k); if (!v.ok) { showErr(x.i, v.error); return UI.toastKey(v.error, 'error'); } showErr(x.i, null); patch[x.k] = v.value || null; }
         const m = Sanitize.validateUrl(maps.value, 'maps'); if (!m.ok) return UI.toastKey(m.error, 'error'); patch.maps_url = m.value || null;
         if (newAvatar) {
+          if (_avatarBlocked) { UI.toastKey('ad.blocked_images_exist', 'error'); return; }
           const blobs = await Upload.compress(newAvatar); const path = `${Auth.uid()}/avatar.webp`;
           const up = await SB.db.storage.from('avatars').upload(path, blobs.medium, { contentType: blobs.medium.type, upsert: true });
           if (up.error) throw up.error; patch.avatar_url = SB.db.storage.from('avatars').getPublicUrl(path).data.publicUrl + '?v=' + Date.now();

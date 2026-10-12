@@ -15,6 +15,9 @@
     // delivery: غير متوفر افتراضيًا، والناشرة تغيّره عند الحاجة
     const S = { category_id: '', subcategory_id: '', attrs: {}, title: '', description: '', price: '', discount_pct: 0, negotiable: false, delivery: false, show_phone: false, video_url: '', faq: [], lat: null, lng: null, wilaya_id: st.profile.wilaya_id, daira_id: st.profile.daira_id, commune_id: st.profile.commune_id, used: false, grade: 9, deal: 'sale', rent_price: '' };
     let imgs = [], step = 1, orig = null, imgDirty = false;   // imgs: [{ old: record } | { file }]
+    let _modPromise = null;   // Promise ينتهي عند اكتمال فحص الصور
+    let _modResults = [];     // نتائج الفحص بنفس ترتيب imgs الجديدة
+    let _modPending = false;  // هل الفحص جارٍ؟
 
     // الحقول الإضافية المخزّنة داخل attrs تُفصل عن سمات الصنف
     const splitExtras = a => {
@@ -197,12 +200,35 @@
       };
       const fi = el('input', { class: 'input', type: 'file', accept: 'image/jpeg,image/png,image/webp', multiple: true });
       fi.addEventListener('change', async () => {
+        const newFiles = [];
         for (const f of [...fi.files]) {
           if (imgs.length >= L.IMAGES_MAX) { UI.toastKey('err.image_count', 'error'); break; }
           const v = await Upload.validate(f); if (!v.ok) { UI.toastKey(v.error, 'error'); continue; }
-          imgs.push({ file: f }); imgDirty = true;
+          imgs.push({ file: f }); imgDirty = true; newFiles.push(f);
         }
         fi.value = ''; paint(); refreshNext();
+
+        if (!newFiles.length) return;
+
+        /* بدء الفحص في الخلفية فور اختيار الصور */
+        _modPending = true;
+        UI.toastKey('ad.images_reviewing', 'info', 3000);
+        const startIdx = _modResults.length;
+
+        const { promise } = Upload.startModeration(newFiles, (i, file, res) => {
+          _modResults[startIdx + i] = res;
+          if (!res.ok) {
+            Upload.showModerationWarning(
+              file.name, res.verdict, res.reasons,
+              () => { /* المستخدم اختار المتابعة */ },
+              () => {
+                const idx = imgs.findIndex(it => it.file === file);
+                if (idx !== -1) { imgs.splice(idx, 1); _modResults.splice(startIdx + i, 1); imgDirty = true; paint(); refreshNext(); }
+              }
+            );
+          }
+        });
+        _modPromise = promise.finally(() => { _modPending = false; });
       });
       const vd = el('input', { class: 'input', type: 'url', inputmode: 'url', maxlength: 300, value: S.video_url }); bind(vd, 'video_url');
       const faqBox = el('div');
@@ -311,6 +337,15 @@
         // عند أي تغيير في الصور (حذف/إضافة/غلاف) تُعاد رفع القائمة النهائية بالترتيب
         const changed = !editId || imgDirty;
         if (changed) {
+          /* إن كان الفحص لا يزال جاريًا: أبلغ المستخدم وانتظر */
+          if (_modPending) {
+            UI.toastKey('ad.waiting_moderation', 'info', 0);
+            try { await _modPromise; } catch { /* fail-open */ }
+          }
+          /* منع النشر إن وُجدت صور ممنوعة (UNSAFE) لم يُزلها المستخدم */
+          const hasUnsafe = imgs.some((it, i) => it.file && _modResults[i] && _modResults[i].ok === false && _modResults[i].verdict === 'UNSAFE');
+          if (hasUnsafe) { UI.toastKey('ad.blocked_images_exist', 'error'); UI.setLoading(next, false); return; }
+
           UI.toast(t('ad.uploading'), 'info', 1500);
           const files = [];
           for (const it of imgs) {
@@ -319,7 +354,7 @@
             const blob = await (await fetch(url)).blob();
             files.push(new File([blob], 'old.' + (blob.type.split('/')[1] || 'webp'), { type: blob.type || 'image/webp' }));
           }
-          images = await Upload.putAdImages(id, files);
+          images = await Upload.putAdImages(id, files, null, _modPromise, _modResults);
         }
         const ad = { category_id: S.category_id, subcategory_id: S.subcategory_id, attrs: buildAttrs(), title: S.title, description: S.description, price: S.price, discount_pct: S.discount_pct, negotiable: S.negotiable, delivery: Categories.isService(S.category_id) ? false : !!S.delivery, show_phone: S.show_phone, video_url: S.video_url, faq: S.faq, wilaya_id: S.wilaya_id, daira_id: S.daira_id, commune_id: S.commune_id, lat: S.lat, lng: S.lng };
         const { data, error } = await SB.fn('submit-ad', { mode: editId ? 'update' : 'create', id, ad, images });
