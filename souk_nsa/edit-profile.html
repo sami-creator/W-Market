@@ -19,12 +19,16 @@
       <label class="btn btn--ghost" for="avatar-file" data-i18n="edit.avatar"></label>
       <input id="avatar-file" class="sr-only" type="file" accept="image/jpeg,image/png,image/webp"></div>
     <div class="field"><label for="name" data-i18n="auth.name"></label><input id="name" class="input"></div>
+    <div class="field"><label for="bio"><span data-i18n="profile.bio"></span><span class="opt" data-i18n="common.optional"></span></label>
+      <textarea id="bio" class="input" rows="3" data-i18n-placeholder="profile.bio_ph"></textarea><div id="bio-count" class="char-count"></div><span class="error-text" id="bio-err"></span></div>
     <div class="field"><label for="gender" data-i18n="auth.gender"></label>
       <select id="gender" class="input"><option value="female" data-i18n="auth.female"></option><option value="male" data-i18n="auth.male"></option></select></div>
     <div class="field"><label for="year" data-i18n="auth.birth_year"></label><select id="year" class="input"></select></div>
     <div class="field"><label for="wilaya" data-i18n="geo.wilaya"></label><select id="wilaya" class="input"></select></div>
     <div class="field"><label for="daira" data-i18n="geo.daira"></label><select id="daira" class="input"></select></div>
     <div class="field"><label for="commune" data-i18n="geo.commune"></label><select id="commune" class="input"></select></div>
+    <h2 data-i18n="delivery.section"></h2>
+    <div class="field"><div id="delivery-sum" class="hint"></div><button id="btn-delivery" class="btn btn--ghost" type="button">🚚 <span data-i18n="delivery.set"></span></button></div>
     <h2 data-i18n="edit.social"></h2>
     <div class="field"><label for="l-facebook" data-i18n="link.facebook"></label><input id="l-facebook" class="input" type="url" inputmode="url"><span class="error-text"></span></div>
     <div class="field"><label for="l-instagram" data-i18n="link.instagram"></label><input id="l-instagram" class="input" type="url" inputmode="url"><span class="error-text"></span></div>
@@ -66,6 +70,7 @@
 <script src="js/chat.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/upload.js"></script>
+<script src="js/delivery.js"></script>
 <script src="js/app.js"></script>
 <script src="js/profile.js"></script>
 <script src="js/logger.js"></script>

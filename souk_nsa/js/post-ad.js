@@ -84,7 +84,24 @@
       const ti = el('input', { class: 'input', maxlength: L.TITLE, value: S.title }); bind(ti, 'title');
       const de = el('textarea', { class: 'input', maxlength: L.DESCRIPTION }); de.value = S.description; bind(de, 'description');
       fillSub();
-      return [field(t('filters.category'), c), field(t('filters.subcategory'), s), attrs, field(t('ad.title'), ti, counter(ti, L.TITLE)), field(t('ad.description'), de, counter(de, L.DESCRIPTION))];
+      const mic = (input, max) => (Voice.supported() ? Voice.dictateButton(input, max) : null);
+      // اختيار الصنف بالصوت (مثال: "طالون" أو "قفطان")
+      const catVoice = Voice.supported() ? el('button', { class: 'btn btn--ghost voice-cat', type: 'button' }, '🎙 ' + t('voice.category')) : null;
+      if (catVoice) catVoice.addEventListener('click', () => {
+        if (Voice.active) return Voice.stop();
+        catVoice.classList.add('is-rec');
+        Voice.start({
+          onFinal: tx => {
+            const m = Voice.matchCategory(tx);
+            if (!m) return UI.toastKey('voice.no_cat', 'error');
+            c.value = m.cat; S.category_id = m.cat; S.subcategory_id = m.sub; S.attrs = {}; fillSub(); saveDraft(); refreshNext();
+          },
+          onEnd: () => catVoice.classList.remove('is-rec')
+        });
+      });
+      return [catVoice, field(t('filters.category'), c), field(t('filters.subcategory'), s), attrs,
+        field(t('ad.title'), el('div', { class: 'row' }, [el('div', { class: 'grow' }, [ti]), mic(ti, L.TITLE)]), counter(ti, L.TITLE)),
+        field(t('ad.description'), el('div', { class: 'row', style: 'align-items:flex-start' }, [el('div', { class: 'grow' }, [de]), mic(de, L.DESCRIPTION)]), counter(de, L.DESCRIPTION))].filter(Boolean);
     }
     const ok1 = () => !!(S.category_id && S.subcategory_id && String(S.title).trim().length >= 3 && String(S.description).trim().length >= 5);
     function check1() {
@@ -113,6 +130,8 @@
           const rp = el('input', { class: 'input', type: 'number', inputmode: 'numeric', min: 1, value: S.rent_price }); bind(rp, 'rent_price');
           box.append(field(t('ad.rent_price') + ' (' + t('currency') + ')', rp));
         }
+        const svc = Categories.isService(S.category_id);
+        if (svc) { S.delivery = false; S.used = false; }
         const dc = el('input', { class: 'input', type: 'number', min: 0, max: 90, inputmode: 'numeric', value: S.discount_pct }); bind(dc, 'discount_pct', v => Math.min(90, Math.max(0, parseInt(v, 10) || 0)));
         const ng = el('input', { type: 'checkbox' }); ng.checked = S.negotiable; ng.addEventListener('change', () => { S.negotiable = ng.checked; saveDraft(); });
         // الحالة: جديد افتراضيًا، ومستعمل بدرجة من 10
@@ -120,12 +139,21 @@
         gr.addEventListener('change', () => { S.grade = Number(gr.value); saveDraft(); });
         const us = el('input', { type: 'checkbox' }); us.checked = S.used; us.addEventListener('change', () => { S.used = us.checked; gr.disabled = !us.checked; saveDraft(); });
         // التوصيل: غير متوفر افتراضيًا
-        const dl = el('input', { type: 'checkbox' }); dl.checked = !!S.delivery; dl.addEventListener('change', () => { S.delivery = dl.checked; saveDraft(); });
+        const dl = el('input', { type: 'checkbox' }); dl.checked = !!S.delivery; dl.addEventListener('change', () => { S.delivery = dl.checked; saveDraft(); paint(); });
         const sp = el('input', { type: 'checkbox' }); sp.checked = S.show_phone; sp.addEventListener('change', () => { S.show_phone = sp.checked; saveDraft(); });
+        // أسعار التوصيل لكل ولاية: تُحفظ في حساب الناشر وتُطبَّق تلقائيًا على كل إعلاناته، ويمكن تعديلها من هنا
+        const dprices = Delivery.clean((st.profile && st.profile.delivery_prices) || {});
+        const dCount = Object.keys(dprices).length;
+        const dBox = (!svc && S.delivery) ? el('div', { class: 'card-box deliv-box' }, [
+          el('div', { class: 'hint', text: dCount ? t('delivery.configured').replace('{n}', dCount) : t('delivery.none_configured') }),
+          el('div', { class: 'hint', text: t('delivery.saved_hint') }),
+          el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => Delivery.openEditor(dprices, pr2 => { if (st.profile) st.profile.delivery_prices = pr2; paint(); }) }, '🚚 ' + t(dCount ? 'delivery.edit' : 'delivery.set'))
+        ]) : null;
         box.append(field(t('ad.discount'), dc, null, true),
           el('label', { class: 'row' }, [ng, t('ad.negotiable')]),
-          field(t('ad.condition'), el('div', { class: 'row' }, [el('label', { class: 'row' }, [us, t('ad.used')]), gr]), el('div', { class: 'hint', text: t('ad.condition_hint') }), true),
-          el('label', { class: 'row', style: 'margin:10px 0' }, [dl, t('ad.delivery_yes')]),
+          svc ? null : field(t('ad.condition'), el('div', { class: 'row' }, [el('label', { class: 'row' }, [us, t('ad.used')]), gr]), el('div', { class: 'hint', text: t('ad.condition_hint') }), true),
+          svc ? null : el('label', { class: 'row', style: 'margin:10px 0' }, [dl, t('ad.delivery_yes')]),
+          dBox,
           el('label', { class: 'row' }, [sp, t('ad.show_phone')]));
       };
       paint();
@@ -253,7 +281,7 @@
     const buildAttrs = () => {
       const out = {}, A = S.attrs;
       ['size', 'shoe_size', 'color'].forEach(k => { if (A[k]) out[k] = A[k]; });
-      if (S.used) out.condition = S.grade + '/10';
+      if (S.used && !Categories.isService(S.category_id)) out.condition = S.grade + '/10';
       if (S.deal !== 'sale') out.deal = S.deal;
       if (S.deal === 'both' && S.rent_price) out.rent_price = String(S.rent_price);
       Object.keys(A).forEach(k => { if (!(k in out)) out[k] = A[k]; });
@@ -282,7 +310,7 @@
           }
           images = await Upload.putAdImages(id, files);
         }
-        const ad = { category_id: S.category_id, subcategory_id: S.subcategory_id, attrs: buildAttrs(), title: S.title, description: S.description, price: S.price, discount_pct: S.discount_pct, negotiable: S.negotiable, delivery: S.delivery, show_phone: S.show_phone, video_url: S.video_url, faq: S.faq, wilaya_id: S.wilaya_id, daira_id: S.daira_id, commune_id: S.commune_id, lat: S.lat, lng: S.lng };
+        const ad = { category_id: S.category_id, subcategory_id: S.subcategory_id, attrs: buildAttrs(), title: S.title, description: S.description, price: S.price, discount_pct: S.discount_pct, negotiable: S.negotiable, delivery: Categories.isService(S.category_id) ? false : !!S.delivery, show_phone: S.show_phone, video_url: S.video_url, faq: S.faq, wilaya_id: S.wilaya_id, daira_id: S.daira_id, commune_id: S.commune_id, lat: S.lat, lng: S.lng };
         const { data, error } = await SB.fn('submit-ad', { mode: editId ? 'update' : 'create', id, ad, images });
         if (error || (data && data.error)) throw error || new Error(data.error);
         Utils.Store.remove(window.CONFIG.STORAGE_KEYS.DRAFT);

@@ -28,6 +28,9 @@
     return f;
   }
 
+  const EMPTY_SVG = '<svg viewBox="0 0 120 120" width="120" height="120" aria-hidden="true"><circle cx="60" cy="60" r="50" fill="var(--c-soft)"/><path d="M38 70c6 10 38 10 44 0" stroke="var(--c-primary)" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="46" cy="52" r="5" fill="var(--c-primary)"/><circle cx="74" cy="52" r="5" fill="var(--c-primary)"/></svg>';
+  function emptyIcon() { const d = document.createElement('div'); d.className = 'empty-ico'; d.innerHTML = EMPTY_SVG; return d; }
+
   // رسمة لطيفة بدل الصفحة الفارغة
   function emptyState(container, titleKey = 'empty.title', subKey = 'empty.sub') {
     container.replaceChildren();
@@ -86,5 +89,5 @@
     return 'err.generic';
   }
 
-  window.UI = { errKey, toast, toastKey, skeletonCards, emptyState, confirmDialog, setLoading, gate, fadeEdge };
+  window.UI = { errKey, toast, toastKey, skeletonCards, emptyState, emptyIcon, confirmDialog, setLoading, gate, fadeEdge };
 })();

@@ -43,3 +43,7 @@
 .menu-list a,.menu-list button{background:none;border:0;border-bottom:1px solid var(--border);border-radius:8px;padding:14px 10px;font-weight:500;font-size:14px}
 .menu-list a:active,.menu-list button:active{background:var(--surface-2)}
 .user-ads{margin-top:16px}
+
+/* ===== النبذة ومشاركة الحساب ===== */
+.profile-bio{max-width:420px;text-align:center;font-size:13px;color:var(--muted);line-height:1.7;margin:2px 0 4px;white-space:pre-line;word-break:break-word}
+.profile-share{margin:0 auto 10px;min-height:38px;padding:8px 16px}

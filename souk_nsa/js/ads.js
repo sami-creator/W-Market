@@ -14,8 +14,16 @@
     if (f.max_price) q = q.lte('price', f.max_price);
     if (f.delivery) q = q.eq('delivery', true);
     if (f.verified_only) q = q.eq('is_verified', true);
+    if (f.condition === 'used') q = q.not('attrs->>condition', 'is', null);
+    else if (f.condition === 'new') q = q.is('attrs->>condition', null);
     if (f.attrs) {
       Object.entries(f.attrs).forEach(([k, v]) => {
+        // مقاس غير معروف النوع (ملابس أو أحذية): يُبحث في size وshoe_size معًا
+        if (k === 'size_any') {
+          const sv = [].concat(v).map(x => String(x).replace(/[,()*%.\\"]/g, '')).filter(Boolean);
+          if (sv.length) q = q.or(sv.flatMap(x => ['size', 'shoe_size'].flatMap(key => ['attrs->>' + key + '.eq.' + x, 'attrs->>' + key + '.ilike.*/' + x + '/*'])).join(','));
+          return;
+        }
         const vals = [].concat(v).map(x => String(x).replace(/[,()*%.\\"]/g, '')).filter(Boolean);
         if (!vals.length || !/^[a-z_]{1,20}$/.test(k)) return;
         // القيمة قد تكون مفردة (إعلان قديم) أو مرمّزة "/أ/ب/" (إعلان بعدة ألوان/مقاسات)
@@ -37,27 +45,123 @@
     }
   }
 
+  const CAP = () => window.CONFIG.LIMITS.RESULTS_CAP;
+  const terms = f => [f.q].concat(f.qx || []).filter(Boolean).slice(0, 6);
+
+  // معرّفات النتائج من كل صيغ الاستعلام (المترادفات) بالتوازي: id ← قرب الترتيب (0 = الأفضل)
+  async function searchIds(ts) {
+    const res = await Promise.all(ts.map(tm => SB.db.rpc('search_ad_ids', { p_q: tm })));
+    const best = new Map();
+    res.forEach(({ data, error }) => {
+      if (error) { console.error('[Ads] search', error); return; }
+      const list = data || [];
+      list.forEach((r, i) => { const sc = i / Math.max(1, list.length); if (!best.has(r.id) || best.get(r.id) > sc) best.set(r.id, sc); });
+    });
+    return new Map([...best.entries()].sort((a, b) => a[1] - b[1]));
+  }
+
+  // درجات الترتيب الذكي (0..1)
+  function locScore(a) {
+    const p = window.Auth && Auth.state && Auth.state.profile; if (!p || !a.wilaya_id) return 0.5;
+    if (a.commune_id && a.commune_id === p.commune_id) return 1;
+    if (a.daira_id && a.daira_id === p.daira_id) return 0.85;
+    return a.wilaya_id === p.wilaya_id ? 0.65 : 0.2;
+  }
+  function rankScore(a, rel) {
+    const R = rel == null ? 0.5 : 1 - rel;
+    const days = Math.max(0, (Date.now() - new Date(a.created_at).getTime()) / 86400000);
+    const fresh = Math.exp(-days / 30);
+    const quality = (a.thumb_path ? 0.4 : 0) + (a.is_verified ? 0.3 : 0) + ((Number(a.rating_avg) || 0) / 5) * 0.3;
+    const eng = Math.min(1, Math.log1p((a.likes_count || 0) * 3 + (a.click_count || 0)) / Math.log(300));
+    return R * 50 + locScore(a) * 15 + fresh * 15 + quality * 10 + eng * 10;
+  }
+
+  const rankedCache = new Map();
+  async function rankedList(f) {
+    const { coords, ...rest } = f, key = JSON.stringify(rest), hit = rankedCache.get(key);
+    if (hit && Date.now() - hit.ts < 120000) return hit.items;
+    let ids = null, rel = null;
+    const ts = terms(f);
+    if (ts.length) {
+      rel = await searchIds(ts); ids = [...rel.keys()].slice(0, CAP());
+      if (!ids.length) { rankedCache.set(key, { ts: Date.now(), items: [] }); return []; }
+    }
+    let q = SB.db.from('ads_feed').select(LIST_COLS).eq('status', 'active');
+    if (ids) q = q.in('id', ids);
+    q = applyFilters(q, f).order('created_at', { ascending: false }).limit(CAP());
+    const { data, error } = await q;
+    if (error) throw error;
+    const items = (data || []).map(a => ({ a, s: rankScore(a, rel ? rel.get(a.id) : null) })).sort((x, y) => y.s - x.s).map(x => x.a);
+    if (rankedCache.size > 12) rankedCache.delete(rankedCache.keys().next().value);
+    rankedCache.set(key, { ts: Date.now(), items });
+    return items;
+  }
+
+  // ترتيب يختاره المستخدم: الفرز من الخادم
+  async function listSorted(f, from, to) {
+    let ids = null;
+    const ts = terms(f);
+    if (ts.length) { ids = [...(await searchIds(ts)).keys()].slice(0, CAP()); if (!ids.length) return { items: [], hasMore: false }; }
+    let q = SB.db.from('ads_feed').select(LIST_COLS).eq('status', 'active');
+    if (ids) q = q.in('id', ids);
+    q = applySort(applyFilters(q, f), f);
+    const { data, error } = await q.range(from, to);
+    if (error) throw error;
+    return { items: data || [], hasMore: (data || []).length >= PS() };
+  }
+
   const Ads = {
-    LIST_COLS,
+    LIST_COLS, clearCache() { rankedCache.clear(); },
     // f: حالة الفلاتر، page: يبدأ من 0
+    // بلا ترتيب مختار: ترتيب ذكي (تطابق 50 + موقع 15 + حداثة 15 + جودة 10 + تفاعل 10) على أفضل 200 نتيجة ثم تقسيم لصفحات
     async list(f = {}, page = 0) {
       const from = page * PS(), to = from + PS() - 1;
-      let ids = null, rank = null;
-      if (f.q) {
-        const { data, error } = await SB.db.rpc('search_ad_ids', { p_q: f.q });
-        if (error) console.error('[Ads] search', error);
-        ids = (data || []).map(r => r.id); rank = new Map(ids.map((id, i) => [id, i]));
-        if (!ids.length) return { items: [], hasMore: false };
-      }
-      let q = SB.db.from('ads_feed').select(LIST_COLS).eq('status', 'active');
+      if (f.sort) return listSorted(f, from, to);
+      const items = await rankedList(f);
+      return { items: items.slice(from, to + 1), hasMore: items.length > to + 1 };
+    },
+
+    // عدد النتائج لفلاتر معيّنة (للاقتراحات عند عدم وجود نتائج)
+    async count(f) {
+      const ts = terms(f); let ids = null;
+      if (ts.length) { ids = [...(await searchIds(ts)).keys()].slice(0, CAP()); if (!ids.length) return 0; }
+      let q = SB.db.from('ads_feed').select('id', { count: 'exact', head: true }).eq('status', 'active');
       if (ids) q = q.in('id', ids);
       q = applyFilters(q, f);
-      if (!ids || f.sort) q = applySort(q, f);
-      const { data, error } = ids && !f.sort ? await q.limit(200) : await q.range(from, to);
-      if (error) throw error;
-      let items = data || [];
-      if (ids && !f.sort) { items.sort((a, b) => rank.get(a.id) - rank.get(b.id)); items = items.slice(from, to + 1); }
-      return { items, hasMore: (data || []).length >= PS() };
+      const { count, error } = await q;
+      return error ? 0 : (count || 0);
+    },
+
+    // اقتراح نتائج قريبة عند غياب النتائج: أول تخفيف يعطي نتائج (الموقع ← السعر ← الخيارات ← الصنف الفرعي)
+    async fallback(f) {
+      const has = a => Array.isArray(a) && a.length;
+      const geo = has(f.wilaya_ids) || has(f.daira_ids) || has(f.commune_ids);
+      if (geo) {
+        const relaxed = Object.assign({}, f, { wilaya_ids: [], daira_ids: [], commune_ids: [] });
+        const ts = terms(relaxed); let ids = null;
+        if (ts.length) { ids = [...(await searchIds(ts)).keys()].slice(0, CAP()); }
+        if (!ts.length || ids.length) {
+          let q = SB.db.from('ads_feed').select('wilaya_id').eq('status', 'active');
+          if (ids) q = q.in('id', ids);
+          q = applyFilters(q, relaxed).limit(CAP());
+          const { data } = await q, cnt = new Map();
+          (data || []).forEach(r => { if (r.wilaya_id) cnt.set(r.wilaya_id, (cnt.get(r.wilaya_id) || 0) + 1); });
+          let best = null; cnt.forEach((n, w) => { if (!best || n > best.n) best = { w, n }; });
+          if (best) return { type: 'wilaya', wilaya_id: best.w, count: best.n, patch: { wilaya_ids: [best.w], daira_ids: [], commune_ids: [] } };
+        }
+      }
+      const steps = [
+        ['price', (f.min_price || f.max_price), { min_price: null, max_price: null }],
+        ['attrs', (Object.keys(f.attrs || {}).length || f.condition), { attrs: {}, condition: '' }],
+        ['sub', f.subcategory_id, { subcategory_id: '', attrs: {} }],
+        ['other', (f.delivery || f.verified_only), { delivery: false, verified_only: false }]
+      ];
+      for (const [type, on, patch] of steps) {
+        if (!on) continue;
+        const n = await this.count(Object.assign({}, f, patch));
+        if (n > 0) return { type, count: n, patch };
+      }
+      return null;
     },
 
     // الصفحة الرئيسية المخصصة: 70% حسب الاهتمامات + 30% حديثة/عشوائية (RPC)

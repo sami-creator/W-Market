@@ -16,6 +16,16 @@
     if (slot) slot.textContent = key ? t(key) : '';
   }
 
+  // مشاركة رابط حساب (من صاحبه أو من الزوار)
+  async function shareProfile(uid, name) {
+    const url = location.origin + location.pathname.replace(/[^/]*$/, '') + R.PROFILE + '?u=' + uid;
+    if (navigator.share) { try { await navigator.share({ title: name || t('app.name'), url }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+    try { await navigator.clipboard.writeText(url); } catch { const i = el('input', { value: url }); document.body.append(i); i.select(); document.execCommand('copy'); i.remove(); }
+    UI.toastKey('ad.link_copied', 'success');
+  }
+  const wordCount = s => String(s || '').trim().split(/\s+/).filter(Boolean).length;
+  function paintBio(text) { const b = $('#p-bio'); if (!b) return; b.textContent = text || ''; b.hidden = !text; }
+
   /* ---------- تسجيل الدخول ---------- */
   P.auth = async function () {
     const st = await App.boot();
@@ -30,7 +40,7 @@
   P.complete = async function () {
     const st = await App.boot({ guard: true, complete: false });
     if (!st) return;
-    if (st.status === 'complete') return Utils.go(R.PROFILE);
+    if (st.status === 'complete') return Router.afterLogin();
     const f = { name: $('#name'), gender: $('#gender'), year: $('#year'), w: $('#wilaya'), d: $('#daira'), c: $('#commune') };
     f.name.value = st.profile.name || ''; f.name.maxLength = L.NAME;
     fillYears(f.year);
@@ -66,6 +76,8 @@
     $('#p-avatar').src = Utils.imgUrl(sp.avatar_url || 'assets/images/avatar.svg', 'medium');
     $('#p-avatar').addEventListener('error', e => { e.target.src = 'assets/images/avatar.svg'; }, { once: true });
     $('#p-name').textContent = sp.name || ''; $('#p-tick').hidden = !sp.is_verified;
+    paintBio(sp.bio);
+    $('#btn-share-profile').addEventListener('click', () => shareProfile(uid, sp.name));
     const { data } = await SB.db.rpc('profile_stats', { p_user: uid });
     const s = (data && data[0]) || {};
     $('#s-followers').textContent = s.followers || 0;
@@ -129,6 +141,8 @@ $('.profile-stats').after(btnFollow);
     $('#p-avatar').addEventListener('error', e => { e.target.src = 'assets/images/avatar.svg'; }, { once: true });
     $('#p-name').textContent = p.name || '';
     $('#p-tick').hidden = !p.is_verified;
+    paintBio(p.bio);
+    $('#btn-share-profile').addEventListener('click', () => shareProfile(p.id, p.name));
     const { data } = await SB.db.rpc('profile_stats', { p_user: p.id });
     const s = (data && data[0]) || {};
     $('#s-followers').textContent = s.followers || 0;
@@ -155,6 +169,15 @@ $('.profile-stats').after(btnFollow);
     if (!st) return;
     const p = st.profile;
     const f = { name: $('#name'), gender: $('#gender'), year: $('#year'), w: $('#wilaya'), d: $('#daira'), c: $('#commune'), avatar: $('#avatar-file'), show: $('#show-phone'), phone: $('#phone') };
+    // نبذة (حتى 100 كلمة)
+    const bio = $('#bio'), bioCount = $('#bio-count');
+    bio.maxLength = L.BIO_CHARS; bio.value = p.bio || '';
+    const paintCount = () => { const n = wordCount(bio.value); bioCount.textContent = n + ' / ' + L.BIO_WORDS; bioCount.style.color = n > L.BIO_WORDS ? 'var(--danger)' : ''; };
+    bio.addEventListener('input', paintCount); paintCount();
+    // أسعار التوصيل لكل ولاية (تُحفظ في الحساب وتظهر تلقائيًا في كل إعلاناتك)
+    const paintDeliv = () => { const n = Delivery.count(p.delivery_prices); $('#delivery-sum').textContent = n ? t('delivery.configured').replace('{n}', n) : t('delivery.none_configured'); };
+    paintDeliv();
+    $('#btn-delivery').addEventListener('click', () => Delivery.openEditor(p.delivery_prices, pr => { p.delivery_prices = pr; paintDeliv(); }));
     const links = ['facebook', 'instagram', 'tiktok', 'telegram'].map(k => ({ k, i: $('#l-' + k) }));
     const maps = $('#l-maps');
     f.name.value = p.name || ''; f.name.maxLength = L.NAME; f.gender.value = p.gender || '';
@@ -184,7 +207,11 @@ $('.profile-stats').after(btnFollow);
         const rawPhone = Sanitize.toLatinDigits(f.phone.value).replace(/[\s.\-()]/g, '');
         if (!p.is_verified && rawPhone && !/^(?:\+213|0)[567]\d{8}$/.test(rawPhone)) return UI.toastKey('verify.bad_phone', 'error');
         const phoneNow = p.is_verified ? p.phone : (rawPhone || null);
-        const patch = { name: name.value, gender: f.gender.value, birth_year: Number(f.year.value), show_phone: f.show.checked && !!phoneNow };
+        const bioV = Sanitize.validateText(bio.value, { max: L.BIO_CHARS, min: 0 });
+        if (!bioV.ok) { $('#bio-err').textContent = t(bioV.error); return UI.toastKey(bioV.error, 'error'); }
+        if (wordCount(bioV.value) > L.BIO_WORDS) { $('#bio-err').textContent = t('profile.bio_too_long'); return UI.toastKey('profile.bio_too_long', 'error'); }
+        $('#bio-err').textContent = '';
+        const patch = { bio: bioV.value || null, name: name.value, gender: f.gender.value, birth_year: Number(f.year.value), show_phone: f.show.checked && !!phoneNow };
         if (!p.is_verified) patch.phone = phoneNow;
         Object.assign(patch, g);
         for (const x of links) { const v = Sanitize.validateUrl(x.i.value, x.k); if (!v.ok) { showErr(x.i, v.error); return UI.toastKey(v.error, 'error'); } showErr(x.i, null); patch[x.k] = v.value || null; }
@@ -194,7 +221,13 @@ $('.profile-stats').after(btnFollow);
           const up = await SB.db.storage.from('avatars').upload(path, blobs.medium, { contentType: blobs.medium.type, upsert: true });
           if (up.error) throw up.error; patch.avatar_url = SB.db.storage.from('avatars').getPublicUrl(path).data.publicUrl + '?v=' + Date.now();
         }
-        const { error } = await SB.db.from('users').update(patch).eq('id', Auth.uid());
+        let { error } = await SB.db.from('users').update(patch).eq('id', Auth.uid());
+        // إن لم يكن عمود bio موجودًا بعد في قاعدة البيانات: نحفظ بقية البيانات ونُنبّه بدل أن يفشل الحفظ كله
+        if (error && /bio|column|schema cache/i.test(String(error.message || ''))) {
+          const { bio: _omit, ...rest } = patch;
+          ({ error } = await SB.db.from('users').update(rest).eq('id', Auth.uid()));
+          if (!error) UI.toastKey('edit.bio_unavailable', 'info', 4500);
+        }
         if (error) throw error;
         UI.toastKey('edit.saved', 'success'); setTimeout(() => Utils.go(R.PROFILE), 700);
       } catch (err) { console.error('[Edit]', err); UI.toastKey(UI.errKey(err), 'error'); }

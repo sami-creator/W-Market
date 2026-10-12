@@ -15,15 +15,29 @@
       window.addEventListener('pagehide', () => { if (visible) acc += Date.now() - start; this.flush(); });
     },
 
-    // تسجيل نقرة (عد متكرر يزيد الرقم في الخادم). للزائر غير المسجل: بلا بيانات جغرافية
-    async click(ad) {
+    // نقرة على بطاقة: تُسجَّل كاهتمام فقط. عدّاد المشاهدات يُحتسب عند فتح صفحة الإعلان فعلًا (view) كي لا تضيع
+    // المشاهدات القادمة من رابط مباشر/مشاركة/إعلان مشابه/محادثة، ولا تُحتسب نقرتان لنفس الفتح
+    click(ad) {
       if (!ad || (lastClick.id === ad.id && Date.now() - lastClick.ts < 3000)) return;
       lastClick = { id: ad.id, ts: Date.now() };
+      Interests.record('click', ad);
+    },
+
+    // مشاهدة إعلان (تُستدعى من صفحة التفاصيل): مرة لكل جهاز كل 30 دقيقة، ولا تُحتسب مشاهدة صاحب الإعلان. تُرجع true إن سُجّلت
+    view(ad) {
+      if (!ad || !ad.id) return false;
+      if (Auth.uid() && ad.user_id === Auth.uid()) return false;
+      const K = window.CONFIG.STORAGE_KEYS.VIEWED, now = Date.now(), WIN = 30 * 60 * 1000;
+      let seen = Utils.Store.get(K, {}) || {};
+      Object.keys(seen).forEach(id => { if (now - seen[id] > 24 * 3600 * 1000) delete seen[id]; });
+      if (seen[ad.id] && now - seen[ad.id] < WIN) return false;
+      seen[ad.id] = now; Utils.Store.set(K, seen);
       const p = Auth.state && Auth.state.profile;
       const row = { ad_id: ad.id, user_id: Auth.uid() || null };
       if (p) Object.assign(row, { wilaya_id: p.wilaya_id, daira_id: p.daira_id, commune_id: p.commune_id, age: Utils.ageFromYear(p.birth_year) });
-      SB.db.from('clicks_raw').insert(row).then(({ error }) => { if (error) console.warn('[Tracking] click', error.message); });
+      SB.db.from('clicks_raw').insert(row).then(({ error }) => { if (error) { console.warn('[Tracking] view', error.message); delete seen[ad.id]; Utils.Store.set(K, seen); } });
       Interests.record('click', ad);
+      return true;
     },
 
     // زمن الصفحة: صف واحد لكل مغادرة (بدل إرسال دوري) لتوفير Bandwidth

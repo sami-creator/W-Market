@@ -67,6 +67,8 @@
     try { ad = await Ads.get(id); } catch (e) { console.error('[AdDetails]', e); }
     if (!ad || ad.status === 'deleted') return UI.emptyState($('#gallery'), 'ad.unavailable', 'empty.sub');
     document.title = ad.title + ' — souk nsa';
+    // المشاهدة تُحتسب هنا (فتح صفحة الإعلان فعلًا) وتظهر فورًا في العدّاد
+    if (Tracking.view(ad)) ad.click_count = (ad.click_count || 0) + 1;
 
     const [imgs, hist, sellerRes] = await Promise.all([
       Ads.images(id), Ads.priceHistory(id),
@@ -95,7 +97,21 @@
     shareBtn.append(lineIcon('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>'));
     const vidBtn = el('button', { class: 'icon-action', type: 'button', title: t('ad.video'), style: video ? null : 'opacity:.4', onclick: () => { if (video) window.open(video, '_blank', 'noopener'); else UI.toastKey('ad.no_video', 'info'); } });
     vidBtn.append(lineIcon('<rect x="2" y="5" width="15" height="14" rx="2"/><path d="M17 9.5l5-3v11l-5-3z"/>'));
-    const iconRow = el('div', { class: 'detail-icon-row' }, [shareBtn, vidBtn, like]);
+    const cmpAd = Object.assign({}, ad, { thumb_path: imgs[0] && (imgs[0].path_thumb || imgs[0].path_medium), is_verified: !!seller.is_verified, rating_count: ad.rating_count || 0 });
+    const cmpBtn = el('button', { class: 'icon-action', type: 'button', title: t('compare.title'), 'aria-label': t('compare.title'), onclick: () => Compare.open(cmpAd) });
+    cmpBtn.append(lineIcon('<path d="M7 4v14M3 14l4 4 4-4M17 20V6M13 10l4-4 4 4"/>'));
+    const svc = Categories.isService(ad.category_id);
+    // قراءة مواصفات الإعلان بصوت عالٍ
+    const readBtn = el('button', { class: 'icon-action', type: 'button', title: t('voice.read'), 'aria-label': t('voice.read') });
+    readBtn.append(lineIcon('<path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>'));
+    readBtn.addEventListener('click', () => {
+      const attrsTxt = Object.entries(ad.attrs || {}).filter(([k]) => !['condition', 'deal', 'rent_price'].includes(k)).map(([k, v]) => Categories.keyLabel(k) + ' ' + (Categories.isMulti(k) ? Categories.decodeMulti(v).join(' ') : v)).join('. ');
+      const place = [ad.wilaya_id && Geo.label(Geo.wilaya(ad.wilaya_id)), ad.commune_id && Geo.label(Geo.commune(ad.commune_id))].filter(Boolean).join(' ');
+      const on = Voice.speak([ad.title, Price.display(ad).text, place, x.condition ? t('ad.used') + ' ' + x.condition : '', attrsTxt, ad.description].filter(Boolean).join('. '));
+      readBtn.classList.toggle('is-rec', !!on);
+    });
+    window.addEventListener('pagehide', () => Voice.stopSpeak());
+    const iconRow = el('div', { class: 'detail-icon-row' }, [shareBtn, vidBtn, cmpBtn, readBtn, like]);
 
     // الناشرة (قابلة للضغط → صفحة حسابها وإعلاناتها)
     const online = seller.last_seen && (Date.now() - new Date(seller.last_seen).getTime() < ONLINE_MS);
@@ -121,19 +137,24 @@
       sold ? el('span', { class: 'badge badge--sale', text: t('ad.sold') }) : null
     ]);
 
-    // الشريط المعلوماتي
+    // الشريط المعلوماتي: الخدمات تعرض "التنقل" بدل التوصيل؛ والتوصيل يعرض زر أسعار الولايات أو "مجاني"
     const loc = [ad.wilaya_id && Geo.wlabel(Geo.wilaya(ad.wilaya_id)), ad.daira_id && Geo.label(Geo.daira(ad.daira_id)), ad.commune_id && Geo.label(Geo.commune(ad.commune_id))].filter(Boolean).join('، ');
+    const prices = seller.delivery_prices || null;
+    let deliveryNode;
+    if (svc) deliveryNode = (ad.attrs && ad.attrs.mobility) ? el('span', { class: 'delivery-available', text: '🚗 ' + Categories.keyLabel('mobility') + ': ' + ad.attrs.mobility }) : null;
+    else if (ad.delivery && Delivery.isFree(prices)) deliveryNode = el('span', { class: 'delivery-available', text: '🚚 ' + t('delivery.free') });
+    else if (ad.delivery && Delivery.has(prices)) deliveryNode = el('button', { class: 'delivery-btn', type: 'button', onclick: () => Delivery.openInfo(prices) }, '🚚 ' + t('delivery.info'));
+    else deliveryNode = el('span', { class: ad.delivery ? 'delivery-available' : 'delivery-unavailable', text: t('ad.delivery') + ' ' + (ad.delivery ? t('ad.available') + ' ✅' : t('ad.unavailable_short') + ' ❌') });
     const meta = el('div', { class: 'detail-meta' }, [
       el('span', { text: '⭐ ' + Number(ad.rating_avg || 0).toFixed(1) }), el('span', { text: '❤️ ' + (ad.likes_count || 0) }), el('span', { text: '👁 ' + (ad.click_count || 0) }),
-      el('span', { text: '📍 ' + loc }),
-      el('span', { class: ad.delivery ? 'delivery-available' : 'delivery-unavailable', text: t('ad.delivery') + ' ' + (ad.delivery ? t('ad.available') + ' ✅' : t('ad.unavailable_short') + ' ❌') })
+      el('span', { text: '📍 ' + loc }), deliveryNode
     ]);
 
     // السمات (ألوان/مقاسات متعددة…)
     const HIDE = ['condition', 'deal', 'rent_price'];
-    const attrChips = Object.entries(ad.attrs || {}).filter(([k]) => !HIDE.includes(k)).map(([k, v]) => {
+    const attrChips = Object.entries(ad.attrs || {}).filter(([k]) => !HIDE.includes(k) && !(svc && k === 'mobility')).map(([k, v]) => {
       const val = Categories.isMulti(k) ? Categories.decodeMulti(v).join(' / ') : v;
-      return el('span', { class: 'tag', text: Categories.keyLabel(k) + ': ' + val });
+      return el('span', { class: 'attr-chip', text: Categories.keyLabel(k) + ': ' + val });
     });
 
     // التواصل
@@ -157,18 +178,24 @@
       el('a', { href: 'https://wa.me/' + (digits.startsWith('0') ? '213' + digits.slice(1) : digits), target: '_blank', rel: 'noopener noreferrer', text: '💬 WhatsApp ' + seller.phone })
     ]) : null;
 
-    const desc = el('p', { class: 'detail-desc' }); desc.append(boldNumbers(ad.description));
+    // الوصف الطويل: أول سطور فقط مع زر "عرض المزيد"
+    const desc = el('p', { class: 'detail-desc is-clamped' }); desc.append(boldNumbers(ad.description));
+    const more = el('button', { class: 'more-btn', type: 'button', text: t('ad.show_more') });
+    more.addEventListener('click', () => { const open = desc.classList.toggle('is-clamped'); more.textContent = open ? t('ad.show_more') : t('ad.show_less'); });
     const oldPrices = hist.length ? el('div', {}, [el('b', { text: t('ad.old_prices') }), el('ul', { class: 'price-hist' }, hist.map(h => el('li', { text: Utils.formatPrice(h.old_price) + ' → ' + Utils.formatPrice(h.new_price) + ' · ' + Utils.formatDate(h.changed_at) })))]) : null;
     const faq = (ad.faq || []).length ? el('div', {}, [el('h3', { text: t('ad.faq') }), ...ad.faq.map(q => el('div', { class: 'faq-item' }, [el('b', { text: q.q }), el('span', { text: q.a })]))]) : null;
 
+    // الترتيب: الأهم أولًا (العنوان والسعر) ← التواصل بأقل جهد ← معلومات سريعة ← الناشرة ← السمات ← الوصف
     info.replaceChildren(...[
-      iconRow, sellerRow,
+      iconRow,
       el('h2', { class: 'detail-title', text: ad.title }), dealBadges, priceEl, nego, rentLine,
+      contactRow, phones, meta, sellerRow,
+      attrChips.length ? el('div', { class: 'detail-attrs' }, attrChips) : null,
       el('div', { class: 'hint', text: Categories.path(ad.category_id, ad.subcategory_id) }),
-      meta, attrChips.length ? el('div', { class: 'detail-attrs' }, attrChips) : null,
-      contactRow, phones, desc, oldPrices, faq,
+      desc, more, oldPrices, faq,
       el('div', { class: 'hint', style: 'margin-bottom:12px', text: t('ad.published_on') + ' ' + Utils.formatDate(ad.created_at) })
     ].filter(Boolean));
+    requestAnimationFrame(() => { if (desc.scrollHeight <= desc.clientHeight + 2) { more.hidden = true; desc.classList.remove('is-clamped'); } });
     Likes.load().then(() => Likes.paint(info));
 
     // شريط سفلي ثابت: رجوع + طلب الآن (أو تعديل/إحصائيات لصاحبة الإعلان)
@@ -181,8 +208,9 @@
       const order = el('button', { class: 'btn-buy-full', type: 'button', text: '🛒 ' + t('ad.order') });
       order.addEventListener('click', async () => {
         await Auth.ready(); if (!Auth.isLogged()) return Router.toLogin();
+        order.disabled = true; order.classList.add('is-busy');      // تفاعل فوري عند الضغط
         const { data, error } = await SB.db.rpc('get_or_create_conversation', { p_ad: ad.id });
-        if (error) return UI.toastKey(UI.errKey(error), 'error');
+        if (error) { order.disabled = false; order.classList.remove('is-busy'); return UI.toastKey(UI.errKey(error), 'error'); }
         await SB.db.from('messages').insert({ conversation_id: data, sender_id: Auth.uid(), content: t('ad.order_msg') });
         Utils.go(R.CHAT, { c: data });
       });

@@ -28,6 +28,35 @@
     },
     async remove(id) { return SB.db.from('alert_subscriptions').delete().eq('id', id).eq('user_id', Auth.uid()); },
 
+    // تحويل نتيجة بحث إلى تنبيه (مثل إضافته من قسم التنبيهات): الصنف الفرعي + الولاية + مجال السعر المفهوم من البحث
+    async fromSearch(f, btn) {
+      await Auth.ready();
+      if (!Auth.isLogged()) { UI.toastKey('auth.need_login', 'info'); return Router.toLogin(); }
+      await Promise.all([Categories.load(), Geo.load()]);
+      let sub = f.subcategory_id;
+      if (!sub && window.Dict) { const p = Dict.parse(f.qraw || f.q || ''); sub = (p.hint && p.hint.sub) || ''; }
+      const base = { wilaya_id: (f.wilaya_ids || [])[0] || null, min_price: f.min_price || null, max_price: f.max_price || null };
+      const save = async (subId, b) => {
+        UI.setLoading(b, true);
+        const r = await this.add(Object.assign({ subcategory_id: subId }, base));
+        UI.setLoading(b, false);
+        if (r.error) { UI.toastKey(r.error, 'error'); return false; }
+        UI.toastKey('alert.added', 'success');
+        enablePush().catch(e => console.error('[Alerts] push', e));
+        return true;
+      };
+      if (sub) return save(sub, btn);
+      // لم نتعرف على الصنف الفرعي: نسأل المستخدم عنه
+      const ov = el('div', { class: 'modal-overlay' }), box = el('div', { class: 'modal' });
+      const sel = el('select', { class: 'input' }); sel.append(new Option(t('filters.subcategory'), ''));
+      Categories.all().forEach(m => { const g = el('optgroup', { label: Categories.label(m) }); m.sub.forEach(x => g.append(new Option(Categories.label(x), x.id))); sel.append(g); });
+      const ok = el('button', { class: 'btn btn--primary grow', type: 'button' }, t('notif.add_alert'));
+      ok.addEventListener('click', async () => { if (!sel.value) return UI.toastKey('err.category_required', 'error'); if (await save(sel.value, ok)) ov.remove(); });
+      box.append(el('h3', { text: t('alert.choose_sub') }), el('p', { class: 'hint', text: [f.qraw || f.q, base.wilaya_id ? Geo.label(Geo.wilaya(base.wilaya_id)) : ''].filter(Boolean).join(' · ') }), sel,
+        el('div', { class: 'modal__row' }, [ok, el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => ov.remove() }, t('common.cancel'))]));
+      ov.append(box); ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); }); document.body.append(ov);
+    },
+
     async render(container) {
       await Promise.all([Categories.load(), Geo.load()]);
       const paint = async () => {

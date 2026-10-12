@@ -23,15 +23,24 @@
       const st = guard ? await Router.guard({ complete }) : await Auth.ready();
       if (!st) return null;
       this.paintAccount(st);
+      // بعد تسجيل الدخول: العودة تلقائيًا للصفحة التي كان المستخدم ينوي زيارتها
+      if (Router.resumeAfterLogin(st)) return null;
       if (Auth.isLogged()) {
         Likes.load().then(() => Likes.paint());
-        Notifications.init(); Fingerprint.register(); Auth.updateLastSeen();
+        Notifications.init(); Fingerprint.register(); Auth.updateLastSeen(); this.heartbeat();
       }
       Tracking.init();
       Banners.mount($('#banner-slot'));
       document.addEventListener('langchange', () => I18n.apply());
       document.body.classList.remove('is-gated');
       return st;
+    },
+
+    // نبضة حضور: تحديث "آخر ظهور" كل دقيقتين ما دامت الصفحة مرئية (لتظهر حالة "متصل" بدقة في المحادثة)
+    heartbeat() {
+      if (this._hb) return; this._hb = true;
+      setInterval(() => { if (!document.hidden) Auth.updateLastSeen(); }, 120000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) Auth.updateLastSeen(); });
     },
 
     mountChrome() {
@@ -73,15 +82,27 @@
       I18n.apply();
     },
 
-    // الشريط السفلي والزر + يختفيان عند النزول ويظهران عند الصعود
+    // الأشرطة العلوية والسفلية: تختفي فورًا عند النزول وتعود فورًا عند الصعود (حد 4px تراكمي لتفادي الارتجاج)
     bindScroll(bar, fab, top) {
-      let last = window.scrollY, hidden = false;
+      const head = document.querySelector('.top-bar, .page-header');
+      let last = Math.max(0, window.scrollY), acc = 0, hidden = false;
+      const set = h => {
+        if (h === hidden) return; hidden = h;
+        bar.classList.toggle('hidden', h); fab.classList.toggle('hidden', h);
+        if (head) head.classList.toggle('is-hidden', h);
+        if (h) { const sg = document.getElementById('suggest'); if (sg) sg.hidden = true; }
+      };
       window.addEventListener('scroll', () => {
-        const y = window.scrollY, d = y - last;
-        if (d > 12 && y > 60 && !hidden) { bar.classList.add('hidden'); fab.classList.add('hidden'); hidden = true; }
-        else if (d < -8 && hidden) { bar.classList.remove('hidden'); fab.classList.remove('hidden'); hidden = false; }
+        const y = Math.max(0, window.scrollY), d = y - last; last = y;
         top.classList.toggle('show', y > 700);
-        last = y;
+        if (!d) return;
+        if ((d > 0) !== (acc > 0)) acc = 0;
+        acc += d;
+        // لا نُخفي الشريط العلوي أثناء الكتابة في خانة البحث
+        const typing = head && document.activeElement && document.activeElement.tagName === 'INPUT' && head.contains(document.activeElement);
+        if (y <= 8) set(false);
+        else if (acc > 4 && !typing) set(true);
+        else if (acc < -4) set(false);
       }, { passive: true });
     },
 
@@ -118,7 +139,10 @@
     // آخر صنف/صنف فرعي مفعّل (محفوظ) يظهر مفتوحًا عند الدخول
     let subOpen = Filters.get().subcategory_id ? Filters.get().category_id : null;
 
-    Search.mount({ input: $('#q'), suggest: $('#suggest'), didYouMean: $('#dym'), button: $('#btn-search'), onSubmit: f => Filters.set(f) });
+    Search.mount({ input: $('#q'), suggest: $('#suggest'), didYouMean: $('#dym'), button: $('#btn-search'), voiceButton: $('#btn-voice'), placeholder: $('#ph'), onSubmit: f => Filters.set(f) });
+    const actions = $('#search-actions');
+    // تفاعل فوري عند الضغط على بحث: هياكل تحميل وصعود لأعلى القائمة
+    document.addEventListener('searchstart', () => { grid.replaceChildren(UI.skeletonCards(6)); $('#dym').replaceChildren(); window.scrollTo({ top: 0 }); });
     $('#btn-filters').addEventListener('click', () => Filters.openPanel());
     const paintFilterBtn = () => $('#btn-filters').classList.toggle('has-filters', Filters.hasActive());
 
@@ -145,27 +169,71 @@
     // أي ضغطة خارج الأزرار تُخفي قائمة الأصناف الفرعية
     document.addEventListener('click', e => { if (subOpen && !e.target.closest('#chips-wrap') && !e.target.closest('#sub-wrap')) { closeSub(); paintChips(); } });
 
+    // عند عدم وجود نتائج: رسالة مفيدة + نصائح + اقتراح نتائج قريبة (ولاية أخرى/بدون حد السعر/...)
+    async function renderEmpty(f) {
+      const my = token;
+      grid.replaceChildren();
+      const box = el('div', { class: 'empty empty--rich' });
+      const btns = el('div', { class: 'empty-actions' });
+      if (Filters.hasActive()) btns.append(el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => Filters.set({ category_id: '', subcategory_id: '', wilaya_ids: [], daira_ids: [], commune_ids: [], min_price: null, max_price: null, delivery: false, verified_only: false, condition: '', attrs: {} }) }, t('empty.remove_filters')));
+      if (f.min_price || f.max_price) btns.append(el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => Filters.set({ min_price: f.min_price ? Math.round(f.min_price * 0.7) : null, max_price: f.max_price ? Math.round(f.max_price * 1.3) : null }) }, t('empty.widen_price')));
+      if (f.q || f.qraw) btns.append(el('button', { class: 'btn btn--primary', type: 'button', onclick: e => Alerts.fromSearch(Filters.get(), e.currentTarget) }, '🔔 ' + t('alert.from_search')));
+      const sug = el('div', { class: 'empty-sug' });
+      box.append(UI.emptyIcon(), el('h3', { text: t('empty.no_match') }), el('p', { text: t('empty.try') }),
+        el('ul', { class: 'empty-tips' }, ['empty.tip_price', 'empty.tip_filters', 'empty.tip_words'].map(k => el('li', { text: t(k) }))), sug, btns);
+      grid.append(box);
+      let fb = null;
+      try { fb = await Ads.fallback(f); } catch (e) { console.warn('[Home] fallback', e); }
+      if (!fb || my !== token) return;
+      const where = f.commune_ids && f.commune_ids[0] ? Geo.label(Geo.commune(f.commune_ids[0])) : (f.wilaya_ids && f.wilaya_ids[0] ? Geo.label(Geo.wilaya(f.wilaya_ids[0])) : '');
+      const msg = fb.type === 'wilaya'
+        ? t('empty.near_wilaya').replace('{from}', where).replace('{n}', fb.count).replace('{to}', Geo.label(Geo.wilaya(fb.wilaya_id)))
+        : t('empty.near_' + fb.type).replace('{n}', fb.count);
+      sug.append(el('div', { class: 'empty-sug__msg', text: msg }), el('button', { class: 'btn btn--primary', type: 'button', onclick: () => Filters.set(fb.patch) }, t('empty.show')));
+    }
+
+    function paintSearchActions() {
+      actions.replaceChildren();
+      const f = Filters.get();
+      if (!(f.q || f.qraw)) return;
+      actions.append(el('button', { class: 'chip chip--alert', type: 'button', onclick: e => Alerts.fromSearch(Filters.get(), e.currentTarget) }, '🔔 ' + t('alert.from_search')));
+    }
+
     async function load(reset) {
       if (loading && !reset) return;
-      if (reset) { page = 0; done = false; token++; if (!prefetch) grid.replaceChildren(UI.skeletonCards(6)); }
+      if (reset) { page = 0; done = false; token++; }
       loading = true; const my = token, f = Filters.get();
       // استخدام نتيجة الجلب المبكر مرة واحدة فقط وإن بقيت الفلاتر كما هي
       const pf = prefetch; prefetch = null;
+      const cacheable = !Filters.isDefault() && f.sort !== 'near';
+      const ckey = JSON.stringify(Object.assign({}, f, { coords: undefined }));
+      let cachedSig = null;
+      if (reset) {
+        // كاش البحث: نعرض آخر نتائج هذا البحث فورًا ثم نحدّثها بالنتائج الحديثة
+        const cached = cacheable ? SearchState.resultsGet(ckey) : null;
+        if (cached && cached.length) { grid.replaceChildren(); Cards.renderList(grid, cached, { append: true }); Likes.paint(grid); cachedSig = cached.map(a => a.id).join(','); }
+        else if (!pf) grid.replaceChildren(UI.skeletonCards(6));
+        paintSearchActions();
+      }
       try {
         const res = (page === 0 && pf && pf.key === JSON.stringify(f)) ? await pf.promise : await Ads.feed(f, page);
         if (my !== token) return;
-        if (reset) grid.replaceChildren();
-        Cards.renderList(grid, res.items, { append: true }); Likes.paint(grid);
+        const sig = res.items.map(a => a.id).join(',');
+        if (!(reset && cachedSig !== null && cachedSig === sig)) {
+          if (reset) grid.replaceChildren();
+          Cards.renderList(grid, res.items, { append: true }); Likes.paint(grid);
+        }
         if (page === 0 && Filters.isDefault() && res.items.length) OfflineCache.saveFeed(res.items);
-        if (reset && !res.items.length) UI.emptyState(grid);
+        if (page === 0 && cacheable && res.items.length) SearchState.resultsSet(ckey, res.items);
+        if (reset && !res.items.length) renderEmpty(f);
         done = !res.hasMore; page++;
       } catch (e) {
         console.error('[Home] load', e);
-        if (reset) {
+        if (reset && cachedSig === null) {
           grid.replaceChildren(); const c = OfflineCache.loadFeed();
           if (c.length) { Cards.renderList(grid, c); UI.toastKey('err.network', 'error'); } else UI.emptyState(grid, 'err.network', 'common.retry');
         }
-      } finally { loading = false; }
+      } finally { loading = false; if (my === token) document.dispatchEvent(new CustomEvent('feeddone')); }
     }
 
     Filters.onChange(() => { paintChips(); paintFilterBtn(); Filters.renderTags(tags); load(true); });
@@ -174,18 +242,20 @@
     document.addEventListener('likechange', () => Likes.paint(grid));
     document.addEventListener('langchange', () => { paintChips(); Filters.renderTags(tags); });
 
-    // العودة من إعلان: استعادة موضع التمرير وعدد الصفحات المحمّلة
-    const SCROLL_KEY = 'sn_home_scroll';
-    window.addEventListener('pagehide', () => { try { sessionStorage.setItem(SCROLL_KEY, JSON.stringify({ y: window.scrollY, pages: page })); } catch { /* ignore */ } });
+    // حفظ حالة البحث وموضع التمرير عند الخروج من التطبيق/الصفحة؛ تُستعاد عند العودة (حتى من قسم آخر) خلال 30 دقيقة
+    const saveScroll = () => SearchState.saveScroll(window.scrollY, page);
+    window.addEventListener('pagehide', saveScroll);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) saveScroll(); });
     paintChips(); paintFilterBtn(); Filters.renderTags(tags);
     await load(true);
     try {
-      const nav = performance.getEntriesByType('navigation')[0], sv = JSON.parse(sessionStorage.getItem(SCROLL_KEY) || 'null');
-      if (sv && nav && nav.type === 'back_forward') {
+      const sv = SearchState.loadScroll(), nav = performance.getEntriesByType('navigation')[0];
+      const back = !!(nav && nav.type === 'back_forward');
+      if (sv && sv.y > 0 && (Filters.isSearching() || back)) {
         while (page < Math.min(sv.pages, 6) && !done) await load(false);
         window.scrollTo({ top: sv.y });
       }
-      sessionStorage.removeItem(SCROLL_KEY);
+      SearchState.clearScroll();
     } catch { /* ignore */ }
   };
 

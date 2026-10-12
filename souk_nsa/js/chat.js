@@ -32,7 +32,8 @@
     async open(convId, container) {
       const msgs = el('div', { class: 'chat-msgs' }), foot = el('div');
       const adSlot = el('div'), presetSlot = el('div');
-      const box = el('div', { class: 'chat-box' }, [adSlot, msgs, presetSlot, foot]);
+      const peerBar = el('div', { class: 'chat-peer' });
+      const box = el('div', { class: 'chat-box' }, [peerBar, adSlot, msgs, presetSlot, foot]);
       container.replaceChildren(box);
 
       // بطاقة الإعلان أعلى المحادثة (تظهر للمشتري والناشر ليفهم كل طرف عن أي إعلان يتحدثان)
@@ -54,6 +55,21 @@
 
       const { data: st } = await SB.db.rpc('block_status', { p_conv: convId });
       const status = (st && st[0]) || {};
+      // حالة الطرف الآخر: متصل الآن / آخر ظهور منذ ... (تُحدَّث كل 30 ثانية)
+      clearInterval(Chat._pt);
+      const paintPeer = async () => {
+        if (!status.other_id) return;
+        const { data: u } = await SB.db.from('seller_public').select('name,avatar_url,last_seen').eq('id', status.other_id).maybeSingle();
+        if (!u) return;
+        const on = !!u.last_seen && Date.now() - new Date(u.last_seen).getTime() < 5 * 60 * 1000;
+        const im = el('img', { class: 'avatar-xs', style: 'width:36px;height:36px', src: Utils.imgUrl(u.avatar_url || 'assets/images/avatar.svg', 'thumb'), alt: '' });
+        im.addEventListener('error', () => { im.src = 'assets/images/avatar.svg'; }, { once: true });
+        peerBar.replaceChildren(im, el('div', { class: 'grow' }, [
+          el('b', { text: u.name || '' }),
+          el('div', { class: 'chat-peer__st' + (on ? ' on' : '') }, [el('span', { class: 'presence' + (on ? ' on' : '') }), on ? t('chat.online') : (u.last_seen ? t('chat.last_seen') + ' ' + Utils.timeAgo(u.last_seen) : '')])
+        ]));
+      };
+      paintPeer().catch(e => console.warn('[Chat] peer', e));
       const renderMsg = m => {
         const me = m.sender_id === Auth.uid();
         msgs.append(el('div', { class: 'msg' + (me ? ' msg--me' : '') }, [el('span', { text: m.content }), el('small', { text: Utils.timeAgo(m.created_at) })]));
@@ -73,6 +89,7 @@
       (data || []).reverse().forEach(renderMsg);
       SB.db.rpc('mark_read', { p_conv: convId });
 
+      Chat._pt = setInterval(() => paintPeer().catch(() => {}), 30000);
       if (channel) SB.db.removeChannel(channel);
       channel = SB.db.channel('conv-' + convId).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: 'conversation_id=eq.' + convId }, p => { if (p.new.sender_id !== Auth.uid()) renderMsg(p.new); }).subscribe();
 
@@ -100,7 +117,7 @@
       input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
       foot.append(el('div', { class: 'chat-input' }, [input, send, blockBtn]));
     },
-    close() { if (channel) { SB.db.removeChannel(channel); channel = null; } }
+    close() { clearInterval(Chat._pt); if (channel) { SB.db.removeChannel(channel); channel = null; } }
   };
   window.Chat = Chat;
 })();

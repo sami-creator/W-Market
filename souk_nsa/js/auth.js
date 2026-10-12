@@ -5,9 +5,13 @@
   let state = null, pending = null;
 
   async function fetchProfile(uid) {
-    const { data, error } = await SB.db.from('users').select(
-      'id,email,name,avatar_url,gender,birth_year,wilaya_id,daira_id,commune_id,phone,show_phone,facebook,instagram,tiktok,telegram,maps_url,is_verified,registration_complete,created_at'
-    ).eq('id', uid).maybeSingle();
+    const BASE = 'id,email,name,avatar_url,gender,birth_year,wilaya_id,daira_id,commune_id,phone,show_phone,facebook,instagram,tiktok,telegram,maps_url,is_verified,registration_complete,created_at';
+    // الأعمدة الجديدة (bio, delivery_prices): إن لم تكن موجودة بعد في قاعدة البيانات نرجع للأعمدة الأساسية دون كسر الدخول
+    let { data, error } = await SB.db.from('users').select(BASE + ',bio,delivery_prices').eq('id', uid).maybeSingle();
+    if (error) {
+      const r = await SB.db.from('users').select(BASE).eq('id', uid).maybeSingle();
+      data = r.data; error = r.error;
+    }
     if (error) console.error('[Auth] profile', error);
     return data || null;
   }
@@ -49,11 +53,13 @@
     uid() { return state && state.user ? state.user.id : null; },
 
     async signInGoogle() {
+      // الوجهة المقصودة محفوظة في localStorage (تبقى بعد العودة من Google)، وعنوان العودة بلا معاملات كي يطابق قائمة Redirect URLs
+      localStorage.setItem(K.LOGIN_PENDING, String(Date.now()));
       const { error } = await SB.db.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: location.origin + location.pathname.replace(/[^/]*$/, '') + 'auth.html?return=' + encodeURIComponent(sessionStorage.getItem('sn_return') || '') }
+        options: { redirectTo: location.origin + location.pathname.replace(/[^/]*$/, '') + 'auth.html' }
       });
-      if (error) { console.error('[Auth] google', error); UI.toastKey('err.login_failed', 'error'); }
+      if (error) { localStorage.removeItem(K.LOGIN_PENDING); console.error('[Auth] google', error); UI.toastKey('err.login_failed', 'error'); }
     },
 
     async signOut() {

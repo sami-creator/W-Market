@@ -30,7 +30,7 @@
 
   const Cards = {
     // pos: ترتيب البطاقة في أول عرض للقائمة (0 = الأولى)؛ undefined = بطاقة عادية (تحميل كسول)
-    render(ad, pos) {
+    render(ad, pos, rec) {
       const first = typeof pos === 'number' && pos < EAGER_COUNT;
       const p = Price.display(ad), sold = ad.status === 'sold';
       const card = el('article', { class: 'card', 'data-id': ad.id, 'data-uid': ad.user_id });
@@ -46,6 +46,11 @@
       ]);
 
       const wil = ad.wilaya_id ? Geo.wilaya(ad.wilaya_id) : null;
+      // "قريبة منك": نفس ولاية المستخدم (الترتيب الافتراضي يقدّم الأقرب أولًا)
+      const me = Auth.state && Auth.state.profile;
+      const near = !!(me && ad.wilaya_id && me.wilaya_id === ad.wilaya_id && ad.user_id !== me.id);
+      // "مقترح لك": أفضل إعلان في مجموعته بحسب السعر والتقييم والقرب والتوثيق والحداثة
+      if (rec) wrap.append(el('div', { class: 'badge-rec', text: '★ ' + t('card.recommended') }));
       const priceEl = el('div', { class: 'price' }, [p.old ? el('span', { class: 'old-price', text: p.oldText }) : null, p.text]);
 
       const star = svg(STAR, 14, { fill: '#F5A623' });
@@ -56,7 +61,7 @@
 
       card.append(wrap,
         el('h3', { text: ad.title }), seller,
-        wil ? el('div', { class: 'loc' }, [el('img', { src: 'assets/images/map-pin.svg', style: 'width:14px;height:14px;vertical-align:middle;margin-left:3px' }), ' ' + Geo.label(wil)]) : null,
+        wil ? el('div', { class: 'loc' }, [el('img', { src: 'assets/images/map-pin.svg', style: 'width:14px;height:14px;vertical-align:middle;margin-left:3px' }), ' ' + Geo.label(wil) + (near ? ' · ' + t('card.near') : '')]) : null,
         el('div', { class: 'nego-tag' + (ad.negotiable ? '' : ' fixed'), text: ad.negotiable ? t('ad.negotiable') : t('ad.fixed_price') }),
         priceEl,
         el('div', { class: 'card-footer' }, [el('div', { class: 'rating' }, [star, Number(ad.rating_avg || 0).toFixed(1)]), heartBtn]),
@@ -76,7 +81,8 @@
       // أول بطاقات تظهر في الشاشة الأولى تُحمّل فورًا (وليس بكسل)، ما دامت القائمة فارغة قبل هذا العرض
       const base = container.querySelector('.card') ? -1 : 0;
       const f = document.createDocumentFragment();
-      items.forEach((a, i) => f.append(this.render(a, base === 0 ? i : undefined)));
+      const recs = window.Compare ? Compare.badge(items) : new Set();
+      items.forEach((a, i) => f.append(this.render(a, base === 0 ? i : undefined, recs.has(a.id))));
       container.append(f);
       this.presence(container, items);
     },
