@@ -1,12 +1,10 @@
 /* profile.js — صفحات الحساب: auth، complete-profile، profile، edit-profile
-   + تصحيحات: try/catch مفصّل مع طباعة الأخطاء في Console لتحديد مكان التوقف */
+   + تصحيح: انتظار انتهاء فحص الأفاتار قبل الحفظ (يمنع تجاوز الفحص) */
 (function () {
   'use strict';
   const el = Utils.el, t = k => I18n.t(k), R = window.CONFIG.ROUTES, L = window.CONFIG.LIMITS;
   const $ = s => document.querySelector(s);
   const P = App.pages;
-  const LOG = (...a) => console.log('%c[Profile]', 'color:#0af;font-weight:bold', ...a);
-  const ERR = (...a) => console.error('%c[Profile ERR]', 'color:#f33;font-weight:bold', ...a);
 
   function fillYears(sel, chosen) {
     sel.replaceChildren(new Option(t('auth.birth_year'), ''));
@@ -19,6 +17,7 @@
     if (slot) slot.textContent = key ? t(key) : '';
   }
 
+  // مشاركة رابط حساب (من صاحبه أو من الزوار)
   async function shareProfile(uid, name) {
     const url = location.origin + location.pathname.replace(/[^/]*$/, '') + R.PROFILE + '?u=' + uid;
     if (navigator.share) { try { await navigator.share({ title: name || t('app.name'), url }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
@@ -54,6 +53,7 @@
       const r = await Auth.completeProfile(Object.assign({ name: f.name.value, gender: f.gender.value, birth_year: f.year.value }, Geo.values(f.w, f.d, f.c)));
       UI.setLoading(btn, false);
       if (r.error) return UI.toastKey(r.error, 'error');
+      // استبيان اختياري بعد أول تسجيل
       $('#form-complete').hidden = true; $('#survey').hidden = false;
     });
     const done = () => Router.afterLogin();
@@ -69,6 +69,7 @@
   };
 
   /* ---------- حسابي ---------- */
+  // صفحة ناشرة أخرى (?u=): اسمها، تقييمها، روابطها وإعلاناتها النشطة
   async function publicProfile(uid) {
     $('#own-actions').hidden = true; $('#own-menu').hidden = true;
     const { data: sp } = await SB.db.from('seller_public').select('*').eq('id', uid).maybeSingle();
@@ -92,6 +93,7 @@
     [['facebook', 'Facebook'], ['instagram', 'Instagram'], ['tiktok', 'TikTok'], ['telegram', 'Telegram'], ['maps_url', 'Maps']].forEach(([k, n]) => { const u = sp[k] && safe(sp[k]); if (u) links.push(el('a', { href: u, target: '_blank', rel: 'noopener noreferrer', text: n })); });
     if (links.length) { $('#public-links').append(...links); $('#public-links').hidden = false; }
 
+    // زر المتابعة
     if (Auth.isLogged() && Auth.uid() !== uid) {
       const { data: existingFollow } = await SB.db.from('follows').select('follower_id').eq('follower_id', Auth.uid()).eq('following_id', uid).maybeSingle();
       let isFollowing = !!existingFollow;
@@ -164,138 +166,65 @@
 
   /* ---------- تعديل المعلومات ---------- */
   P['edit-profile'] = async function () {
-    LOG('🚀 edit-profile: start');
-    let st;
-    try {
-      st = await App.boot({ guard: true });
-    } catch (e) { ERR('App.boot threw', e); return; }
-    if (!st) { ERR('App.boot returned falsy — aborting'); return; }
-    LOG('✅ App.boot ok. profile id:', st.profile && st.profile.id);
-
+    const st = await App.boot({ guard: true });
+    if (!st) return;
     const p = st.profile;
-    const f = {
-      name: $('#name'), gender: $('#gender'), year: $('#year'),
-      w: $('#wilaya'), d: $('#daira'), c: $('#commune'),
-      avatar: $('#avatar-file'), show: $('#show-phone'), phone: $('#phone')
-    };
-    LOG('🔍 Fields resolved:', Object.fromEntries(Object.entries(f).map(([k, v]) => [k, v ? '✅' : '❌'])));
+    const f = { name: $('#name'), gender: $('#gender'), year: $('#year'), w: $('#wilaya'), d: $('#daira'), c: $('#commune'), avatar: $('#avatar-file'), show: $('#show-phone'), phone: $('#phone') };
+    // نبذة (حتى 100 كلمة)
+    const bio = $('#bio'), bioCount = $('#bio-count');
+    bio.maxLength = L.BIO_CHARS; bio.value = p.bio || '';
+    const paintCount = () => { const n = wordCount(bio.value); bioCount.textContent = n + ' / ' + L.BIO_WORDS; bioCount.style.color = n > L.BIO_WORDS ? 'var(--danger)' : ''; };
+    bio.addEventListener('input', paintCount); paintCount();
+    // أسعار التوصيل لكل ولاية (تُحفظ في الحساب وتظهر تلقائيًا في كل إعلاناتك)
+    const paintDeliv = () => { const n = Delivery.count(p.delivery_prices); $('#delivery-sum').textContent = n ? t('delivery.configured').replace('{n}', n) : t('delivery.none_configured'); };
+    paintDeliv();
+    $('#btn-delivery').addEventListener('click', () => Delivery.openEditor(p.delivery_prices, pr => { p.delivery_prices = pr; paintDeliv(); }));
+    const links = ['facebook', 'instagram', 'tiktok', 'telegram'].map(k => ({ k, i: $('#l-' + k) }));
+    const maps = $('#l-maps');
+    f.name.value = p.name || ''; f.name.maxLength = L.NAME; f.gender.value = p.gender || '';
+    fillYears(f.year, p.birth_year);
+    await Geo.bindCascade(f.w, f.d, f.c, p);
+    links.forEach(x => { x.i.value = p[x.k] || ''; x.i.maxLength = 300; }); maps.value = p.maps_url || ''; maps.maxLength = 300;
+    f.phone.value = p.phone || ''; f.phone.maxLength = 16; f.phone.disabled = !!p.is_verified;
+    f.show.checked = !!p.show_phone;
+    $('#avatar-prev').src = Utils.imgUrl(p.avatar_url || 'assets/images/avatar.svg', 'thumb');
 
-    const missingFields = Object.entries(f).filter(([, v]) => !v).map(([k]) => k);
-    if (missingFields.length) {
-      ERR('❌ Missing DOM elements:', missingFields);
-      return;
-    }
-
-    // نبذة
-    let bio, bioCount;
-    try {
-      bio = $('#bio'); bioCount = $('#bio-count');
-      if (!bio || !bioCount) throw new Error('bio or bio-count missing');
-      bio.maxLength = L.BIO_CHARS; bio.value = p.bio || '';
-      const paintCount = () => {
-        const n = wordCount(bio.value);
-        bioCount.textContent = n + ' / ' + L.BIO_WORDS;
-        bioCount.style.color = n > L.BIO_WORDS ? 'var(--danger)' : '';
-      };
-      bio.addEventListener('input', paintCount); paintCount();
-      LOG('✅ Bio bound');
-    } catch (e) { ERR('Bio setup failed', e); return; }
-
-    // التوصيل
-    try {
-      const paintDeliv = () => {
-        const n = Delivery.count(p.delivery_prices);
-        $('#delivery-sum').textContent = n ? t('delivery.configured').replace('{n}', n) : t('delivery.none_configured');
-      };
-      paintDeliv();
-      $('#btn-delivery').addEventListener('click', () => Delivery.openEditor(p.delivery_prices, pr => { p.delivery_prices = pr; paintDeliv(); }));
-      LOG('✅ Delivery bound');
-    } catch (e) { ERR('Delivery setup failed', e); return; }
-
-    // الروابط
-    let links, maps;
-    try {
-      links = ['facebook', 'instagram', 'tiktok', 'telegram'].map(k => ({ k, i: $('#l-' + k) }));
-      maps = $('#l-maps');
-      f.name.value = p.name || ''; f.name.maxLength = L.NAME; f.gender.value = p.gender || '';
-      fillYears(f.year, p.birth_year);
-      LOG('✅ Name/gender/year filled');
-    } catch (e) { ERR('Basic fields failed', e); return; }
-
-    // Geo
-    try {
-      LOG('⏳ Geo.bindCascade...');
-      await Geo.bindCascade(f.w, f.d, f.c, p);
-      LOG('✅ Geo.bindCascade done');
-    } catch (e) { ERR('Geo.bindCascade failed', e); return; }
-
-    try {
-      links.forEach(x => { x.i.value = p[x.k] || ''; x.i.maxLength = 300; });
-      maps.value = p.maps_url || ''; maps.maxLength = 300;
-      LOG('✅ Links filled');
-    } catch (e) { ERR('Links fill failed', e); return; }
-
-    try {
-      f.phone.value = p.phone || ''; f.phone.maxLength = 16; f.phone.disabled = !!p.is_verified;
-      f.show.checked = !!p.show_phone;
-      LOG('✅ Phone/show filled');
-    } catch (e) { ERR('Phone setup failed', e); return; }
-
-    try {
-      $('#avatar-prev').src = Utils.imgUrl(p.avatar_url || 'assets/images/avatar.svg', 'thumb');
-      LOG('✅ Avatar preview set');
-    } catch (e) { ERR('Avatar preview failed', e); return; }
-
-    /* ============================================================
-       🎯 ربط حدث الأفاتار + الفحص — يجب أن يصل هنا
-       ============================================================ */
     let newAvatar = null;
-    let _avatarBlocked = false;
-    let _avatarToken = 0;
+    let _avatarBlocked = false;   // true إن كانت الصورة UNSAFE
+    let _avatarToken = 0;         // لمنع سباق النتائج القديمة
+    let _avatarPromise = null;    // ← جديد: Promise الفحص الجاري (يمنع تجاوز الفحص عند الحفظ السريع)
 
-    LOG('🔗 Binding avatar change listener...');
     f.avatar.addEventListener('change', async () => {
-      LOG('📁 Avatar change event fired');
       const file = f.avatar.files[0];
-      if (!file) { LOG('⚠️ no file selected'); return; }
-
-      let v;
-      try {
-        v = await Upload.validate(file);
-      } catch (e) { ERR('Upload.validate threw', e); UI.toastKey('err.image_type', 'error'); f.avatar.value = ''; return; }
-      if (!v || !v.ok) { f.avatar.value = ''; return UI.toastKey(v.error || 'err.image_type', 'error'); }
-
+      const v = await Upload.validate(file);
+      if (!v.ok) { f.avatar.value = ''; return UI.toastKey(v.error, 'error'); }
+      // ابدأ جلسة جديدة: أي نتيجة قديمة ستُتجاهل
       const myToken = ++_avatarToken;
       newAvatar = file; _avatarBlocked = false;
       $('#avatar-prev').src = URL.createObjectURL(file);
-      LOG('✅ Avatar preview set, starting moderation...');
 
+      /* فحص في الخلفية فور الاختيار */
       UI.toastKey('ad.images_reviewing', 'info', 3000);
-
-      try {
-        const { promise } = Upload.startModeration([file], (i, f2, res) => {
-          LOG('📊 Moderation result:', JSON.stringify(res));
-          if (myToken !== _avatarToken) { LOG('⚠️ stale token, ignoring'); return; }
-          if (!res.ok) {
-            _avatarBlocked = res.verdict === 'UNSAFE';
-            Upload.showModerationWarning(
-              f2.name, res.verdict, res.reasons,
-              () => { if (myToken === _avatarToken) _avatarBlocked = false; },
-              () => {
-                if (myToken !== _avatarToken) return;
-                newAvatar = null; _avatarBlocked = false;
-                f.avatar.value = '';
-                $('#avatar-prev').src = p.avatar_url || 'assets/images/avatar.svg';
-              }
-            );
-          }
-        });
-        promise.catch(e => { ERR('Moderation promise rejected', e); if (myToken === _avatarToken) _avatarBlocked = false; });
-      } catch (e) { ERR('startModeration threw', e); }
+      const { promise } = Upload.startModeration([file], (i, f2, res) => {
+        if (myToken !== _avatarToken) return;   // تجاهل نتيجة جلسة قديمة
+        if (!res.ok) {
+          _avatarBlocked = res.verdict === 'UNSAFE';
+          Upload.showModerationWarning(
+            f2.name, res.verdict, res.reasons,
+            () => { if (myToken === _avatarToken) _avatarBlocked = false; },   // متابعة
+            () => {
+              if (myToken !== _avatarToken) return;
+              newAvatar = null; _avatarBlocked = false;
+              f.avatar.value = '';
+              $('#avatar-prev').src = p.avatar_url || 'assets/images/avatar.svg';
+            }
+          );
+        }
+      });
+      // ← نحفظ الـ promise حتى يستطيع زر الحفظ انتظاره
+      _avatarPromise = promise.catch(() => { if (myToken === _avatarToken) _avatarBlocked = false; /* fail-open */ });
     });
-    LOG('✅ Avatar listener bound — READY');
 
-    // إرسال النموذج
     $('#form-edit').addEventListener('submit', async e => {
       e.preventDefault();
       const btn = $('#btn-save'); UI.setLoading(btn, true);
@@ -318,12 +247,18 @@
         for (const x of links) { const v = Sanitize.validateUrl(x.i.value, x.k); if (!v.ok) { showErr(x.i, v.error); return UI.toastKey(v.error, 'error'); } showErr(x.i, null); patch[x.k] = v.value || null; }
         const m = Sanitize.validateUrl(maps.value, 'maps'); if (!m.ok) return UI.toastKey(m.error, 'error'); patch.maps_url = m.value || null;
         if (newAvatar) {
+          /* ← انتظر انتهاء الفحص إن كان لا يزال جاريًا */
+          if (_avatarPromise) {
+            UI.toastKey('ad.waiting_moderation', 'info', 0);
+            try { await _avatarPromise; } catch { /* fail-open */ }
+          }
           if (_avatarBlocked) { UI.toastKey('ad.blocked_images_exist', 'error'); return; }
           const blobs = await Upload.compress(newAvatar); const path = `${Auth.uid()}/avatar.webp`;
           const up = await SB.db.storage.from('avatars').upload(path, blobs.medium, { contentType: blobs.medium.type, upsert: true });
           if (up.error) throw up.error; patch.avatar_url = SB.db.storage.from('avatars').getPublicUrl(path).data.publicUrl + '?v=' + Date.now();
         }
         let { error } = await SB.db.from('users').update(patch).eq('id', Auth.uid());
+        // إن لم يكن عمود bio موجودًا بعد في قاعدة البيانات: نحفظ بقية البيانات ونُنبّه بدل أن يفشل الحفظ كله
         if (error && /bio|column|schema cache/i.test(String(error.message || ''))) {
           const { bio: _omit, ...rest } = patch;
           ({ error } = await SB.db.from('users').update(rest).eq('id', Auth.uid()));
@@ -331,7 +266,7 @@
         }
         if (error) throw error;
         UI.toastKey('edit.saved', 'success'); setTimeout(() => Utils.go(R.PROFILE), 700);
-      } catch (err) { ERR('Submit failed', err); UI.toastKey(UI.errKey(err), 'error'); }
+      } catch (err) { console.error('[Edit]', err); UI.toastKey(UI.errKey(err), 'error'); }
       finally { UI.setLoading(btn, false); }
     });
   };
