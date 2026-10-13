@@ -107,7 +107,7 @@
   // ─── Supabase URL ─────────────────────────────────────────────────────────────
   function getEdgeUrl() {
     // يستخدم window.ENV.SUPABASE_URL إن وُجد، وإلا الثابت
-    const base = (window.ENV?.SUPABASE_URL ?? '').replace(/\/$/, '');
+    const base = (window.__ENV__?.SUPABASE_URL ?? '').replace(/\/$/, '');
     return base ? base + C.SMART_AGENT.EDGE_FUNCTION_URL : C.SMART_AGENT.EDGE_FUNCTION_URL;
   }
 
