@@ -1,26 +1,36 @@
-/* settings.js — الإعدادات: اللغة، الوضع الليلي، 14 لونًا، الخطوط، الدعم، الخصوصية، الإبلاغ عن خطأ (التنبيهات المخصصة انتقلت لصفحة الإشعارات) */
+/* settings.js — صفحة الإعدادات */
 (function () {
   'use strict';
-  const el = Utils.el, t = k => I18n.t(k), C = window.CONFIG;
-  const COLOR_HEX = C.COLOR_HEX;
+  const C = window.CONFIG, K = C.STORAGE_KEYS;
+  const { el, $, t } = window.Utils ?? {};
 
-  const Settings = {
-    render(root) {
-      root.replaceChildren();
-      const row = (label, ctrl) => el('div', { class: 'settings-row' }, [el('span', { text: label }), ctrl]);
+  window.Settings = {
+    async init() {
+      const root = $('#settings-root');
+      if (!root) return;
 
       const lang = el('select', { class: 'input', style: 'width:auto' });
-      [['ar', 'العربية'], ['fr', 'Français'], ['en', 'English']].forEach(([v, n]) => lang.append(new Option(n, v)));
-      lang.value = I18n.lang; lang.addEventListener('change', async () => { await I18n.set(lang.value); this.render(root); });
+      C.LANGS.forEach(l => lang.append(new Option(l.toUpperCase(), l)));
+      lang.value = I18n.lang;
+      lang.addEventListener('change', async () => {
+        await I18n.setLang(lang.value);
+        location.reload();
+      });
 
-      const dark = el('button', { class: 'switch', role: 'switch', type: 'button', 'aria-checked': document.documentElement.dataset.theme === 'dark' });
-      dark.addEventListener('click', () => { Theme.toggleMode(); dark.setAttribute('aria-checked', document.documentElement.dataset.theme === 'dark'); });
+      const darkToggle = el('label', { class: 'toggle' }, [
+        el('input', { type: 'checkbox', id: 'dark-toggle' }),
+        el('span', { class: 'toggle__track' })
+      ]);
+      const darkInput = darkToggle.querySelector('input');
+      darkInput.checked = document.documentElement.dataset.theme === 'dark';
+      darkInput.addEventListener('change', () => Theme.setTheme(darkInput.checked ? 'dark' : 'light'));
 
-      const sw = el('div', { class: 'swatches', style: 'flex-wrap:wrap;justify-content:flex-end;max-width:210px' });
+      const sw = el('div', { class: 'color-swatches' });
       C.COLORS.forEach(c => {
-        const b = el('button', { class: 'swatch' + (document.documentElement.dataset.color === c ? ' active' : ''), type: 'button', style: 'background:' + COLOR_HEX[c], 'aria-label': c });
-        b.addEventListener('click', () => { Theme.setColor(c); sw.querySelectorAll('.swatch').forEach(x => x.classList.remove('active')); b.classList.add('active'); });
-        sw.append(b);
+        const s = el('button', { class: 'swatch', type: 'button', style: `background:${C.COLOR_HEX[c]}`, 'data-color': c, 'aria-label': c });
+        s.addEventListener('click', () => { Theme.setColor(c); sw.querySelectorAll('.swatch').forEach(x => x.classList.toggle('active', x.dataset.color === c)); });
+        if ((document.documentElement.dataset.color || C.DEFAULTS.COLOR) === c) s.classList.add('active');
+        sw.append(s);
       });
 
       const font = el('select', { class: 'input', style: 'width:auto' });
@@ -28,17 +38,45 @@
       font.value = document.documentElement.dataset.font || C.DEFAULTS.FONT;
       font.addEventListener('change', () => Theme.setFont(font.value));
 
+      // ── أزرار الدعم الثلاثة ──────────────────────────────────────────
       const wa = C.SUPPORT.WHATSAPP ? 'https://wa.me/' + encodeURIComponent(C.SUPPORT.WHATSAPP) : null;
       const tg = C.SUPPORT.TELEGRAM ? 'https://t.me/' + encodeURIComponent(C.SUPPORT.TELEGRAM) : null;
-      const support = el('div', { class: 'contact-links' }, [
-        wa ? el('a', { href: wa, target: '_blank', rel: 'noopener noreferrer', text: 'WhatsApp' }) : null,
-        tg ? el('a', { href: tg, target: '_blank', rel: 'noopener noreferrer', text: 'Telegram' }) : null
-      ]);
+
+      const supportBtns = el('div', { class: 'contact-links' });
+
+      // زر المساعد الذكي — يفتح smart_agent.html
+      const agentBtn = el('a', {
+        href: C.ROUTES.SMART_AGENT,
+        class: 'btn btn--ghost contact-link contact-link--agent',
+        'aria-label': t('settings.support')
+      });
+      agentBtn.textContent = t('settings.support');
+      supportBtns.append(agentBtn);
+
+      if (wa) {
+        const waBtn = el('a', { href: wa, target: '_blank', rel: 'noopener noreferrer', class: 'btn btn--ghost contact-link contact-link--whatsapp' });
+        waBtn.textContent = 'WhatsApp';
+        supportBtns.append(waBtn);
+      }
+      if (tg) {
+        const tgBtn = el('a', { href: tg, target: '_blank', rel: 'noopener noreferrer', class: 'btn btn--ghost contact-link contact-link--telegram' });
+        tgBtn.textContent = 'Telegram';
+        supportBtns.append(tgBtn);
+      }
+
+      function row(label, ctrl) {
+        return el('div', { class: 'settings-row' }, [
+          el('span', { text: label }),
+          ctrl
+        ]);
+      }
 
       root.append(
-        row(t('settings.language'), lang), row(t('settings.dark'), dark),
-        row(t('settings.color'), sw), row(t('settings.font'), font),
-        row(t('settings.support'), support),
+        row(t('settings.language'), lang),
+        row(t('settings.dark'), darkToggle),
+        row(t('settings.color'), sw),
+        row(t('settings.font'), font),
+        row(t('settings.support'), supportBtns),
         el('div', { class: 'settings-row' }, [el('a', { href: C.ROUTES.PRIVACY, text: t('settings.privacy') })]),
         el('div', { class: 'settings-row' }, [el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => this.reportBug(), text: t('settings.report_bug') })])
       );
@@ -63,12 +101,9 @@
 
     // يُستدعى من profile.js بعد حفظ تعديلات الملف الشخصي
     handlePostAdReturn() {
-      const returnUrl = Utils.Store.get('post_ad_return');
-      if (returnUrl) {
-        Utils.Store.remove('post_ad_return');
-        location.href = returnUrl;
-      }
+      const key = C.STORAGE_KEYS.RETURN_TO;
+      const ret = Utils.Store.get(key);
+      if (ret) { Utils.Store.remove(key); Router.go(ret); }
     }
   };
-  window.Settings = Settings;
 })();

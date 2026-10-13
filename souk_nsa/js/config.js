@@ -8,7 +8,8 @@
       IMAGES_MIN: 1, IMAGES_MAX: 10, IMAGE_MAX_BYTES: 5 * 1024 * 1024,
       PRICE_EDITS_MAX: 3, ALERTS_MAX: 3, MIN_AGE: 18,
       PAGE_SIZE: 20, SEARCH_DEBOUNCE_MS: 250, SEARCH_HISTORY_MAX: 10, BIO_WORDS: 100, BIO_CHARS: 800,
-      RESULTS_CAP: 200, PRICE_BAND: 0.15, AI_TIMEOUT_MS: 1600
+      RESULTS_CAP: 200, PRICE_BAND: 0.15, AI_TIMEOUT_MS: 1600,
+      SMART_AGENT_MSG: 200
     },
     UPLOAD: {
       ALLOWED_MIME: ['image/jpeg', 'image/png', 'image/webp'],
@@ -21,7 +22,8 @@
       SESSION_HINT: 'sn_session_hint', PROFILE_STATE: 'sn_profile_state',
       LIKE_TOAST: 'sn_like_toast_seen', DRAFT: 'sn_ad_draft', DEVICE: 'sn_device_id', FILTERS: 'sn_filters', RECENT: 'sn_recent_ads',
       CACHE_PREFIX: 'sn_cache_', SEARCH_HISTORY: 'sn_search_hist', SEARCH_STATE: 'sn_search_state',
-      RETURN_TO: 'sn_return', LOGIN_PENDING: 'sn_login_pending', VIEWED: 'sn_viewed'
+      RETURN_TO: 'sn_return', LOGIN_PENDING: 'sn_login_pending', VIEWED: 'sn_viewed',
+      SMART_AGENT_HISTORY: 'sn_agent_history', SMART_AGENT_DRAFT: 'sn_agent_draft'
     },
     DEFAULTS: { LANG: 'ar', THEME: 'dark', COLOR: 'rose', FONT: 'proto' },
     LANGS: ['ar', 'fr', 'en'],
@@ -31,11 +33,17 @@
     INTEREST_POINTS: { click: 1, like: 3, message: 5, buy_or_rate: 8 },
     CLICK_RAW_DAYS: 30,
     SUPPORT: { WHATSAPP: '+213659088226', TELEGRAM: 'Nawalquee' },
+    SMART_AGENT: {
+      EDGE_FUNCTION_URL: '/functions/v1/smart-agent',
+      RATE_PER_MIN: 10,
+      RATE_PER_DAY: 50
+    },
     ROUTES: {
       HOME: 'index.html', AUTH: 'auth.html', COMPLETE: 'complete-profile.html', PROFILE: 'profile.html',
       EDIT_PROFILE: 'edit-profile.html', VERIFY: 'verify.html', POST: 'post-ad.html', MY_ADS: 'my-ads.html',
       STATS: 'ad-stats.html', AD: 'ad-details.html', FAVS: 'favorites.html', NOTIFS: 'notifications.html',
-      CHAT: 'chat.html', SETTINGS: 'settings.html', PRIVACY: 'privacy.html'
+      CHAT: 'chat.html', SETTINGS: 'settings.html', PRIVACY: 'privacy.html',
+      SMART_AGENT: 'smart_agent.html'
     }
   });
 })();

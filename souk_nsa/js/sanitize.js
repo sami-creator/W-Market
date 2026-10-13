@@ -20,7 +20,7 @@
   function cleanText(s, max) {
     let t = String(s ?? '')
       .replace(/<[^>]*>/g, '')
-      .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g, '')
+      .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F​-‏‪-‮⁦-⁩﻿]/g, '')
       .replace(/\s+/g, ' ')
       .trim();
     const m = max || L().INPUT_GENERIC;
@@ -36,17 +36,34 @@
     return PHONE_RE.test(t) || LONG_DIGITS_RE.test(t);
   }
 
-  // قائمة كلمات غير لائقة قابلة للتوسعة (تُدمج مع كل ما تضيفه من admin أو config)
-  const BAD_WORDS = window.__BAD_WORDS__ || [
-    'fuck', 'shit', 'bitch', 'putain', 'merde', 'connard', 'salope', 'nique',
-    'شرموطة', 'قحبة', 'زبي', 'نيك', 'كلب', 'حمار', 'منيوك'
+  // ─── قائمة الكلمات البذيئة الموسّعة (AR + FR + EN + دارجة) ───────────
+  const BAD_WORDS_BASE = [
+    // English
+    'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'damn', 'cunt', 'dick',
+    'pussy', 'whore', 'slut', 'cock', 'prick', 'wanker', 'twat', 'bollocks',
+    // French
+    'putain', 'merde', 'connard', 'salope', 'nique', 'enculé', 'fils de pute',
+    'batard', 'fdp', 'ntm', 'tg', 'va te faire', 'pédé', 'tapette',
+    // Arabic MSA + Algerian Darija
+    'شرموطة', 'قحبة', 'زبي', 'نيك', 'كلب', 'حمار', 'منيوك', 'زنجي',
+    'عاهرة', 'مومس', 'لواط', 'خنزير', 'ولد الكلب', 'ولد الحرام',
+    'يلعن', 'لعن', 'زمل', 'زملة', 'تيس', 'حشيش', 'بوز', 'وليد قحبة',
+    'كوس', 'بوزي', 'قحبتك', 'نيكها', 'كوسها', 'طيزك', 'طيزها',
+    'يتنيك', 'تتنيك', 'نيكك', 'هبل', 'مهبول', 'شاذ',
+    // Obfuscated variants
+    'f*ck', 'sh*t', 'b*tch', 'f**k', 's**t', 'fck', 'sht'
   ];
+
+  const BAD_WORDS = (window.__BAD_WORDS__ || []).concat(BAD_WORDS_BASE);
+
   function normalizeForBad(s) {
     return toLatinDigits(s).toLowerCase()
-      .replace(/[\u064B-\u065F\u0640]/g, '')
+      .replace(/[ً-ٟـ]/g, '')
       .replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه')
-      .replace(/[^a-z0-9\u0621-\u064A ]/g, '');
+      .replace(/[*@$!0]/g, c => ({ '*': '', '@': 'a', '$': 's', '!': 'i', '0': 'o' }[c] ?? c))
+      .replace(/[^a-z0-9ء-ي ]/g, '');
   }
+
   function containsBadWords(s) {
     const t = normalizeForBad(s);
     return BAD_WORDS.some(w => t.includes(normalizeForBad(w)));
@@ -57,6 +74,16 @@
     const value = cleanText(s, max);
     if (value.length < min) return { ok: false, value, error: 'err.too_short' };
     if (!allowPhone && containsPhone(value)) return { ok: false, value, error: 'err.no_phone_in_text' };
+    if (containsBadWords(value)) return { ok: false, value, error: 'err.bad_words' };
+    return { ok: true, value };
+  }
+
+  // فحص رسالة المساعد الذكي (حد 200 حرف + كلمات بذيئة)
+  function validateAgentMessage(s) {
+    const maxLen = (window.CONFIG && window.CONFIG.LIMITS.SMART_AGENT_MSG) || 200;
+    const value = cleanText(s, maxLen);
+    if (!value) return { ok: false, value, error: 'err.too_short' };
+    if (value.length > maxLen) return { ok: false, value, error: 'agent.err_too_long' };
     if (containsBadWords(value)) return { ok: false, value, error: 'err.bad_words' };
     return { ok: true, value };
   }
@@ -97,6 +124,6 @@
 
   window.Sanitize = {
     toLatinDigits, escapeHtml, cleanText, containsPhone, containsBadWords,
-    validateText, validateUrl, validatePrice, setText
+    validateText, validateAgentMessage, validateUrl, validatePrice, setText
   };
 })();

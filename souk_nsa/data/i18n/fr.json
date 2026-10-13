@@ -425,5 +425,18 @@
   "search.image_remaining": "Il vous reste {n} tentative(s) aujourd'hui",
   "search.image_last": "C'est votre dernière recherche par image aujourd'hui",
   "search.image_limit": "Limite journalière atteinte (3 recherches par image)",
-  "search.image_no_tags": "Impossible d'analyser l'image, réessayez"
+  "search.image_no_tags": "Impossible d'analyser l'image, réessayez",
+  "agent.title": "Assistant intelligent",
+  "agent.subtitle": "Votre assistant support",
+  "agent.placeholder": "Écrivez votre message... (200 caractères max)",
+  "agent.send": "Envoyer",
+  "agent.welcome": "Bonjour ! Je suis votre assistant intelligent pour souk nsa. Comment puis-je vous aider ?",
+  "agent.err_too_long": "Le message dépasse 200 caractères",
+  "agent.err_rate_min": "Vous avez dépassé 10 messages par minute. Veuillez patienter.",
+  "agent.err_rate_day": "Vous avez dépassé 50 messages aujourd'hui. Réessayez demain.",
+  "agent.err_generic": "Erreur de connexion, veuillez réessayer.",
+  "agent.thinking": "En cours de rédaction...",
+  "agent.chars_left": "{n} caractères restants",
+  "agent.clear_confirm": "Voulez-vous effacer la conversation ?",
+  "agent.clear": "Effacer la conversation"
 }

@@ -425,5 +425,18 @@
   "search.image_remaining": "تبقى لك {n} محاولة/محاولات اليوم",
   "search.image_last": "هذه آخر محاولة بحث بالصورة اليوم",
   "search.image_limit": "وصلت للحد اليومي للبحث بالصور (3 محاولات)",
-  "search.image_no_tags": "لم نتمكن من تحليل الصورة، حاول مرة أخرى"
+  "search.image_no_tags": "لم نتمكن من تحليل الصورة، حاول مرة أخرى",
+  "agent.title": "المساعد الذكي",
+  "agent.subtitle": "مساعدك للدعم الفني",
+  "agent.placeholder": "اكتبي رسالتك... (200 حرف كحد أقصى)",
+  "agent.send": "إرسال",
+  "agent.welcome": "مرحبًا! أنا مساعدك الذكي لتطبيق souk nsa. كيف يمكنني مساعدتك اليوم؟",
+  "agent.err_too_long": "الرسالة تتجاوز 200 حرف",
+  "agent.err_rate_min": "لقد تجاوزتِ 10 رسائل في الدقيقة. انتظري قليلًا.",
+  "agent.err_rate_day": "لقد تجاوزتِ 50 رسالة اليوم. حاولي غدًا.",
+  "agent.err_generic": "حدث خطأ في الاتصال، حاولي مجددًا.",
+  "agent.thinking": "جارٍ الكتابة...",
+  "agent.chars_left": "متبقٍّ {n} حرف",
+  "agent.clear_confirm": "هل تريدين مسح المحادثة؟",
+  "agent.clear": "مسح المحادثة"
 }

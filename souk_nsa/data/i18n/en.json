@@ -425,5 +425,18 @@
   "search.image_remaining": "{n} attempt(s) remaining today",
   "search.image_last": "This is your last image search for today",
   "search.image_limit": "Daily image search limit reached (3 attempts)",
-  "search.image_no_tags": "Could not analyze the image, please try again"
+  "search.image_no_tags": "Could not analyze the image, please try again",
+  "agent.title": "Smart Assistant",
+  "agent.subtitle": "Your support assistant",
+  "agent.placeholder": "Type your message... (200 chars max)",
+  "agent.send": "Send",
+  "agent.welcome": "Hello! I'm your smart assistant for souk nsa. How can I help you today?",
+  "agent.err_too_long": "Message exceeds 200 characters",
+  "agent.err_rate_min": "You've sent 10 messages this minute. Please wait.",
+  "agent.err_rate_day": "You've sent 50 messages today. Try again tomorrow.",
+  "agent.err_generic": "Connection error, please try again.",
+  "agent.thinking": "Typing...",
+  "agent.chars_left": "{n} chars left",
+  "agent.clear_confirm": "Do you want to clear the conversation?",
+  "agent.clear": "Clear conversation"
 }
