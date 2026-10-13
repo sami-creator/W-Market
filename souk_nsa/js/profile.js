@@ -1,4 +1,5 @@
-/* profile.js — صفحات الحساب: auth، complete-profile، profile، edit-profile */
+/* profile.js — صفحات الحساب: auth، complete-profile، profile، edit-profile
+   + إصلاح: منع سباق زمني في فحص الأفاتار عبر token */
 (function () {
   'use strict';
   const el = Utils.el, t = k => I18n.t(k), R = window.CONFIG.ROUTES, L = window.CONFIG.LIMITS;
@@ -189,31 +190,37 @@ $('.profile-stats').after(btnFollow);
     $('#avatar-prev').src = Utils.imgUrl(p.avatar_url || 'assets/images/avatar.svg', 'thumb');
 
     let newAvatar = null;
-    let _avatarBlocked = false;
-    let _avatarPromise = null;
-    let _avatarPending = false;   // true إن كانت الصورة UNSAFE
+    let _avatarBlocked = false;   // true إن كانت الصورة UNSAFE
+    let _avatarToken = 0;         // ← إصلاح: token لمنع سباق النتائج القديمة
 
     f.avatar.addEventListener('change', async () => {
       const file = f.avatar.files[0];
       const v = await Upload.validate(file);
       if (!v.ok) { f.avatar.value = ''; return UI.toastKey(v.error, 'error'); }
+      // ابدأ جلسة جديدة: أي نتيجة قديمة ستُتجاهل
+      const myToken = ++_avatarToken;
       newAvatar = file; _avatarBlocked = false;
       $('#avatar-prev').src = URL.createObjectURL(file);
 
       /* فحص في الخلفية فور الاختيار */
       UI.toastKey('ad.images_reviewing', 'info', 3000);
       const { promise } = Upload.startModeration([file], (i, f2, res) => {
+        if (myToken !== _avatarToken) return;   // ← تجاهل نتيجة جلسة قديمة
         if (!res.ok) {
           _avatarBlocked = res.verdict === 'UNSAFE';
           Upload.showModerationWarning(
             f2.name, res.verdict, res.reasons,
-            () => { _avatarBlocked = false; },   // متابعة
-            () => { newAvatar = null; _avatarBlocked = false; f.avatar.value = ''; $('#avatar-prev').src = p.avatar_url || 'assets/images/avatar.svg'; }
+            () => { if (myToken === _avatarToken) _avatarBlocked = false; },   // متابعة
+            () => {
+              if (myToken !== _avatarToken) return;
+              newAvatar = null; _avatarBlocked = false;
+              f.avatar.value = '';
+              $('#avatar-prev').src = p.avatar_url || 'assets/images/avatar.svg';
+            }
           );
         }
       });
-      _avatarPromise = promise.finally(() => { _avatarPending = false; });
-      _avatarPromise.catch(() => { _avatarBlocked = false; });
+      promise.catch(() => { if (myToken === _avatarToken) _avatarBlocked = false; /* fail-open */ });
     });
 
     $('#form-edit').addEventListener('submit', async e => {
@@ -238,11 +245,7 @@ $('.profile-stats').after(btnFollow);
         for (const x of links) { const v = Sanitize.validateUrl(x.i.value, x.k); if (!v.ok) { showErr(x.i, v.error); return UI.toastKey(v.error, 'error'); } showErr(x.i, null); patch[x.k] = v.value || null; }
         const m = Sanitize.validateUrl(maps.value, 'maps'); if (!m.ok) return UI.toastKey(m.error, 'error'); patch.maps_url = m.value || null;
         if (newAvatar) {
-          if (_avatarPending) {
-            UI.toastKey('ad.waiting_moderation', 'info', 0);
-            try { await _avatarPromise; } catch { /* fail-open */ }
-  }
-  if (_avatarBlocked) { UI.toastKey('ad.blocked_images_exist', 'error'); return; }
+          if (_avatarBlocked) { UI.toastKey('ad.blocked_images_exist', 'error'); return; }
           const blobs = await Upload.compress(newAvatar); const path = `${Auth.uid()}/avatar.webp`;
           const up = await SB.db.storage.from('avatars').upload(path, blobs.medium, { contentType: blobs.medium.type, upsert: true });
           if (up.error) throw up.error; patch.avatar_url = SB.db.storage.from('avatars').getPublicUrl(path).data.publicUrl + '?v=' + Date.now();

@@ -1,4 +1,5 @@
-/* post-ad.js — نشر/تعديل إعلان بـ4 خطوات مرقمة، الزر التالي يتلوّن عند اكتمال شروط الخطوة، والتحقق يتكرر في Edge Function (submit-ad) */
+/* post-ad.js — نشر/تعديل إعلان بـ4 خطوات مرقمة، الزر التالي يتلوّن عند اكتمال شروط الخطوة، والتحقق يتكرر في Edge Function (submit-ad)
+   + إصلاح: ربط نتائج فحص الصور بالملف نفسه (it.mod) بدلًا من مصفوفة فهارس منفصلة */
 (function () {
   'use strict';
   const el = Utils.el, t = k => I18n.t(k), L = window.CONFIG.LIMITS, R = window.CONFIG.ROUTES;
@@ -14,9 +15,8 @@
     const editId = Utils.qs('id');
     // delivery: غير متوفر افتراضيًا، والناشرة تغيّره عند الحاجة
     const S = { category_id: '', subcategory_id: '', attrs: {}, title: '', description: '', price: '', discount_pct: 0, negotiable: false, delivery: false, show_phone: false, video_url: '', faq: [], lat: null, lng: null, wilaya_id: st.profile.wilaya_id, daira_id: st.profile.daira_id, commune_id: st.profile.commune_id, used: false, grade: 9, deal: 'sale', rent_price: '' };
-    let imgs = [], step = 1, orig = null, imgDirty = false;   // imgs: [{ old: record } | { file }]
-    let _modPromise = null;   // Promise ينتهي عند اكتمال فحص الصور
-    let _modResults = [];     // نتائج الفحص بنفس ترتيب imgs الجديدة
+    let imgs = [], step = 1, orig = null, imgDirty = false;   // imgs: [{ old: record } | { file, mod }]
+    let _modPromise = null;   // Promise ينتهي عند اكتمال فحص كل الصور الجارية
     let _modPending = false;  // هل الفحص جارٍ؟
 
     // الحقول الإضافية المخزّنة داخل attrs تُفصل عن سمات الصنف
@@ -204,7 +204,8 @@
         for (const f of [...fi.files]) {
           if (imgs.length >= L.IMAGES_MAX) { UI.toastKey('err.image_count', 'error'); break; }
           const v = await Upload.validate(f); if (!v.ok) { UI.toastKey(v.error, 'error'); continue; }
-          imgs.push({ file: f }); imgDirty = true; newFiles.push(f);
+          // أضف حقل mod ليُربط بنتيجة الفحص لاحقًا
+          imgs.push({ file: f, mod: null }); imgDirty = true; newFiles.push(f);
         }
         fi.value = ''; paint(); refreshNext();
 
@@ -213,22 +214,24 @@
         /* بدء الفحص في الخلفية فور اختيار الصور */
         _modPending = true;
         UI.toastKey('ad.images_reviewing', 'info', 3000);
-        const startIdx = _modResults.length;
 
         const { promise } = Upload.startModeration(newFiles, (i, file, res) => {
-          _modResults[startIdx + i] = res;
+          // اربط النتيجة بالملف نفسه، لا بالفهرس
+          const item = imgs.find(it => it.file === file);
+          if (item) item.mod = res;
           if (!res.ok) {
             Upload.showModerationWarning(
               file.name, res.verdict, res.reasons,
               () => { /* المستخدم اختار المتابعة */ },
               () => {
                 const idx = imgs.findIndex(it => it.file === file);
-                if (idx !== -1) { imgs.splice(idx, 1); _modResults.splice(startIdx + i, 1); imgDirty = true; paint(); refreshNext(); }
+                if (idx !== -1) { imgs.splice(idx, 1); imgDirty = true; paint(); refreshNext(); }
               }
             );
           }
         });
-        _modPromise = promise.finally(() => { _modPending = false; });
+        // اجمع كل الوعود الجارية (لو رفع المستخدم دفعتين متتاليتين)
+        _modPromise = Promise.all([_modPromise, promise].filter(Boolean)).finally(() => { _modPending = false; });
       });
       const vd = el('input', { class: 'input', type: 'url', inputmode: 'url', maxlength: 300, value: S.video_url }); bind(vd, 'video_url');
       const faqBox = el('div');
@@ -342,19 +345,25 @@
             UI.toastKey('ad.waiting_moderation', 'info', 0);
             try { await _modPromise; } catch { /* fail-open */ }
           }
-          /* منع النشر إن وُجدت صور ممنوعة (UNSAFE) لم يُزلها المستخدم */
-          const hasUnsafe = imgs.some((it, i) => it.file && _modResults[i] && _modResults[i].ok === false && _modResults[i].verdict === 'UNSAFE');
+          /* منع النشر إن وُجدت صور ممنوعة (UNSAFE) لم يُزلها المستخدم — مرتبطة بالملف نفسه */
+          const hasUnsafe = imgs.some(it => it.file && it.mod && it.mod.ok === false && it.mod.verdict === 'UNSAFE');
           if (hasUnsafe) { UI.toastKey('ad.blocked_images_exist', 'error'); UI.setLoading(next, false); return; }
 
           UI.toast(t('ad.uploading'), 'info', 1500);
           const files = [];
+          const modResults = [];
           for (const it of imgs) {
-            if (it.file) { files.push(it.file); continue; }
+            if (it.file) {
+              files.push(it.file);
+              modResults.push(it.mod || { ok: true });
+              continue;
+            }
             const url = Utils.imgUrl(it.old.path_large || it.old.path_medium, 'large');
             const blob = await (await fetch(url)).blob();
             files.push(new File([blob], 'old.' + (blob.type.split('/')[1] || 'webp'), { type: blob.type || 'image/webp' }));
+            modResults.push({ ok: true });   // الصور القديمة سبق فحصها
           }
-          images = await Upload.putAdImages(id, files, null, _modPromise, _modResults);
+          images = await Upload.putAdImages(id, files, null, _modPromise, modResults);
         }
         const ad = { category_id: S.category_id, subcategory_id: S.subcategory_id, attrs: buildAttrs(), title: S.title, description: S.description, price: S.price, discount_pct: S.discount_pct, negotiable: S.negotiable, delivery: Categories.isService(S.category_id) ? false : !!S.delivery, show_phone: S.show_phone, video_url: S.video_url, faq: S.faq, wilaya_id: S.wilaya_id, daira_id: S.daira_id, commune_id: S.commune_id, lat: S.lat, lng: S.lng };
         const { data, error } = await SB.fn('submit-ad', { mode: editId ? 'update' : 'create', id, ad, images });
