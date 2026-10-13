@@ -189,7 +189,9 @@ $('.profile-stats').after(btnFollow);
     $('#avatar-prev').src = Utils.imgUrl(p.avatar_url || 'assets/images/avatar.svg', 'thumb');
 
     let newAvatar = null;
-    let _avatarBlocked = false;   // true إن كانت الصورة UNSAFE
+    let _avatarBlocked = false;
+    let _avatarPromise = null;
+    let _avatarPending = false;   // true إن كانت الصورة UNSAFE
 
     f.avatar.addEventListener('change', async () => {
       const file = f.avatar.files[0];
@@ -210,7 +212,8 @@ $('.profile-stats').after(btnFollow);
           );
         }
       });
-      promise.catch(() => { _avatarBlocked = false; /* fail-open */ });
+      _avatarPromise = promise.finally(() => { _avatarPending = false; });
+      _avatarPromise.catch(() => { _avatarBlocked = false; });
     });
 
     $('#form-edit').addEventListener('submit', async e => {
@@ -235,7 +238,11 @@ $('.profile-stats').after(btnFollow);
         for (const x of links) { const v = Sanitize.validateUrl(x.i.value, x.k); if (!v.ok) { showErr(x.i, v.error); return UI.toastKey(v.error, 'error'); } showErr(x.i, null); patch[x.k] = v.value || null; }
         const m = Sanitize.validateUrl(maps.value, 'maps'); if (!m.ok) return UI.toastKey(m.error, 'error'); patch.maps_url = m.value || null;
         if (newAvatar) {
-          if (_avatarBlocked) { UI.toastKey('ad.blocked_images_exist', 'error'); return; }
+          if (_avatarPending) {
+            UI.toastKey('ad.waiting_moderation', 'info', 0);
+            try { await _avatarPromise; } catch { /* fail-open */ }
+  }
+  if (_avatarBlocked) { UI.toastKey('ad.blocked_images_exist', 'error'); return; }
           const blobs = await Upload.compress(newAvatar); const path = `${Auth.uid()}/avatar.webp`;
           const up = await SB.db.storage.from('avatars').upload(path, blobs.medium, { contentType: blobs.medium.type, upsert: true });
           if (up.error) throw up.error; patch.avatar_url = SB.db.storage.from('avatars').getPublicUrl(path).data.publicUrl + '?v=' + Date.now();
