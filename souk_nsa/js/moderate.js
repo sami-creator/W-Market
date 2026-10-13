@@ -44,6 +44,7 @@
         snort:8, inject:7, overdose:9,
         syringe:8, needle:6, bong:7,
         drug:9, drugs:9, narcotic:9, narcotics:9, dope:7,
+        pills:6, pill:5, powder:4,
       }
     },
 
