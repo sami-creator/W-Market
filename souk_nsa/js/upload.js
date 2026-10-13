@@ -1,5 +1,6 @@
 /* upload.js — تحقق (MIME + امتداد + magic bytes + حجم) وضغط WebP بـ3 أحجام قبل الرفع إلى ImageKit
-   + فحص محتوى الصور عبر moderate.js (fail-open: الفشل لا يوقف الرفع) */
+   + فحص محتوى الصور عبر moderate.js 
+   (fail-open: الفشل لا يوقف الرفع) */
 (function () {
   'use strict';
   const C = window.CONFIG, U = C.UPLOAD, L = C.LIMITS;
