@@ -64,13 +64,20 @@
     },
 
     meds: {
-      label: 'أدوية مشبوهة',
-      words: {
-        xanax:8, valium:7, tramadol:8, codeine:7,
-        oxycontin:9, hydrocodone:9,
-        counterfeit:8, fake_pills:9,
-      }
-    },
+  label: 'أدوية مشبوهة',
+  words: {
+    xanax:8, valium:7, tramadol:8, codeine:7,
+    oxycontin:9, hydrocodone:9,
+    counterfeit:8, fake_pills:9,
+    // ← أضف هذه
+    medication:5, medications:5,
+    pills:5, pill:5,
+    tablet:4, tablets:4,
+    capsule:4, capsules:4,
+    prescription:6, pharmacy:4,
+    overdose:9, drug:7, drugs:7,
+  }
+},
 
     hate: {
       label: 'كراهية وتمييز',
