@@ -343,7 +343,8 @@ html, body { height: 100%; overflow: hidden; }
   })();
 
   // تهيئة المساعد عند جهوزية التطبيق
-  document.addEventListener('app:ready', function () {
+  document.addEventListener('DOMContentLoaded', async function() {
+        await Promise.all([window.I18n?.init?.(), window.Theme?.init?.()]);
     // تحديث اتجاه الصفحة حسب اللغة
     const lang = window.I18n?.lang ?? 'ar';
     document.documentElement.lang = lang;
