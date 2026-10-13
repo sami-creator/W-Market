@@ -2,7 +2,8 @@
 (function () {
   'use strict';
   const C = window.CONFIG, K = C.STORAGE_KEYS;
-  const { el, qs: $, t } = window.Utils ?? {};
+  const { el, qs: $ } = window.Utils ?? {};
+  const t = k => I18n.t(k);
 
   window.Settings = {
     async init() {
