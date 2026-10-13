@@ -6,7 +6,7 @@
   'use strict';
 
   const WORKER_URL = 'https://nsfw-checker.houssemhoussam25.workers.dev';
-  const TIMEOUT_MS = 12000;
+  const TIMEOUT_MS = 45000;
 
   /* ================================================================
      قاموس الكلمات المحظورة مع أوزانها
