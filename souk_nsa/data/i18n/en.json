@@ -417,5 +417,8 @@
 "verify.review_bad": "The review says it looks like ({cat}). Fix the category to continue.",
 "verify.limit": "Daily review limit ({n}) reached. Fix the category to continue.",
 "verify.review_failed": "Review unavailable right now. Try later or fix the category.",
-"verify.remaining": "Reviews left today: {n}"
+"verify.remaining": "Reviews left today: {n}",
+"ad.images_reviewing": "Reviewing images...",
+"ad.waiting_moderation": "Please wait, review not finished yet",
+"ad.blocked_images_exist": "Blocked images exist, please remove them before publishing"
 }

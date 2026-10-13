@@ -417,5 +417,8 @@
 "verify.review_bad": "La vérification indique ({cat}). Corrigez la catégorie pour continuer.",
 "verify.limit": "Limite de {n} vérifications par jour atteinte. Corrigez la catégorie pour continuer.",
 "verify.review_failed": "Vérification indisponible, réessayez plus tard ou corrigez la catégorie.",
-"verify.remaining": "Vérifications restantes aujourd’hui : {n}"
+"verify.remaining": "Vérifications restantes aujourd’hui : {n}",
+"ad.images_reviewing": "Vérification des images en cours...",
+"ad.waiting_moderation": "Veuillez patienter, la vérification n'est pas terminée",
+"ad.blocked_images_exist": "Des images interdites existent, veuillez les supprimer avant de publier"
 }
