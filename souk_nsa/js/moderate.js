@@ -1,6 +1,7 @@
 /* moderate.js — فحص محتوى الصور عبر worker خارجي + تحليل نصي بالأوزان
    لا يتطلب أي مفاتيح أو edge functions
-   الفشل → fail-open (يُسمح بالرفع) */
+   الفشل → fail-open (يُسمح بالرفع)
+   + إضافة: score و description في النتيجة للتشخيص */
 (function () {
   'use strict';
 
@@ -64,20 +65,13 @@
     },
 
     meds: {
-  label: 'أدوية مشبوهة',
-  words: {
-    xanax:8, valium:7, tramadol:8, codeine:7,
-    oxycontin:9, hydrocodone:9,
-    counterfeit:8, fake_pills:9,
-    // ← أضف هذه
-    medication:5, medications:5,
-    pills:5, pill:5,
-    tablet:4, tablets:4,
-    capsule:4, capsules:4,
-    prescription:6, pharmacy:4,
-    overdose:9, drug:7, drugs:7,
-  }
-},
+      label: 'أدوية مشبوهة',
+      words: {
+        xanax:8, valium:7, tramadol:8, codeine:7,
+        oxycontin:9, hydrocodone:9,
+        counterfeit:8, fake_pills:9,
+      }
+    },
 
     hate: {
       label: 'كراهية وتمييز',
@@ -128,17 +122,22 @@
 
   /* ================================================================
      تحليل الوصف النصي المُعاد من الـ worker
+     يُعيد: { verdict, reasons, score, foundWords }
      ================================================================ */
   function analyzeText(text) {
     const lower = text.toLowerCase();
     let totalScore = 0;
     const reasons = [];
+    const foundWords = [];
 
     for (const [, cat] of Object.entries(CATEGORIES)) {
       let catScore = 0;
       for (const [word, weight] of Object.entries(cat.words)) {
         const matches = lower.match(new RegExp(`\\b${word.replace(/_/g, '\\s+')}\\b`, 'g'));
-        if (matches) catScore += weight * matches.length;
+        if (matches) {
+          catScore += weight * matches.length;
+          matches.forEach(() => foundWords.push(word + '(' + weight + ')'));
+        }
       }
       if (catScore > 0) { totalScore += catScore; reasons.push(cat.label); }
     }
@@ -147,7 +146,7 @@
     if      (totalScore >= THRESHOLD_UNSAFE)  verdict = 'UNSAFE';
     else if (totalScore >= THRESHOLD_WARNING) verdict = 'WARNING';
 
-    return { verdict, reasons };
+    return { verdict, reasons, score: totalScore, foundWords };
   }
 
   /* ================================================================
@@ -172,9 +171,9 @@
       const description = (data.result && data.result.description) || '';
       if (!description) return { ok: true, skipped: true };
 
-      const { verdict, reasons } = analyzeText(description);
-      if (verdict === 'SAFE') return { ok: true };
-      return { ok: false, verdict, reasons };
+      const { verdict, reasons, score, foundWords } = analyzeText(description);
+      if (verdict === 'SAFE') return { ok: true, score, description };
+      return { ok: false, verdict, reasons, score, description, foundWords };
 
     } catch {
       return { ok: true, skipped: true };   // timeout أو خطأ شبكة → fail-open
