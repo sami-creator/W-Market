@@ -1,5 +1,7 @@
 /* post-ad.js — نشر/تعديل إعلان بـ4 خطوات مرقمة، الزر التالي يتلوّن عند اكتمال شروط الخطوة، والتحقق يتكرر في Edge Function (submit-ad)
-   + إصلاح: ربط نتائج فحص الصور بالملف نفسه (it.mod) بدلًا من مصفوفة فهارس منفصلة */
+   + إصلاح 1: ربط نتائج الفحص بالملف نفسه (it.mod)
+   + إصلاح 2: لا يُسمح بالنشر حتى تكون كل صورة جديدة قد انتهى فحصها فعليًا
+   + إصلاح 3: تمرير ملف الصورة إلى نافذة التحذير لعرض صورة مصغّرة */
 (function () {
   'use strict';
   const el = Utils.el, t = k => I18n.t(k), L = window.CONFIG.LIMITS, R = window.CONFIG.ROUTES;
@@ -15,9 +17,8 @@
     const editId = Utils.qs('id');
     // delivery: غير متوفر افتراضيًا، والناشرة تغيّره عند الحاجة
     const S = { category_id: '', subcategory_id: '', attrs: {}, title: '', description: '', price: '', discount_pct: 0, negotiable: false, delivery: false, show_phone: false, video_url: '', faq: [], lat: null, lng: null, wilaya_id: st.profile.wilaya_id, daira_id: st.profile.daira_id, commune_id: st.profile.commune_id, used: false, grade: 9, deal: 'sale', rent_price: '' };
-    let imgs = [], step = 1, orig = null, imgDirty = false;   // imgs: [{ old: record } | { file, mod }]
+    let imgs = [], step = 1, orig = null, imgDirty = false;   // imgs: [{ old } | { file, mod }]
     let _modPromise = null;   // Promise ينتهي عند اكتمال فحص كل الصور الجارية
-    let _modPending = false;  // هل الفحص جارٍ؟
 
     // الحقول الإضافية المخزّنة داخل attrs تُفصل عن سمات الصنف
     const splitExtras = a => {
@@ -47,7 +48,6 @@
 
     /* ---- الخطوة 1: الصنف + السمات (ألوان/مقاسات متعددة) + العنوان والوصف ---- */
     function multiPick(f) {
-      // قيمة قديمة مفردة ("أحمر") أو مرمّزة ("/أحمر/أزرق/")
       const raw = S.attrs[f.key], dec = Categories.decodeMulti(raw);
       const cur = new Set(dec.length ? dec : (raw ? [raw] : []));
       const box = el('div', { class: 'opts' });
@@ -82,7 +82,7 @@
           attrs.append(field(Categories.keyLabel(f.key), i, null, true));
         });
       };
-      let vc = null;   // تنبيه التصنيف اللحظي (verify-category.js)
+      let vc = null;
       c.addEventListener('change', () => { S.category_id = c.value; S.subcategory_id = ''; S.attrs = {}; fillSub(); saveDraft(); if (vc) vc.refresh(); });
       s.addEventListener('change', () => { S.subcategory_id = s.value; S.attrs = {}; fillAttrs(); saveDraft(); if (vc) vc.refresh(); });
       const ti = el('input', { class: 'input', maxlength: L.TITLE, value: S.title }); bind(ti, 'title');
@@ -91,7 +91,6 @@
       const hintT = VerifyCategory.hintEl(), hintD = VerifyCategory.hintEl();
       vc = VerifyCategory.attach({ title: ti, desc: de, hintTitle: hintT, hintDesc: hintD, getSel: () => ({ main: S.category_id, sub: S.subcategory_id }) });
       const mic = (input, max) => (Voice.supported() ? Voice.dictateButton(input, max) : null);
-      // اختيار الصنف بالصوت (مثال: "طالون" أو "قفطان")
       const catVoice = Voice.supported() ? el('button', { class: 'btn btn--ghost voice-cat', type: 'button' }, '🎙 ' + t('voice.category')) : null;
       if (catVoice) catVoice.addEventListener('click', () => {
         if (Voice.active) return Voice.stop();
@@ -114,7 +113,6 @@
       if (!S.category_id || !S.subcategory_id) return 'err.category_required';
       const a = Sanitize.validateText(S.title, { max: L.TITLE, min: 3 }); if (!a.ok) return a.error; S.title = a.value;
       const b = Sanitize.validateText(S.description, { max: L.DESCRIPTION, min: 5 }); if (!b.ok) return b.error; S.description = b.value;
-      // التصنيف: يُمنع المتابعة إن بدا العنوان/الوصف خاصًا بتصنيف آخر، حتى يُصحَّح أو تعتمده المراجعة
       const unchanged = !!(orig && orig.category_id === S.category_id && orig.subcategory_id === S.subcategory_id && orig.title === S.title && orig.description === S.description);
       return await VerifyCategory.gate({
         title: S.title, desc: S.description, main: S.category_id, sub: S.subcategory_id, S, unchanged,
@@ -132,7 +130,6 @@
         const pr = el('input', { class: 'input', type: 'number', inputmode: 'numeric', min: 1, value: S.price }); bind(pr, 'price');
         const r = Categories.range(S.category_id, S.subcategory_id);
         const hint = el('div', { class: 'hint', text: r ? Utils.formatNumber(r.min ?? 0) + ' - ' + (r.max != null ? Utils.formatNumber(r.max) : '∞') : '' });
-        // بيع فقط (افتراضي) / بيع أو كراء / كراء فقط
         const dealBox = el('div', { class: 'opts' }, [['sale', 'ad.deal_sale'], ['both', 'ad.deal_both'], ['rent', 'ad.deal_rent_only']].map(([v, k]) => {
           const i = el('input', { type: 'radio', name: 'deal' }); i.checked = S.deal === v;
           i.addEventListener('change', () => { S.deal = v; saveDraft(); paint(); refreshNext(); });
@@ -147,14 +144,11 @@
         if (svc) { S.delivery = false; S.used = false; }
         const dc = el('input', { class: 'input', type: 'number', min: 0, max: 90, inputmode: 'numeric', value: S.discount_pct }); bind(dc, 'discount_pct', v => Math.min(90, Math.max(0, parseInt(v, 10) || 0)));
         const ng = el('input', { type: 'checkbox' }); ng.checked = S.negotiable; ng.addEventListener('change', () => { S.negotiable = ng.checked; saveDraft(); });
-        // الحالة: جديد افتراضيًا، ومستعمل بدرجة من 10
         const gr = el('select', { class: 'input', style: 'width:auto' }); for (let n = 10; n >= 1; n--) gr.append(new Option(n + '/10', n)); gr.value = S.grade; gr.disabled = !S.used;
         gr.addEventListener('change', () => { S.grade = Number(gr.value); saveDraft(); });
         const us = el('input', { type: 'checkbox' }); us.checked = S.used; us.addEventListener('change', () => { S.used = us.checked; gr.disabled = !us.checked; saveDraft(); });
-        // التوصيل: غير متوفر افتراضيًا
         const dl = el('input', { type: 'checkbox' }); dl.checked = !!S.delivery; dl.addEventListener('change', () => { S.delivery = dl.checked; saveDraft(); paint(); });
         const sp = el('input', { type: 'checkbox' }); sp.checked = S.show_phone; sp.addEventListener('change', () => { S.show_phone = sp.checked; saveDraft(); });
-        // أسعار التوصيل لكل ولاية: تُحفظ في حساب الناشر وتُطبَّق تلقائيًا على كل إعلاناته، ويمكن تعديلها من هنا
         const dprices = Delivery.clean((st.profile && st.profile.delivery_prices) || {});
         const dCount = Object.keys(dprices).length;
         const dBox = (!svc && S.delivery) ? el('div', { class: 'card-box deliv-box' }, [
@@ -192,9 +186,23 @@
         prev.replaceChildren();
         imgs.forEach((it, i) => {
           const src = it.old ? Utils.imgUrl(it.old.path_thumb, 'thumb') : URL.createObjectURL(it.file);
-          const ph = el('div', { class: 'ph' }, [el('img', { src, alt: '' }), el('button', { type: 'button', 'aria-label': t('common.delete'), onclick: () => { imgs.splice(i, 1); imgDirty = true; paint(); refreshNext(); } }, '×')]);
+          const ph = el('div', { class: 'ph' }, [el('img', { src, alt: '' }), el('button', { type: 'button', 'aria-label': t('common.delete'), onclick: () => {
+            const removed = imgs.splice(i, 1)[0];
+            if (removed && removed.file && Upload.clearModerationWarningsFor) Upload.clearModerationWarningsFor(removed.file);
+            imgDirty = true; paint(); refreshNext();
+          } }, '×')]);
           if (i === 0) ph.append(el('span', { style: 'position:absolute;bottom:2px;inset-inline-start:2px;background:var(--c-primary);color:#fff;font-size:9px;padding:1px 6px;border-radius:8px', text: t('ad.cover') }));
           else ph.append(el('button', { type: 'button', style: 'top:auto;bottom:2px;inset-inline-end:2px;background:rgba(0,0,0,.6)', title: t('ad.make_cover'), onclick: () => { imgs.unshift(imgs.splice(i, 1)[0]); imgDirty = true; paint(); } }, '★'));
+
+          // شارة حالة الفحص لكل صورة جديدة
+          if (it.file) {
+            let badgeText = '', badgeBg = '';
+            if (it.mod === null || it.mod === undefined) { badgeText = '⏳'; badgeBg = 'rgba(0,0,0,.55)'; }
+            else if (it.mod.ok === false) { badgeText = it.mod.verdict === 'UNSAFE' ? '🚫' : '⚠️'; badgeBg = it.mod.verdict === 'UNSAFE' ? 'rgba(200,0,0,.9)' : 'rgba(230,138,0,.9)'; }
+            else if (!it.mod.skipped) { badgeText = '✓'; badgeBg = 'rgba(34,139,34,.9)'; }
+            if (badgeText) ph.append(el('span', { style: 'position:absolute;top:2px;inset-inline-end:2px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:bold;background:' + badgeBg, text: badgeText }));
+          }
+
           prev.append(ph);
         });
       };
@@ -204,7 +212,6 @@
         for (const f of [...fi.files]) {
           if (imgs.length >= L.IMAGES_MAX) { UI.toastKey('err.image_count', 'error'); break; }
           const v = await Upload.validate(f); if (!v.ok) { UI.toastKey(v.error, 'error'); continue; }
-          // أضف حقل mod ليُربط بنتيجة الفحص لاحقًا
           imgs.push({ file: f, mod: null }); imgDirty = true; newFiles.push(f);
         }
         fi.value = ''; paint(); refreshNext();
@@ -212,13 +219,12 @@
         if (!newFiles.length) return;
 
         /* بدء الفحص في الخلفية فور اختيار الصور */
-        _modPending = true;
         UI.toastKey('ad.images_reviewing', 'info', 3000);
 
         const { promise } = Upload.startModeration(newFiles, (i, file, res) => {
-          // اربط النتيجة بالملف نفسه، لا بالفهرس
           const item = imgs.find(it => it.file === file);
           if (item) item.mod = res;
+          paint();
           if (!res.ok) {
             Upload.showModerationWarning(
               file.name, res.verdict, res.reasons,
@@ -226,12 +232,13 @@
               () => {
                 const idx = imgs.findIndex(it => it.file === file);
                 if (idx !== -1) { imgs.splice(idx, 1); imgDirty = true; paint(); refreshNext(); }
-              }
+              },
+              file   // ← لتمرير الصورة المصغّرة إلى النافذة
             );
           }
         });
-        // اجمع كل الوعود الجارية (لو رفع المستخدم دفعتين متتاليتين)
-        _modPromise = Promise.all([_modPromise, promise].filter(Boolean)).finally(() => { _modPending = false; });
+        // تراكم الوعود الجارية بدل استبدالها (يمنع انتهاء العلم مبكرًا)
+        _modPromise = _modPromise ? _modPromise.then(() => promise) : promise;
       });
       const vd = el('input', { class: 'input', type: 'url', inputmode: 'url', maxlength: 300, value: S.video_url }); bind(vd, 'video_url');
       const faqBox = el('div');
@@ -268,7 +275,6 @@
       const gps = el('button', { class: 'btn btn--ghost', type: 'button' }, S.lat ? t('ad.gps_done') : t('ad.use_gps'));
       gps.addEventListener('click', () => navigator.geolocation && navigator.geolocation.getCurrentPosition(p => { S.lat = p.coords.latitude; S.lng = p.coords.longitude; gps.textContent = t('ad.gps_done'); saveDraft(); }, () => UI.toastKey('geo.locate_denied', 'error'), { timeout: 8000 }));
 
-      // وسائل التواصل الغير مضبوطة
       const p = st.profile;
       const SOCIAL_ICONS = { phone: '📞', facebook: 'f', instagram: '📷', tiktok: '♪', telegram: '✈', maps_url: '📍' };
       const missing = [
@@ -286,7 +292,6 @@
           missing.map(k => el('span', { class: 'badge', text: (SOCIAL_ICONS[k] || '') + ' ' + (k === 'maps_url' ? 'Maps' : k === 'phone' ? t('ad.phone') : k.charAt(0).toUpperCase() + k.slice(1)) }))
         ),
         el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => {
-          // حفظ مرجع الرجوع ثم الانتقال لصفحة تعديل الملف الشخصي
           const returnUrl = location.href;
           Utils.Store.set('post_ad_return', returnUrl);
           Utils.go(R.EDIT_PROFILE);
@@ -302,7 +307,6 @@
     }
 
     const builders = [null, step1, step2, step3, step4], checks = [null, check1, check2, check3, check4], oks = [null, ok1, ok2, ok3, ok4];
-    // يتلوّن الزر "التالي" عند استيفاء شروط الخطوة، وما عداها اختياري
     const refreshNext = () => next.classList.toggle('ready', !!oks[step]());
     root.addEventListener('input', refreshNext); root.addEventListener('change', refreshNext);
 
@@ -316,7 +320,6 @@
       setTimeout(refreshNext, 0);
     }
 
-    // سمات الإرسال: المقاسات والألوان أولًا لأن الخادم يحتفظ بأول 5 مفاتيح فقط
     const buildAttrs = () => {
       const out = {}, A = S.attrs;
       ['size', 'shoe_size', 'color'].forEach(k => { if (A[k]) out[k] = A[k]; });
@@ -330,22 +333,26 @@
     $('#btn-back').addEventListener('click', () => { step--; render(); });
     next.addEventListener('click', async () => {
       const err = await checks[step]();
-      if (err === 'verify.blocked') return;                    // النافذة ظاهرة للمستخدم بالفعل
+      if (err === 'verify.blocked') return;
       if (err) return UI.toast(t(err) === err ? err : t(err), 'error');
       if (step < TOTAL) { step++; return render(); }
       UI.setLoading(next, true);
       try {
         const id = editId || Utils.uuid();
         let images = null;
-        // عند أي تغيير في الصور (حذف/إضافة/غلاف) تُعاد رفع القائمة النهائية بالترتيب
         const changed = !editId || imgDirty;
         if (changed) {
-          /* إن كان الفحص لا يزال جاريًا: أبلغ المستخدم وانتظر */
-          if (_modPending) {
+          /* 1) انتظر أي فحص جارٍ */
+          if (_modPromise) {
             UI.toastKey('ad.waiting_moderation', 'info', 0);
             try { await _modPromise; } catch { /* fail-open */ }
           }
-          /* منع النشر إن وُجدت صور ممنوعة (UNSAFE) لم يُزلها المستخدم — مرتبطة بالملف نفسه */
+
+          /* 2) لا تُسمح كل صورة جديدة بالمرور حتى ينتهي فحصها فعلًا */
+          const unchecked = imgs.some(it => it.file && !it.mod);
+          if (unchecked) { UI.toastKey('ad.waiting_moderation', 'error'); UI.setLoading(next, false); return; }
+
+          /* 3) منع النشر إن وُجدت صور UNSAFE */
           const hasUnsafe = imgs.some(it => it.file && it.mod && it.mod.ok === false && it.mod.verdict === 'UNSAFE');
           if (hasUnsafe) { UI.toastKey('ad.blocked_images_exist', 'error'); UI.setLoading(next, false); return; }
 
@@ -361,7 +368,7 @@
             const url = Utils.imgUrl(it.old.path_large || it.old.path_medium, 'large');
             const blob = await (await fetch(url)).blob();
             files.push(new File([blob], 'old.' + (blob.type.split('/')[1] || 'webp'), { type: blob.type || 'image/webp' }));
-            modResults.push({ ok: true });   // الصور القديمة سبق فحصها
+            modResults.push({ ok: true });
           }
           images = await Upload.putAdImages(id, files, null, _modPromise, modResults);
         }
@@ -377,7 +384,6 @@
     render();
     if (!editId && S.title) UI.toastKey('ad.saved_draft', 'info', 1800);
 
-    // الرجوع من صفحة تعديل الملف الشخصي
     const returnUrl = Utils.Store.get('post_ad_return');
     if (returnUrl) { Utils.Store.remove('post_ad_return'); }
   };
