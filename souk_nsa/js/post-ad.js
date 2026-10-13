@@ -160,7 +160,7 @@
           el('label', { class: 'row' }, [ng, t('ad.negotiable')]),
           svc ? null : field(t('ad.condition'), el('div', { class: 'row' }, [el('label', { class: 'row' }, [us, t('ad.used')]), gr]), el('div', { class: 'hint', text: t('ad.condition_hint') }), true),
           svc ? null : el('label', { class: 'row', style: 'margin:10px 0' }, [dl, t('ad.delivery_yes')]),
-          dBox,
+          ...(dBox ? [dBox] : []),
           el('label', { class: 'row' }, [sp, t('ad.show_phone')]));
       };
       paint();

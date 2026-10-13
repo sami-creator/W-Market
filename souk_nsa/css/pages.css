@@ -16,10 +16,10 @@
 .contact-links a{padding:6px 12px;border-radius:999px;background:var(--surface-2);font-size:13px}
 .faq-item{border-bottom:1px solid var(--border);padding:8px 0}.faq-item b{display:block}
 .presence{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--muted);margin-inline-end:4px}.presence.on{background:var(--ok)}
-.img-preview{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.img-preview{display:grid;grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:6px}
 .img-preview .ph{position:relative;aspect-ratio:1/1;border-radius:10px;overflow:hidden;background:var(--surface-2)}
 .img-preview img{width:100%;height:100%;object-fit:cover}
-.img-preview button{position:absolute;top:2px;inset-inline-end:2px;border:0;border-radius:50%;width:22px;height:22px;background:rgba(0,0,0,.6);color:#fff}
+.img-preview button{position:absolute;top:2px;inset-inline-end:2px;border:0;border-radius:50%;width:22px;height:22px;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;pointer-events:auto}
 .char-count{font-size:11px;color:var(--muted);text-align:end}
 .stats-table{width:100%;border-collapse:collapse;font-size:13px}
 .stats-table th,.stats-table td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:start}
