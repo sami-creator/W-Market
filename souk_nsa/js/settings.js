@@ -2,7 +2,8 @@
 (function () {
   'use strict';
   const C = window.CONFIG, K = C.STORAGE_KEYS;
-  const { el, qs: $ } = window.Utils ?? {};
+  const el = window.Utils.el;
+  const $ = s => document.querySelector(s);
   const t = k => I18n.t(k);
 
   window.Settings = {
