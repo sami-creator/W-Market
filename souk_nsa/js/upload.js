@@ -49,7 +49,8 @@
       method: 'POST', body: formData
     });
     if (!res.ok) { const err = await res.json(); throw new Error(err.message || 'ImageKit upload failed'); }
-    return (await res.json()).url;
+    const r = await res.json();
+    return { url: r.url, fileId: r.fileId };
   }
 
   /* ================================================================
@@ -253,7 +254,14 @@
         const rec   = { position: i };
         for (const k of Object.keys(blobs)) {
           const fileName = `${uid}_${adId}_${i}_${k}.webp`;
-          rec['path_' + k] = await uploadToImageKit(blobs[k], fileName);
+          const { url, fileId } = await uploadToImageKit(blobs[k], fileName);
+          rec['path_' + k] = url;
+          if (k === 'large') rec.imagekit_file_id = fileId;
+        }
+        /* حفظ وصف وكلمات مفتاحية من نتيجة الفحص */
+        if (modRes && modRes.ok !== false) {
+          if (modRes.description) rec.ai_description = modRes.description;
+          if (modRes.tags && modRes.tags.length) rec.ai_tags = modRes.tags;
         }
         res.push(rec);
         if (onProgress) onProgress(i + 1, files.length);

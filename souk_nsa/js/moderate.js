@@ -151,6 +151,35 @@
   }
 
   /* ================================================================
+     استخراج كلمات مفتاحية من الوصف النصي (للبحث لاحقاً)
+     ================================================================ */
+  const STOP_WORDS = new Set(['the','a','an','is','are','was','were','be','been','being',
+    'have','has','had','do','does','did','will','would','could','should','may','might',
+    'shall','can','need','dare','ought','used','it','its','this','that','these','those',
+    'i','we','you','he','she','they','me','him','her','us','them','my','your','his',
+    'our','their','what','which','who','whom','whose','when','where','why','how',
+    'all','each','every','both','few','more','most','other','some','such','no','nor',
+    'not','only','own','same','so','than','too','very','just','as','at','by','for',
+    'in','of','on','to','up','and','but','or','if','with','about','into','through',
+    'during','before','after','above','below','from','out','off','over','under',
+    'image','features','shows','wearing','placed','surface','possibly','making',
+    'sitting','standing','lying','seen','appears','looks','seem','showing']);
+
+  function extractTags(text) {
+    if (!text) return [];
+    const words = text.toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 2 && !STOP_WORDS.has(w));
+    const freq = {};
+    words.forEach(w => { freq[w] = (freq[w] || 0) + 1; });
+    return Object.entries(freq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 20)
+      .map(([w]) => w);
+  }
+
+  /* ================================================================
      فحص ملف واحد: إرسال للـ worker → تحليل الوصف
      الفشل دائمًا → { ok: true, skipped: true }
      ================================================================ */
@@ -173,8 +202,9 @@
       if (!description) return { ok: true, skipped: true };
 
       const { verdict, reasons, score, foundWords } = analyzeText(description);
-      if (verdict === 'SAFE') return { ok: true, score, description };
-      return { ok: false, verdict, reasons, score, description, foundWords };
+      const tags = extractTags(description);
+      if (verdict === 'SAFE') return { ok: true, score, description, tags };
+      return { ok: false, verdict, reasons, score, description, foundWords, tags };
 
     } catch {
       return { ok: true, skipped: true };   // timeout أو خطأ شبكة → fail-open

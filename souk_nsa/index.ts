@@ -8,8 +8,13 @@
  *   رد   : { ok, description?, error? }
  *
  * متغيرات البيئة المطلوبة (Supabase Secrets):
- *   OPENAI_API_KEY   — مفتاح OpenAI لاستخدام GPT-4o-mini Vision
+ *   OPENAI_API_KEY        — مفتاح OpenAI لاستخدام GPT-4o-mini Vision
+ *   IMAGEKIT_PRIVATE_KEY  — المفتاح الخاص لـ ImageKit (للحذف)
  *   (اختياري) MODERATE_SECRET — secret header للتحقق من الطالب
+ *
+ * المسارات:
+ *   POST /functions/v1/moderate-image          — فحص صورة
+ *   POST /functions/v1/moderate-image/delete   — حذف ملف من ImageKit
  */
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
@@ -18,6 +23,8 @@ const OPENAI_URL  = 'https://api.openai.com/v1/chat/completions';
 const MODEL       = 'gpt-4o-mini';
 const MAX_TOKENS  = 300;
 const TIMEOUT_MS  = 10_000;
+
+const IMAGEKIT_DELETE_URL = 'https://api.imagekit.io/v1/files/';
 
 const SYSTEM_PROMPT = `You are a content moderation assistant.
 Analyze the image and write a concise English description (2-5 sentences) of what you see.
@@ -43,14 +50,57 @@ serve(async (req: Request) => {
     return json({ ok: false, error: 'Method not allowed' }, 405);
   }
 
-  /* ---- اختياري: التحقق من secret ---- */
+  /* ---- التحقق من secret (اختياري) ---- */
   const secret = Deno.env.get('MODERATE_SECRET');
   if (secret) {
     const provided = req.headers.get('x-moderate-secret') || '';
     if (provided !== secret) return json({ ok: false, error: 'Forbidden' }, 403);
   }
 
-  /* ---- قراءة الصورة ---- */
+  const url = new URL(req.url);
+
+  /* ================================================================
+     مسار الحذف: POST /moderate-image/delete
+     body: { fileIds: string[] }
+     يحذف الملفات من ImageKit باستخدام Batch Delete API
+     ================================================================ */
+  if (url.pathname.endsWith('/delete')) {
+    const privateKey = Deno.env.get('IMAGEKIT_PRIVATE_KEY');
+    if (!privateKey) return json({ ok: false, error: 'IMAGEKIT_PRIVATE_KEY not set' }, 500);
+
+    let fileIds: string[] = [];
+    try {
+      const body = await req.json();
+      fileIds = Array.isArray(body.fileIds) ? body.fileIds.filter((x: unknown) => typeof x === 'string') : [];
+    } catch {
+      return json({ ok: false, error: 'Invalid JSON body' }, 400);
+    }
+
+    if (!fileIds.length) return json({ ok: true, deleted: 0 });
+
+    /* ImageKit Bulk Delete */
+    const auth = btoa(privateKey + ':');
+    const deleteRes = await fetch('https://api.imagekit.io/v1/files/batch/deleteByFileIds', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${auth}`,
+      },
+      body: JSON.stringify({ fileIds }),
+    });
+
+    if (!deleteRes.ok) {
+      const err = await deleteRes.text();
+      console.error('[moderate-image/delete] ImageKit error:', err);
+      return json({ ok: false, error: 'ImageKit delete failed' }, 502);
+    }
+
+    return json({ ok: true, deleted: fileIds.length });
+  }
+
+  /* ================================================================
+     مسار الفحص الرئيسي: POST /moderate-image
+     ================================================================ */
   const apiKey = Deno.env.get('OPENAI_API_KEY');
   if (!apiKey) return json({ ok: false, error: 'Server misconfigured' }, 500);
 
@@ -102,7 +152,6 @@ serve(async (req: Request) => {
     if (!openaiRes.ok) {
       const err = await openaiRes.text();
       console.error('[moderate-image] OpenAI error:', err);
-      /* فشل النموذج → نسمح بالرفع (fail-open) */
       return json({ ok: true, skipped: true, description: '' });
     }
 
@@ -114,7 +163,6 @@ serve(async (req: Request) => {
   } catch (e) {
     clearTimeout(timer);
     console.error('[moderate-image] fetch error:', e);
-    /* فشل الشبكة / timeout → fail-open */
     return json({ ok: true, skipped: true, description: '' });
   }
 });

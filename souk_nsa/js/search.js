@@ -202,6 +202,69 @@
       } catch (e) { console.warn('[Search] suggest', e); }
     },
 
+    /* ===== البحث بالصورة ===== */
+    mountImageSearch({ btn: imgBtn, fileInput, onResults }) {
+      if (!imgBtn || !fileInput) return;
+      imgBtn.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', async () => {
+        const file = fileInput.files && fileInput.files[0];
+        fileInput.value = '';
+        if (!file) return;
+
+        /* التحقق من الصحة */
+        const valid = await Upload.validate(file);
+        if (!valid.ok) { UI.toastKey(valid.error, 'error'); return; }
+
+        /* التحقق من بقية المحاولات */
+        const remaining = await Ads.imageSearchRemaining();
+        if (remaining <= 0) { UI.toastKey('search.image_limit', 'error'); return; }
+
+        setBusy(true);
+        imgBtn.classList.add('is-loading');
+
+        try {
+          /* فحص الصورة أولاً (يبدأ فقط عند الضغط على بحث) */
+          const modRes = await Moderate.checkFile(file);
+          if (modRes.ok === false) {
+            /* الصورة ممنوعة: نعرض رسالة مع الأسباب وزر إزالة */
+            Upload.showModerationWarning(
+              file.name,
+              modRes.verdict,
+              modRes.reasons,
+              null,   /* لا يوجد "متابعة" للبحث */
+              () => {},  /* إزالة = لا شيء */
+              file
+            );
+            return;
+          }
+
+          /* تسجيل المحاولة */
+          await Ads.logImageSearch();
+          const newRemaining = remaining - 1;
+
+          /* إبلاغ المستخدم بالمحاولات المتبقية */
+          if (newRemaining > 0) {
+            UI.toast(I18n.t('search.image_remaining').replace('{n}', newRemaining), 'info', 3000);
+          } else {
+            UI.toastKey('search.image_last', 'info', 3000);
+          }
+
+          const tags = modRes.tags || [];
+          if (!tags.length) { UI.toastKey('search.image_no_tags', 'info'); return; }
+
+          const results = await Ads.searchByTags(tags);
+          if (onResults) onResults(results);
+
+        } catch (e) {
+          console.error('[Search] image search', e);
+          UI.toastKey('err.generic', 'error');
+        } finally {
+          setBusy(false);
+          imgBtn.classList.remove('is-loading');
+        }
+      });
+    },
+
     async didYouMean(q) {
       dymBox.replaceChildren();
       try {

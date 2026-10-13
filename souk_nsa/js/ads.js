@@ -196,6 +196,37 @@
       const { data } = await SB.db.from('ad_images').select('path_thumb,path_medium,path_large,position').eq('ad_id', adId).order('position');
       return data || [];
     },
+
+    /* البحث بالصورة: مطابقة الكلمات المفتاحية مع ad_images.ai_tags
+       يُعيد الإعلانات مرتبة حسب عدد التطابقات تنازليًا */
+    async searchByTags(tags) {
+      if (!tags || !tags.length) return [];
+      const { data, error } = await SB.db.rpc('search_by_image_tags', { p_tags: tags });
+      if (error) { console.error('[Ads] searchByTags', error); return []; }
+      return data || [];
+    },
+
+    /* التحقق من بقية محاولات البحث بالصورة لليوم الحالي */
+    async imageSearchRemaining() {
+      const uid = Auth.uid();
+      if (!uid) return 0;
+      const today = new Date().toISOString().slice(0, 10);
+      const { data } = await SB.db.from('image_search_logs')
+        .select('count')
+        .eq('user_id', uid)
+        .eq('search_date', today)
+        .maybeSingle();
+      const used = data ? Number(data.count) : 0;
+      return Math.max(0, 3 - used);
+    },
+
+    /* تسجيل محاولة بحث بالصورة */
+    async logImageSearch() {
+      const uid = Auth.uid();
+      if (!uid) return;
+      const today = new Date().toISOString().slice(0, 10);
+      await SB.db.rpc('increment_image_search_log', { p_user: uid, p_date: today });
+    },
     async priceHistory(adId) {
       const { data } = await SB.db.from('price_history').select('old_price,new_price,changed_at').eq('ad_id', adId).order('changed_at', { ascending: false });
       return data || [];
