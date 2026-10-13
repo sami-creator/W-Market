@@ -264,6 +264,8 @@
           if (modRes.tags && modRes.tags.length) rec.ai_tags = modRes.tags;
         }
         res.push(rec);
+        console.log('[putAdImages] rec:', JSON.stringify(rec));
+        console.log('[putAdImages] modRes:', JSON.stringify(modRes));
         if (onProgress) onProgress(i + 1, files.length);
       }
       return res;
