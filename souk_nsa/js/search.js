@@ -256,7 +256,7 @@
           if (onResults) onResults(results);
 
         } catch (e) {
-          console.error('[Search] image search', e);
+          console.error('[ImageSearch] ERROR:', e, e && e.message, e && e.stack);
           UI.toastKey('err.generic', 'error');
         } finally {
           setBusy(false);
