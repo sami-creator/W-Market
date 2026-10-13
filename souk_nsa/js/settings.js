@@ -102,10 +102,11 @@
     },
 
     // يُستدعى من profile.js بعد حفظ تعديلات الملف الشخصي
-    handlePostAdReturn() {
+        handlePostAdReturn() {
       const key = C.STORAGE_KEYS.RETURN_TO;
       const ret = Utils.Store.get(key);
       if (ret) { Utils.Store.remove(key); Router.go(ret); }
-    }
+    },
+    render() { return this.init(); }
   };
 })();
