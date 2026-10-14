@@ -378,6 +378,7 @@
             }
           }
           images = await Upload.putAdImages(id, files, null, _modPromise, modResults);
+          console.log('[DEBUG] images:', JSON.stringify(images));
           /* حذف الصور الممنوعة من ImageKit بشكل غير متزامن */
           if (bannedFileIds.length) {
             SB.fn('imagekit-delete', { fileIds: bannedFileIds }).catch(e => console.warn('[PostAd] imagekit-delete', e));
