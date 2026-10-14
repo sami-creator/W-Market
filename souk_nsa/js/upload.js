@@ -259,9 +259,10 @@
           if (k === 'large') rec.imagekit_file_id = fileId;
         }
         /* حفظ وصف وكلمات مفتاحية من نتيجة الفحص */
-        if (modRes && modRes.ok !== false) {
-          if (modRes.description) rec.ai_description = modRes.description;
-          if (modRes.tags && modRes.tags.length) rec.ai_tags = modRes.tags;
+        const thisModRes = Array.isArray(modRes) ? modRes[i] : modRes;
+        if (thisModRes && thisModRes.ok !== false) {
+        if (thisModRes.description) rec.ai_description = thisModRes.description;
+        if (thisModRes.tags && thisModRes.tags.length) rec.ai_tags = thisModRes.tags;
         }
         res.push(rec);
         console.log('[putAdImages] rec:', JSON.stringify(rec));

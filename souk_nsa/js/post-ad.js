@@ -362,7 +362,7 @@
           for (const it of imgs) {
             if (it.file) {
               files.push(it.file);
-              modResults.push(it.mod || { ok: true });
+              modResults.push(it.mod && it.mod.ok !== false ? { ok: true, description: it.mod.description, tags: it.mod.tags } : { ok: true });
               continue;
             }
             const url = Utils.imgUrl(it.old.path_large || it.old.path_medium, 'large');
