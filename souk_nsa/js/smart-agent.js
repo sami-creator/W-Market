@@ -113,40 +113,30 @@
 
   // ─── استدعاء Edge Function ───────────────────────────────────────────────────
   async function callAgent(message, kbAnswer) {
-    const lang = (window.I18n?.lang ?? 'ar').slice(0, 2);
-    const fp   = (window.__FP__ ?? '').slice(0, 64); // fingerprint اختياري
-
-    const authToken = window.SB?.session?.access_token ?? '';
-
-    const payload = {
-      message,
-      lang,
-      history: history.slice(-10),
-      kb_answer: kbAnswer ?? '',
-      fingerprint: fp,
-    };
-
-    const headers = { 'Content-Type': 'application/json' };
-    if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
-
-    const res = await fetch(getEdgeUrl(), {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload),
-    });
-
-    const data = await res.json();
-
-    if (res.status === 429) {
-      const key = data.error === 'rate_limit_min' ? 'agent.err_rate_min' : 'agent.err_rate_day';
-      throw Object.assign(new Error(key), { i18nKey: key });
-    }
-    if (!res.ok || data.error) {
-      throw Object.assign(new Error('agent.err_generic'), { i18nKey: 'agent.err_generic' });
-    }
-
-    return data.reply;
+  const lang = (window.I18n?.lang ?? 'ar').slice(0, 2);
+  const fp = (window.__FP__ ?? '').slice(0, 64);
+  
+  const payload = {
+    message,
+    lang,
+    history: history.slice(-10),
+    kb_answer: kbAnswer ?? '',
+    fingerprint: fp,
+  };
+  
+  const { data, error } = await SB.fn('smart-agent', payload);
+  
+  if (error) throw Object.assign(new Error('agent.err_generic'), { i18nKey: 'agent.err_generic' });
+  
+  if (data.error === 'rate_limit_min' || data.error === 'rate_limit_day') {
+    const key = data.error === 'rate_limit_min' ? 'agent.err_rate_min' : 'agent.err_rate_day';
+    throw Object.assign(new Error(key), { i18nKey: key });
   }
+  
+  if (data.error) throw Object.assign(new Error('agent.err_generic'), { i18nKey: 'agent.err_generic' });
+  
+  return data.reply;
+}
 
   // ─── إرسال الرسالة ────────────────────────────────────────────────────────────
   async function send() {
