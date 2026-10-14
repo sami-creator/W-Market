@@ -186,12 +186,12 @@
       } catch (e) { console.warn('[Search] suggest', e); }
     },
 
-    /* ===== البحث بالصورة — يستدعي Edge Function image-search ===== */
+    /* ===== البحث بالصورة ===== */
     mountImageSearch({ btn: imgBtn, fileInput, onResults }) {
       if (!imgBtn || !fileInput) return;
       imgBtn.addEventListener('click', () => {
-        /* اشتراط تسجيل الدخول */
-        if (!Auth.isLogged()) { UI.toastKey('auth.required', 'error'); return; }
+        /* اشتراط تسجيل الدخول — توجيه مباشر مع حفظ العودة */
+        if (!Auth.isLogged()) { Router.toLogin(); return; }
         fileInput.click();
       });
       fileInput.addEventListener('change', async () => {
@@ -199,7 +199,6 @@
         fileInput.value = '';
         if (!file) return;
 
-        /* التحقق من صحة الملف محلياً */
         const valid = await Upload.validate(file);
         if (!valid.ok) { UI.toastKey(valid.error, 'error'); return; }
 
@@ -207,34 +206,32 @@
         imgBtn.classList.add('is-loading');
 
         try {
-          /* إرسال الصورة للـ Edge Function */
-          const buffer = await file.arrayBuffer();
-          const { data, error } = await SB.fn('image-search', buffer, {
-            headers: { 'Content-Type': file.type || 'image/jpeg' }
+          /* إرسال الصورة للـ Edge Function كـ base64 داخل JSON */
+          const buffer  = await file.arrayBuffer();
+          const bytes   = new Uint8Array(buffer);
+          let bin = '';
+          bytes.forEach(b => { bin += String.fromCharCode(b); });
+          const b64 = btoa(bin);
+
+          const { data, error } = await SB.fn('image-search', {
+            image: b64,
+            mime:  file.type || 'image/jpeg'
           });
 
           if (error) throw error;
 
-          /* صورة ممنوعة */
-          if (data && data.ok === false) {
-            Upload.showModerationWarning(file.name, data.verdict, data.reasons, null, () => {}, file);
-            return;
-          }
-
-          /* تجاوز الحد اليومي */
           if (data && data.error === 'LIMIT_REACHED') {
-            UI.toastKey('search.image_limit', 'error');
-            return;
+            UI.toastKey('search.image_limit', 'error'); return;
           }
 
-          /* إبلاغ المستخدم بالمحاولات المتبقية */
+          if (data && data.ok === false) {
+            Upload.showModerationWarning(file.name, data.verdict, data.reasons, null, () => {}, file); return;
+          }
+
           const remaining = data && typeof data.remaining === 'number' ? data.remaining : null;
           if (remaining !== null) {
-            if (remaining > 0) {
-              UI.toast(I18n.t('search.image_remaining').replace('{n}', remaining), 'info', 3000);
-            } else {
-              UI.toastKey('search.image_last', 'info', 3000);
-            }
+            if (remaining > 0) UI.toast(I18n.t('search.image_remaining').replace('{n}', remaining), 'info', 3000);
+            else UI.toastKey('search.image_last', 'info', 3000);
           }
 
           const results = (data && data.results) || [];
