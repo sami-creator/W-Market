@@ -217,7 +217,7 @@
         .eq('search_date', today)
         .maybeSingle();
       const used = data ? Number(data.count) : 0;
-      return Math.max(0, 3 - used);
+      return Math.max(0, 10 - used);
     },
 
     /* تسجيل محاولة بحث بالصورة */
