@@ -16,7 +16,7 @@
       lang.value = I18n.lang;
       lang.addEventListener('change', async () => {
         await I18n.set(lang.value);
-        location.reload();
+        Settings.init();
       });
 
       const darkToggle = el('label', { class: 'toggle' }, [
