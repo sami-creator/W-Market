@@ -16,8 +16,9 @@
       lang.value = I18n.lang;
       lang.addEventListener('change', async () => {
         await I18n.set(lang.value);
-        document.querySelector('#settings-root').innerHTML = '';
-        Settings.init();
+        const r = document.querySelector('#settings-root');
+        r.innerHTML = '';
+        await Settings.init();
       });
 
       const darkToggle = el('label', { class: 'toggle' }, [
