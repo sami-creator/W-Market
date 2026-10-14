@@ -227,7 +227,14 @@
       const today = new Date().toISOString().slice(0, 10);
       await SB.db.rpc('increment_image_search_log', { p_user: uid, p_date: today });
     },
-    async priceHistory(adId) {
+    async listByIds(ids) {
+        if (!ids || !ids.length) return { items: [], hasMore: false };
+        const { data, error } = await SB.db.from('ads_feed').select(LIST_COLS).in('id', ids).eq('status', 'active');
+        if (error) throw error;
+        const map = new Map(ids.map((id, i) => [id, i]));
+        return { items: (data || []).sort((a, b) => map.get(a.id) - map.get(b.id)), hasMore: false };
+      },
+      async priceHistory(adId) {
       const { data } = await SB.db.from('price_history').select('old_price,new_price,changed_at').eq('ad_id', adId).order('changed_at', { ascending: false });
       return data || [];
     },

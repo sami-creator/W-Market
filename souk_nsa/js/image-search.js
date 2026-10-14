@@ -20,9 +20,18 @@
     Search.mountImageSearch({
       btn: imgBtn,
       fileInput,
-      onResults(results) {
-        /* نُطلق حدث مخصص يلتقطه app.js لعرض النتائج */
-        document.dispatchEvent(new CustomEvent('imagesearchresults', { detail: { results } }));
+            onResults(results) {
+        if (!results || !results.length) { UI.toastKey('empty.no_match', 'info'); return; }
+        const ids = results.map(r => r.ad_id);
+        Ads.listByIds(ids).then(({ items }) => {
+          const grid = document.getElementById('grid');
+          if (!grid) return;
+          grid.replaceChildren();
+          Cards.renderList(grid, items);
+          Likes.paint(grid);
+          window.scrollTo({ top: 0 });
+        });
+      }
       }
     });
   }
