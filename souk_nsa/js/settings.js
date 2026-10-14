@@ -15,7 +15,7 @@
       C.LANGS.forEach(l => lang.append(new Option(l.toUpperCase(), l)));
       lang.value = I18n.lang;
       lang.addEventListener('change', async () => {
-        await I18n.setLang(lang.value);
+        await I18n.set(lang.value);
         location.reload();
       });
 
