@@ -15,11 +15,11 @@
     const list = samples(); if (!list.length) return;
     const txt = list[phIdx % list.length]; phIdx++;
     current = txt; phBox.hidden = false;
-    const rtl = /[\u0600-\u06FF]/.test(txt);               // اتجاه الحركة حسب لغة الجملة: عربية ← من اليمين لليسار، لاتينية ← العكس
+    const rtl = /[\u0600-\u06FF]/.test(txt);
     phBox.dir = rtl ? 'rtl' : 'ltr';
     phSpan.textContent = txt; phSpan.style.transform = 'none';
     const bw = phBox.clientWidth, tw = phSpan.scrollWidth;
-    if (tw > bw + 2 && phSpan.animate) {                    // جملة أطول من الخانة: تتحرك بدل أن تُقطع
+    if (tw > bw + 2 && phSpan.animate) {
       const from = rtl ? tw : -tw, to = rtl ? -bw : bw;
       phAnim = phSpan.animate([{ transform: 'translateX(' + from + 'px)' }, { transform: 'translateX(' + to + 'px)' }], { duration: Math.max(4000, (bw + tw) / 45 * 1000), easing: 'linear' });
       phAnim.onfinish = phShow;
@@ -27,7 +27,6 @@
   }
   const togglePh = () => { if (!phBox) return; if (input.value) { phStop(); phBox.hidden = true; } else if (phBox.hidden) phShow(); };
 
-  // يُبقي آخر ما كتبه المستخدم ظاهرًا عند الجمل الطويلة
   function keepTail() {
     requestAnimationFrame(() => {
       if (input.selectionStart !== input.value.length) return;
@@ -69,24 +68,19 @@
       phBox = placeholder; phSpan = placeholder && placeholder.firstElementChild;
       input.maxLength = MAXQ; input.setAttribute('dir', 'auto'); input.setAttribute('enterkeyhint', 'search');
       input.setAttribute('autocapitalize', 'off'); input.setAttribute('autocorrect', 'off'); input.setAttribute('spellcheck', 'false');
-
-      // استعادة نص البحث الأصلي (وليس الكلمات المفتاحية المحللة)
       const st = window.Filters && Filters.get();
       if (st && (st.qraw || st.q)) input.value = st.qraw || st.q;
       phIdx = 0; phShow();
       document.addEventListener('langchange', () => { phIdx = 0; phShow(); });
-
       input.addEventListener('input', () => { togglePh(); keepTail(); this.suggestSoon(); });
       input.addEventListener('focus', () => this.suggest());
       input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); this.submit(); } });
-      // زر المسح الأصلي في خانة البحث: يلغي البحث النصي
       input.addEventListener('search', () => {
         if (!input.value && window.Filters && (Filters.get().q || Filters.get().qraw)) { SearchState.clearScroll(); onSearch({ q: '', qx: [], qraw: '' }); }
       });
       if (btn) btn.addEventListener('click', () => this.submit());
       document.addEventListener('click', e => { if (!sugBox.contains(e.target) && e.target !== input) sugBox.hidden = true; });
       document.addEventListener('feeddone', () => setBusy(false));
-
       if (voiceBtn) {
         if (!Voice.supported()) voiceBtn.hidden = true;
         else voiceBtn.addEventListener('click', () => this.voice());
@@ -95,15 +89,14 @@
 
     suggestSoon: Utils.debounce(function () { Search.suggest(); }, L.SEARCH_DEBOUNCE_MS),
 
-    // ===== تنفيذ البحث =====
     async submit() {
       if (busy) return;
       let raw = Sanitize.cleanText(input.value, MAXQ);
-      if (!raw) raw = current;                                // الصندوق فارغ ← ننفّذ الجملة المثال الظاهرة
+      if (!raw) raw = current;
       if (!raw) return;
       if (Sanitize.containsBadWords(raw)) { UI.toastKey('err.bad_words', 'error'); return; }
       input.value = raw; togglePh(); sugBox.hidden = true; input.blur();
-      setBusy(true);                                          // تفاعل فوري: مؤشر على الزر + هياكل تحميل
+      setBusy(true);
       document.dispatchEvent(new CustomEvent('searchstart'));
       let f;
       try { f = await this.interpret(raw); }
@@ -113,12 +106,10 @@
       this.didYouMean(raw);
     },
 
-    // بحث جديد يمسح الفلاتر القديمة (الصنف/السعر/الموقع/الخيارات) ويُبقي الترتيب والتوثيق
     fresh() {
       return { q: '', qx: [], qraw: '', category_id: '', subcategory_id: '', wilaya_ids: [], daira_ids: [], commune_ids: [], min_price: null, max_price: null, delivery: false, condition: '', attrs: {} };
     },
 
-    // التحليل المحلي فوري؛ الذكاء الاصطناعي فقط للجمل التي لم نفهمها كاملة
     async interpret(raw) {
       const p = Dict.parse(raw), v = Dict.queryVariants(p), f = this.fresh();
       Object.assign(f, { q: v.q, qx: v.qx, qraw: raw, min_price: p.min || null, max_price: p.max || null, wilaya_ids: p.wilayaIds, commune_ids: p.communeIds, condition: p.condition, delivery: p.delivery });
@@ -126,15 +117,10 @@
       if (p.size) f.attrs.size_any = [p.size];
       if (p.rent) f.attrs.deal = ['rent', 'both'];
       if (!f.q && !p.recognized && !Object.keys(f.attrs).length && !f.wilaya_ids.length && !f.min_price && !f.max_price && !f.condition) f.q = raw;
-
-      if (this.needAI(p)) {
-        const ai = await this.ai(raw);
-        if (ai) this.merge(f, ai, p);
-      }
+      if (this.needAI(p)) { const ai = await this.ai(raw); if (ai) this.merge(f, ai, p); }
       return f;
     },
 
-    // متى نستخدم الذكي ومتى العادي: العادي دائمًا للجمل البسيطة/المفهومة؛ الذكي للجمل الطويلة غير المفهومة أو ذات مكان مجهول
     needAI(p) {
       if (p.tokens < 3) return false;
       return p.unknownPlace > 0 || p.leftover >= 3 || (!p.recognized && p.leftover >= 2);
@@ -145,7 +131,7 @@
       const call = SB.fn('smart-search', { q: raw }).then(({ data, error }) => { if (error || !data || !data.filters) throw error || new Error('no filters'); return data.filters; });
       const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), L.AI_TIMEOUT_MS));
       try { const r = await Promise.race([call, timeout]); SearchState.aiSet(key, r); return r; }
-      catch (e) { call.then(r => SearchState.aiSet(key, r)).catch(() => {}); return null; }   // الرد المتأخر يُخزَّن للمرة القادمة
+      catch (e) { call.then(r => SearchState.aiSet(key, r)).catch(() => {}); return null; }
     },
     merge(f, ai, p) {
       if (!f.wilaya_ids.length && ai.wilaya) { const w = Number(ai.wilaya); if (w) f.wilaya_ids = [w]; }
@@ -163,7 +149,6 @@
       } else if (!f.q && ai.keywords) f.q = Sanitize.cleanText(ai.keywords, MAXQ);
     },
 
-    // ===== بحث صوتي =====
     voice() {
       if (Voice.active) { Voice.stop(); return; }
       voiceBtn.classList.add('is-rec'); input.value = ''; togglePh();
@@ -178,10 +163,9 @@
       });
     },
 
-    // ===== الاقتراحات المنسدلة + الإكمال التلقائي + السجل =====
     async suggest() {
       const q = Sanitize.cleanText(input.value, MAXQ);
-      if (!q) {                                               // خانة فارغة: السجل أو جمل مقترحة
+      if (!q) {
         const hist = SearchState.history().slice(0, 6).map(x => ({ text: x, kind: 'hist' }));
         return renderRows(hist.length ? hist : samples().map(x => ({ text: x, kind: 'srv' })), '');
       }
@@ -197,62 +181,64 @@
         const { data } = await SB.db.rpc('suggest_terms', { p_q: q });
         const list = (data || []).slice(0, 6).map(r => r.term);
         SearchState.suggestSet(q, list);
-        if (Sanitize.cleanText(input.value, MAXQ) !== q) return;   // تغيّر النص أثناء الانتظار
+        if (Sanitize.cleanText(input.value, MAXQ) !== q) return;
         list.forEach(x => add(x, 'srv')); renderRows(rows, q);
       } catch (e) { console.warn('[Search] suggest', e); }
     },
 
-    /* ===== البحث بالصورة ===== */
+    /* ===== البحث بالصورة — يستدعي Edge Function image-search ===== */
     mountImageSearch({ btn: imgBtn, fileInput, onResults }) {
       if (!imgBtn || !fileInput) return;
-      imgBtn.addEventListener('click', () => fileInput.click());
+      imgBtn.addEventListener('click', () => {
+        /* اشتراط تسجيل الدخول */
+        if (!Auth.isLogged()) { UI.toastKey('auth.required', 'error'); return; }
+        fileInput.click();
+      });
       fileInput.addEventListener('change', async () => {
         const file = fileInput.files && fileInput.files[0];
         fileInput.value = '';
         if (!file) return;
 
-        /* التحقق من الصحة */
+        /* التحقق من صحة الملف محلياً */
         const valid = await Upload.validate(file);
         if (!valid.ok) { UI.toastKey(valid.error, 'error'); return; }
-
-        /* التحقق من بقية المحاولات */
-        const remaining = await Ads.imageSearchRemaining();
-        if (remaining <= 0) { UI.toastKey('search.image_limit', 'error'); return; }
 
         setBusy(true);
         imgBtn.classList.add('is-loading');
 
         try {
-          /* فحص الصورة أولاً (يبدأ فقط عند الضغط على بحث) */
-          const modRes = await Moderate.checkFile(file);
-          if (modRes.ok === false) {
-            /* الصورة ممنوعة: نعرض رسالة مع الأسباب وزر إزالة */
-            Upload.showModerationWarning(
-              file.name,
-              modRes.verdict,
-              modRes.reasons,
-              null,   /* لا يوجد "متابعة" للبحث */
-              () => {},  /* إزالة = لا شيء */
-              file
-            );
+          /* إرسال الصورة للـ Edge Function */
+          const buffer = await file.arrayBuffer();
+          const { data, error } = await SB.fn('image-search', buffer, {
+            headers: { 'Content-Type': file.type || 'image/jpeg' }
+          });
+
+          if (error) throw error;
+
+          /* صورة ممنوعة */
+          if (data && data.ok === false) {
+            Upload.showModerationWarning(file.name, data.verdict, data.reasons, null, () => {}, file);
             return;
           }
 
-          /* تسجيل المحاولة */
-          await Ads.logImageSearch();
-          const newRemaining = remaining - 1;
-
-          /* إبلاغ المستخدم بالمحاولات المتبقية */
-          if (newRemaining > 0) {
-            UI.toast(I18n.t('search.image_remaining').replace('{n}', newRemaining), 'info', 3000);
-          } else {
-            UI.toastKey('search.image_last', 'info', 3000);
+          /* تجاوز الحد اليومي */
+          if (data && data.error === 'LIMIT_REACHED') {
+            UI.toastKey('search.image_limit', 'error');
+            return;
           }
 
-          const tags = modRes.tags || [];
-          if (!tags.length) { UI.toastKey('search.image_no_tags', 'info'); return; }
+          /* إبلاغ المستخدم بالمحاولات المتبقية */
+          const remaining = data && typeof data.remaining === 'number' ? data.remaining : null;
+          if (remaining !== null) {
+            if (remaining > 0) {
+              UI.toast(I18n.t('search.image_remaining').replace('{n}', remaining), 'info', 3000);
+            } else {
+              UI.toastKey('search.image_last', 'info', 3000);
+            }
+          }
 
-          const results = await Ads.searchByTags(tags);
+          const results = (data && data.results) || [];
+          if (!results.length) { UI.toastKey('empty.no_match', 'info'); return; }
           if (onResults) onResults(results);
 
         } catch (e) {

@@ -8,7 +8,6 @@
     const fileInput = document.getElementById('img-search-input');
     if (!imgBtn || !fileInput) return;
 
-    /* تعيين aria-label بعد تحميل الترجمة */
     const setLabel = () => {
       const lbl = I18n && I18n.t ? I18n.t('search.image_btn') : 'بحث بصورة';
       imgBtn.setAttribute('aria-label', lbl);
@@ -21,10 +20,7 @@
       btn: imgBtn,
       fileInput,
       onResults(results) {
-        if (!results || !results.length) {
-          UI.toastKey('empty.no_match', 'info');
-          return;
-        }
+        if (!results || !results.length) { UI.toastKey('empty.no_match', 'info'); return; }
         const ids = results.map(r => r.ad_id);
         Ads.listByIds(ids).then(({ items }) => {
           const grid = document.getElementById('grid');
@@ -41,10 +37,5 @@
     });
   }
 
-  /* ننتظر جاهزية الصفحة */
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+  window.addEventListener('load', init);
 })();
