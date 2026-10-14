@@ -219,6 +219,15 @@
       const used = data ? Number(data.count) : 0;
       return Math.max(0, 3 - used);
     },
+    
+    async listByIds(ids) {
+  if (!ids || !ids.length) return { items: [], hasMore: false };
+  const { data, error } = await SB.db.from('ads_feed')
+    .select(LIST_COLS).in('id', ids).eq('status', 'active');
+  if (error) throw error;
+  const map = new Map(ids.map((id, i) => [id, i]));
+  return { items: (data || []).sort((a, b) => map.get(a.id) - map.get(b.id)), hasMore: false };
+},
 
     /* تسجيل محاولة بحث بالصورة */
     async logImageSearch() {
