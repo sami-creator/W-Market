@@ -4,7 +4,7 @@
   'use strict';
 
   function init() {
-    const imgBtn   = document.getElementById('btn-img-search');
+    const imgBtn    = document.getElementById('btn-img-search');
     const fileInput = document.getElementById('img-search-input');
     if (!imgBtn || !fileInput) return;
 
@@ -20,8 +20,11 @@
     Search.mountImageSearch({
       btn: imgBtn,
       fileInput,
-            onResults(results) {
-        if (!results || !results.length) { UI.toastKey('empty.no_match', 'info'); return; }
+      onResults(results) {
+        if (!results || !results.length) {
+          UI.toastKey('empty.no_match', 'info');
+          return;
+        }
         const ids = results.map(r => r.ad_id);
         Ads.listByIds(ids).then(({ items }) => {
           const grid = document.getElementById('grid');
@@ -30,8 +33,10 @@
           Cards.renderList(grid, items);
           Likes.paint(grid);
           window.scrollTo({ top: 0 });
+        }).catch(e => {
+          console.error('[ImageSearch] listByIds', e);
+          UI.toastKey('err.generic', 'error');
         });
-      }
       }
     });
   }
