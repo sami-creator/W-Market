@@ -1,1245 +1,749 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مستخرج إعلانات Ouedkniss</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: #fff;
-            border-radius: 15px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-
-        .controls {
-            padding: 20px;
-            background: #f8f9fa;
-            border-bottom: 2px solid #e9ecef;
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .input-group {
-            flex: 1;
-            min-width: 300px;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        input[type="text"]:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .btn {
-            padding: 12px 30px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        .retry-methods {
-            padding: 15px 20px;
-            background: #e9ecef;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .retry-methods h3 {
-            margin-bottom: 10px;
-            color: #495057;
-            font-size: 14px;
-        }
-
-        .methods-list {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .method-badge {
-            background: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 13px;
-            border: 2px solid #dee2e6;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .method-badge.active {
-            border-color: #667eea;
-            background: #667eea;
-            color: white;
-        }
-
-        .method-badge.success {
-            border-color: #28a745;
-            background: #28a745;
-            color: white;
-        }
-
-        .method-badge.failed {
-            border-color: #dc3545;
-            background: #dc3545;
-            color: white;
-        }
-
-        .method-badge.partial {
-            border-color: #ffc107;
-            background: #ffc107;
-            color: #212529;
-        }
-
-        .stats {
-            padding: 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            background: #f8f9fa;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .stat-card h4 {
-            color: #6c757d;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-
-        .stat-card .value {
-            font-size: 2em;
-            font-weight: bold;
-            color: #667eea;
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 400px;
-            gap: 0;
-            min-height: 600px;
-        }
-
-        @media (max-width: 1024px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .results-panel {
-            padding: 20px;
-            max-height: 800px;
-            overflow-y: auto;
-        }
-
-        .results-panel h2 {
-            margin-bottom: 20px;
-            color: #333;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .ads-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .ad-card {
-            background: white;
-            border: 1px solid #e9ecef;
-            border-radius: 12px;
-            overflow: hidden;
-            transition: all 0.3s;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        .ad-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-
-        .ad-image {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            background: #f0f0f0;
-        }
-
-        .ad-content {
-            padding: 15px;
-        }
-
-        .ad-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 8px;
-            line-height: 1.4;
-            height: 44px;
-            overflow: hidden;
-        }
-
-        .ad-price {
-            font-size: 18px;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-
-        .ad-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-
-        .ad-tag {
-            background: #e9ecef;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            color: #495057;
-        }
-
-        .ad-link {
-            display: inline-block;
-            color: #667eea;
-            text-decoration: none;
-            font-size: 14px;
-            margin-top: 10px;
-        }
-
-        .ad-link:hover {
-            text-decoration: underline;
-        }
-
-        .console-panel {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            display: flex;
-            flex-direction: column;
-            max-height: 800px;
-        }
-
-        .console-header {
-            padding: 15px 20px;
-            background: #2d2d30;
-            border-bottom: 1px solid #3e3e42;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .console-header h3 {
-            color: #fff;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .console-controls {
-            display: flex;
-            gap: 8px;
-        }
-
-        .console-btn {
-            padding: 6px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.2s;
-        }
-
-        .console-btn.copy {
-            background: #0e639c;
-            color: white;
-        }
-
-        .console-btn.copy:hover {
-            background: #1177bb;
-        }
-
-        .console-btn.clear {
-            background: #3e3e42;
-            color: #ccc;
-        }
-
-        .console-btn.clear:hover {
-            background: #4e4e52;
-        }
-
-        .console-body {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 13px;
-            line-height: 1.6;
-        }
-
-        .console-line {
-            padding: 4px 0;
-            border-bottom: 1px solid #2d2d30;
-            display: flex;
-            gap: 10px;
-        }
-
-        .console-time {
-            color: #6e7681;
-            min-width: 70px;
-        }
-
-        .console-line.info .console-msg {
-            color: #4fc1ff;
-        }
-
-        .console-line.success .console-msg {
-            color: #4ec9b0;
-        }
-
-        .console-line.warning .console-msg {
-            color: #ce9178;
-        }
-
-        .console-line.error .console-msg {
-            color: #f44747;
-        }
-
-        .console-line.retry .console-msg {
-            color: #dcdcaa;
-        }
-
-        .console-line.scraper .console-msg {
-            color: #c586c0;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #6c757d;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #6c757d;
-        }
-
-        .empty-state svg {
-            width: 100px;
-            height: 100px;
-            margin-bottom: 20px;
-            opacity: 0.5;
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #28a745;
-            color: white;
-            padding: 15px 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.3s;
-            z-index: 1000;
-        }
-
-        .toast.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        .error-details {
-            background: #2d2d30;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 5px;
-            font-size: 11px;
-            color: #888;
-            overflow-x: auto;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>مستخرج Ouedkniss - GraphQL</title>
+<style>
+:root {
+  --bg: #f4f6fb;
+  --card: #fff;
+  --primary: #5c6bc0;
+  --primary-dark: #3949ab;
+  --success: #43a047;
+  --error: #e53935;
+  --warn: #fb8c00;
+  --text: #212121;
+  --sub: #757575;
+  --border: #e0e0e0;
+  --console-bg: #1a1a2e;
+  --console-text: #c8d6f5;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-sizing: border-box;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f0f1a;
+    --card: #1e1e30;
+    --border: #333;
+    --text: #e0e0e0;
+    --sub: #aaa;
+  }
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+.topbar {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: #fff;
+  padding: 22px 24px 18px;
+  text-align: center;
+}
+.topbar h1 { font-size: 1.5em; margin-bottom: 4px; }
+.topbar p { font-size: 0.85em; opacity: .85; }
+
+.controls {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 200px; }
+.field label { font-size: 12px; color: var(--sub); font-weight: 600; }
+input, select {
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text);
+  transition: border-color .2s;
+}
+input:focus, select:focus { outline: none; border-color: var(--primary); }
+
+.btn {
+  padding: 10px 22px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-dark); transform: translateY(-1px); }
+.btn-secondary { background: var(--border); color: var(--text); }
+.btn-success { background: var(--success); color: #fff; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Stats */
+.stats {
+  display: flex;
+  gap: 12px;
+  padding: 14px 20px;
+  background: var(--bg);
+  flex-wrap: wrap;
+}
+.stat {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 18px;
+  text-align: center;
+  min-width: 110px;
+  flex: 1;
+}
+.stat .val { font-size: 1.8em; font-weight: 800; color: var(--primary); }
+.stat .lbl { font-size: 11px; color: var(--sub); margin-top: 2px; }
+
+/* Layout */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  min-height: 600px;
+}
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+}
+
+/* Results */
+.results-panel { padding: 16px 20px; overflow-y: auto; max-height: 700px; }
+.panel-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.panel-title h2 { font-size: 1em; color: var(--text); }
+
+.ads-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.ad-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform .2s, box-shadow .2s;
+}
+.ad-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+.ad-img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  background: var(--border);
+  display: block;
+}
+.ad-img-placeholder {
+  width: 100%;
+  height: 180px;
+  background: var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2em;
+  color: var(--sub);
+}
+.ad-body { padding: 12px; }
+.ad-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.ad-price { font-size: 16px; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
+.ad-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.tag {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11px;
+  color: var(--sub);
+}
+.ad-link {
+  display: inline-block;
+  color: var(--primary);
+  font-size: 12px;
+  text-decoration: none;
+  margin-top: 4px;
+}
+.ad-link:hover { text-decoration: underline; }
+
+/* Console */
+.console-panel {
+  background: var(--console-bg);
+  color: var(--console-text);
+  display: flex;
+  flex-direction: column;
+  max-height: 700px;
+}
+.console-head {
+  background: #111126;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #333;
+}
+.console-head span { font-size: 13px; color: #aac; font-weight: 700; }
+.cbtn {
+  background: #2a2a4a;
+  color: #aac;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  margin-right: 6px;
+}
+.cbtn:hover { background: #3a3a6a; }
+.console-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  font-family: 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.cline { display: flex; gap: 8px; border-bottom: 1px solid #1f1f3a; padding: 2px 0; }
+.ctime { color: #4a5a7a; min-width: 60px; flex-shrink: 0; }
+.cline.info .cmsg { color: #7ec8e3; }
+.cline.success .cmsg { color: #81c784; }
+.cline.warn .cmsg { color: #ffb74d; }
+.cline.error .cmsg { color: #ef9a9a; }
+.cline.data .cmsg { color: #ce93d8; }
+
+/* Empty */
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--sub);
+}
+.empty .icon { font-size: 3em; margin-bottom: 12px; }
+.empty h3 { margin-bottom: 6px; }
+.empty p { font-size: 13px; }
+
+/* Error box */
+.error-box {
+  background: #fff3f3;
+  border: 1px solid #ffcdd2;
+  border-radius: 10px;
+  padding: 16px;
+  margin: 16px 20px;
+  color: #c62828;
+  font-size: 13px;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  flex-wrap: wrap;
+}
+.page-btn {
+  padding: 7px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.page-btn:hover, .page-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.method-row {
+  display: flex;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 12px;
+}
+.method-row span { color: var(--sub); font-weight: 600; margin-left: 4px; }
+.mbadge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1.5px solid var(--border);
+  color: var(--sub);
+  background: var(--bg);
+  transition: all .2s;
+}
+.mbadge.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.mbadge.ok { background: var(--success); color: #fff; border-color: var(--success); }
+.mbadge.fail { background: var(--error); color: #fff; border-color: var(--error); }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🔍 مستخرج إعلانات Ouedkniss</h1>
-            <p>استخراج إعلانات ملابس النساء مع نظام Retry متقدم</p>
-        </div>
 
-        <div class="controls">
-            <div class="input-group">
-                <input type="text" id="urlInput" value="https://www.ouedkniss.com/vetements_mode-femmes/1" placeholder="أدخل رابط الصفحة...">
-            </div>
-            <button class="btn btn-primary" id="scrapeBtn" onclick="startScraping()">
-                <span>🚀</span> بدء الاستخراج
-            </button>
-            <button class="btn btn-secondary" onclick="clearResults()">
-                <span>🗑️</span> مسح النتائج
-            </button>
-        </div>
+<div class="topbar">
+  <h1>🔍 مستخرج Ouedkniss</h1>
+  <p>يستخدم GraphQL API الرسمي للموقع — لا حاجة لـ CORS proxy</p>
+</div>
 
-        <div class="retry-methods">
-            <h3>🔧 طرق إعادة المحاولة (Retry Methods):</h3>
-            <div class="methods-list" id="methodsList">
-                <div class="method-badge" id="method-1">
-                    <span>1️⃣</span> Fetch API
-                </div>
-                <div class="method-badge" id="method-2">
-                    <span>2️⃣</span> XMLHttpRequest
-                </div>
-                <div class="method-badge" id="method-3">
-                    <span>3️⃣</span> CORS Proxy
-                </div>
-                <div class="method-badge" id="method-4">
-                    <span>4️⃣</span> AllOrigins Proxy
-                </div>
-                <div class="method-badge" id="method-5">
-                    <span>5️⃣</span> CORS Anywhere
-                </div>
-            </div>
-        </div>
+<div class="controls">
+  <div class="field">
+    <label>الفئة (Slug)</label>
+    <input id="slug" value="vetements_mode-femmes" placeholder="مثال: vetements_mode-femmes">
+  </div>
+  <div class="field" style="max-width:130px">
+    <label>الصفحة</label>
+    <input id="pageNum" type="number" value="1" min="1">
+  </div>
+  <div class="field" style="max-width:130px">
+    <label>عدد النتائج</label>
+    <select id="countPer">
+      <option value="24">24</option>
+      <option value="48" selected>48</option>
+      <option value="96">96</option>
+    </select>
+  </div>
+  <div class="field" style="max-width:180px">
+    <label>كلمة بحث (اختياري)</label>
+    <input id="keyword" placeholder="مثال: فستان">
+  </div>
+  <button class="btn btn-primary" id="fetchBtn" onclick="fetchAds()">🚀 استخراج</button>
+  <button class="btn btn-secondary" onclick="clearAll()">🗑️ مسح</button>
+</div>
 
-        <div class="stats" id="statsPanel" style="display: none;">
-            <div class="stat-card">
-                <h4>📊 إجمالي الإعلانات</h4>
-                <div class="value" id="totalAds">0</div>
-            </div>
-            <div class="stat-card">
-                <h4>✅ نجاح</h4>
-                <div class="value" id="successCount" style="color: #28a745;">0</div>
-            </div>
-            <div class="stat-card">
-                <h4>❌ فشل</h4>
-                <div class="value" id="failCount" style="color: #dc3545;">0</div>
-            </div>
-            <div class="stat-card">
-                <h4>🔄 محاولات</h4>
-                <div class="value" id="retryCount" style="color: #ffc107;">0</div>
-            </div>
-        </div>
+<div class="method-row">
+  <span>الطريقة:</span>
+  <div class="mbadge" id="m1">1. GraphQL API</div>
+  <div class="mbadge" id="m2">2. REST Search API</div>
+  <div class="mbadge" id="m3">3. CORS Proxy + GraphQL</div>
+</div>
 
-        <div class="main-content">
-            <div class="results-panel">
-                <h2>
-                    <span>📋 النتائج المستخرجة</span>
-                    <button class="btn btn-success" id="exportBtn" onclick="exportToJSON()" style="display: none; font-size: 14px; padding: 8px 20px;">
-                        💾 تصدير JSON
-                    </button>
-                </h2>
-                <div id="resultsContainer">
-                    <div class="empty-state">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="9" y1="9" x2="15" y2="15"></line>
-                            <line x1="15" y1="9" x2="9" y2="15"></line>
-                        </svg>
-                        <h3>لا توجد نتائج بعد</h3>
-                        <p>اضغط على "بدء الاستخراج" لبدء عملية scraping</p>
-                    </div>
-                </div>
-            </div>
+<div class="stats" id="statsBox" style="display:none">
+  <div class="stat"><div class="val" id="sTotal">0</div><div class="lbl">إجمالي الإعلانات</div></div>
+  <div class="stat"><div class="val" id="sPage" style="color:var(--success)">0</div><div class="lbl">في هذه الصفحة</div></div>
+  <div class="stat"><div class="val" id="sPages" style="color:var(--warn)">0</div><div class="lbl">عدد الصفحات</div></div>
+  <div class="stat"><div class="val" id="sMethod" style="font-size:.9em;color:var(--sub)">-</div><div class="lbl">الطريقة الناجحة</div></div>
+</div>
 
-            <div class="console-panel">
-                <div class="console-header">
-                    <h3>
-                        <span>🖥️</span> كونسول الأخطاء والعمليات
-                    </h3>
-                    <div class="console-controls">
-                        <button class="console-btn copy" onclick="copyConsole()">📋 نسخ</button>
-                        <button class="console-btn clear" onclick="clearConsole()">🗑️ مسح</button>
-                    </div>
-                </div>
-                <div class="console-body" id="consoleBody">
-                    <div class="console-line info">
-                        <span class="console-time">--:--:--</span>
-                        <span class="console-msg">جاهز للبدء... اضغط على زر "بدء الاستخراج"</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="layout">
+  <div class="results-panel">
+    <div class="panel-title">
+      <h2 id="panelTitle">النتائج</h2>
+      <button class="btn btn-success" id="exportBtn" style="display:none;font-size:12px;padding:7px 16px" onclick="exportJSON()">💾 تصدير JSON</button>
     </div>
+    <div id="resultsContainer">
+      <div class="empty">
+        <div class="icon">🔎</div>
+        <h3>جاهز للاستخراج</h3>
+        <p>اضغط "استخراج" للبدء</p>
+      </div>
+    </div>
+    <div id="paginationBox" class="pagination" style="display:none"></div>
+  </div>
 
-    <div class="toast" id="toast">تم نسخ الكونسول بنجاح!</div>
+  <div class="console-panel">
+    <div class="console-head">
+      <span>🖥️ سجل العمليات</span>
+      <div>
+        <button class="cbtn" onclick="copyLog()">📋 نسخ</button>
+        <button class="cbtn" onclick="clearLog()">🗑️ مسح</button>
+      </div>
+    </div>
+    <div class="console-body" id="consoleBody">
+      <div class="cline info"><span class="ctime">--:--</span><span class="cmsg">جاهز...</span></div>
+    </div>
+  </div>
+</div>
 
-    <script>
-        // ==================== Console System ====================
-        const consoleBody = document.getElementById('consoleBody');
-        let consoleLogs = [];
+<script>
+// ─── State ───────────────────────────────────────────────
+let allAds = [];
+let logs = [];
+let currentPage = 1;
 
-        function logToConsole(message, type = 'info', details = null) {
-            const time = new Date().toLocaleTimeString('ar-DZ');
-            const logEntry = {
-                time: time,
-                type: type,
-                message: message,
-                details: details
-            };
-            consoleLogs.push(logEntry);
+// ─── Logging ─────────────────────────────────────────────
+function log(msg, type='info') {
+  const t = new Date().toLocaleTimeString('ar-DZ', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  logs.push({t, type, msg});
+  const body = document.getElementById('consoleBody');
+  const div = document.createElement('div');
+  div.className = 'cline ' + type;
+  div.innerHTML = `<span class="ctime">${t}</span><span class="cmsg">${msg}</span>`;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+  console[type === 'error' ? 'error' : type === 'warn' ? 'warn' : 'log'](`[${type}]`, msg);
+}
+function clearLog() {
+  logs = [];
+  document.getElementById('consoleBody').innerHTML = '<div class="cline info"><span class="ctime">--:--</span><span class="cmsg">تم المسح</span></div>';
+}
+function copyLog() {
+  navigator.clipboard.writeText(logs.map(l => `[${l.t}][${l.type}] ${l.msg}`).join('\n'));
+  log('تم نسخ السجل ✅', 'success');
+}
 
-            const line = document.createElement('div');
-            line.className = `console-line ${type}`;
-            
-            let html = `
-                <span class="console-time">${time}</span>
-                <span class="console-msg">${message}</span>
-            `;
-            
-            if (details) {
-                html += `<div class="error-details">${details}</div>`;
+// ─── Method Badges ────────────────────────────────────────
+function setMethod(id, status) {
+  const el = document.getElementById(id);
+  el.className = 'mbadge ' + (status === 'active' ? 'active' : status === 'ok' ? 'ok' : status === 'fail' ? 'fail' : '');
+}
+function resetMethods() {
+  ['m1','m2','m3'].forEach(m => document.getElementById(m).className = 'mbadge');
+}
+
+// ─── GraphQL Query ────────────────────────────────────────
+function buildGraphQL(slug, page, count, keyword) {
+  const filters = keyword
+    ? `keyword: "${keyword}", categorySlug: "${slug}"`
+    : `categorySlug: "${slug}"`;
+  return {
+    operationName: "SearchQuery",
+    variables: {
+      filter: {
+        categorySlug: slug,
+        ...(keyword ? { keyword } : {}),
+        count: count,
+        page: page,
+      },
+      mediaSize: "MEDIUM"
+    },
+    query: `
+      query SearchQuery($filter: SearchFilter, $mediaSize: MediaSize) {
+        search(filter: $filter) {
+          announcements {
+            data {
+              id
+              title
+              description
+              price
+              priceUnit
+              priceType
+              location { name wilaya }
+              category { name slug }
+              medias(size: $mediaSize) { url }
+              user { username }
+              publishedAt
+              hasExchange
+              delivery
+              slug
             }
-            
-            line.innerHTML = html;
-            consoleBody.appendChild(line);
-            consoleBody.scrollTop = consoleBody.scrollHeight;
-
-            // Also log to browser console
-            const consoleMethod = type === 'error' ? 'error' : type === 'warning' ? 'warn' : 'log';
-            console[consoleMethod](`[${type.toUpperCase()}] ${message}`, details || '');
+            paginatorInfo {
+              total
+              lastPage
+              currentPage
+              perPage
+            }
+          }
         }
+      }
+    `
+  };
+}
 
-        function clearConsole() {
-            consoleLogs = [];
-            consoleBody.innerHTML = `
-                <div class="console-line info">
-                    <span class="console-time">--:--:--</span>
-                    <span class="console-msg">تم مسح الكونسول</span>
-                </div>
-            `;
-        }
+// ─── Method 1: GraphQL Direct ─────────────────────────────
+async function tryGraphQL(slug, page, count, keyword) {
+  const body = buildGraphQL(slug, page, count, keyword);
+  const res = await fetch('https://www.ouedkniss.com/graphql', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Origin': 'https://www.ouedkniss.com',
+      'Referer': 'https://www.ouedkniss.com/',
+    },
+    body: JSON.stringify(body),
+    credentials: 'omit'
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (data.errors) throw new Error(data.errors[0].message);
+  const search = data?.data?.search?.announcements;
+  if (!search) throw new Error('لا توجد بيانات في الاستجابة');
+  return search;
+}
 
-        function copyConsole() {
-            const text = consoleLogs.map(log => 
-                `[${log.time}] [${log.type.toUpperCase()}] ${log.message}${log.details ? '\n  Details: ' + log.details : ''}`
-            ).join('\n');
-            
-            navigator.clipboard.writeText(text).then(() => {
-                showToast('تم نسخ الكونسول بنجاح!');
-                logToConsole('تم نسخ محتوى الكونسول إلى الحافظة', 'success');
-            }).catch(err => {
-                logToConsole('فشل نسخ الكونسول: ' + err.message, 'error');
-            });
-        }
+// ─── Method 2: REST API ───────────────────────────────────
+async function tryRESTAPI(slug, page, count, keyword) {
+  const kw = keyword ? `&q=${encodeURIComponent(keyword)}` : '';
+  const url = `https://www.ouedkniss.com/api/v2/search?category=${encodeURIComponent(slug)}&page=${page}&count=${count}${kw}`;
+  const res = await fetch(url, {
+    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    credentials: 'omit'
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  // Normalize to same shape as GraphQL
+  const ads = (data.data || data.announcements || data.results || []).map(normalizeRESTAd);
+  return {
+    data: ads,
+    paginatorInfo: {
+      total: data.meta?.total || data.total || ads.length,
+      lastPage: data.meta?.last_page || data.lastPage || 1,
+      currentPage: page,
+      perPage: count
+    }
+  };
+}
 
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
+// ─── Method 3: CORS Proxy + GraphQL ──────────────────────
+async function tryCORSProxy(slug, page, count, keyword) {
+  const body = buildGraphQL(slug, page, count, keyword);
+  const targetUrl = 'https://www.ouedkniss.com/graphql';
+  const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+  const res = await fetch(proxyUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error(`Proxy HTTP ${res.status}`);
+  const data = await res.json();
+  if (data.errors) throw new Error(data.errors[0].message);
+  const search = data?.data?.search?.announcements;
+  if (!search) throw new Error('لا توجد بيانات');
+  return search;
+}
 
-        // ==================== Retry Methods ====================
-        const retryMethods = [
-            {
-                name: 'Fetch API',
-                id: 'method-1',
-                execute: async (url) => {
-                    const response = await fetch(url, {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                            'Accept-Language': 'ar,en-US;q=0.7,en;q=0.3',
-                            'Cache-Control': 'no-cache',
-                        },
-                        mode: 'cors',
-                        credentials: 'omit'
-                    });
-                    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    return await response.text();
-                }
-            },
-            {
-                name: 'XMLHttpRequest',
-                id: 'method-2',
-                execute: async (url) => {
-                    return new Promise((resolve, reject) => {
-                        const xhr = new XMLHttpRequest();
-                        xhr.open('GET', url, true);
-                        xhr.setRequestHeader('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8');
-                        xhr.timeout = 15000;
-                        
-                        xhr.onload = () => {
-                            if (xhr.status >= 200 && xhr.status < 300) {
-                                resolve(xhr.responseText);
-                            } else {
-                                reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
-                            }
-                        };
-                        
-                        xhr.onerror = () => reject(new Error('Network Error - CORS blocked'));
-                        xhr.ontimeout = () => reject(new Error('Request Timeout'));
-                        xhr.send();
-                    });
-                }
-            },
-            {
-                name: 'CORS Proxy (corsproxy.io)',
-                id: 'method-3',
-                execute: async (url) => {
-                    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-                    const response = await fetch(proxyUrl);
-                    if (!response.ok) throw new Error(`Proxy HTTP ${response.status}`);
-                    return await response.text();
-                }
-            },
-            {
-                name: 'AllOrigins Proxy',
-                id: 'method-4',
-                execute: async (url) => {
-                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-                    const response = await fetch(proxyUrl);
-                    if (!response.ok) throw new Error(`AllOrigins HTTP ${response.status}`);
-                    const data = await response.json();
-                    if (!data.contents) throw new Error('No content in proxy response');
-                    return data.contents;
-                }
-            },
-            {
-                name: 'CORS Anywhere',
-                id: 'method-5',
-                execute: async (url) => {
-                    const proxyUrl = `https://cors-anywhere.herokuapp.com/${url}`;
-                    const response = await fetch(proxyUrl, {
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    });
-                    if (!response.ok) throw new Error(`CORS Anywhere HTTP ${response.status}`);
-                    return await response.text();
-                }
-            }
-        ];
+// ─── Normalize REST response ──────────────────────────────
+function normalizeRESTAd(ad) {
+  return {
+    id: ad.id,
+    title: ad.title || ad.name || '',
+    description: ad.description || '',
+    price: ad.price || ad.prix || '',
+    priceUnit: ad.priceUnit || ad.currency || 'DA',
+    priceType: ad.priceType || '',
+    location: { name: ad.commune || ad.location || '', wilaya: ad.wilaya || '' },
+    category: { name: ad.category || '', slug: ad.categorySlug || '' },
+    medias: (ad.images || ad.photos || ad.medias || []).map(u => ({url: typeof u === 'string' ? u : u.url})),
+    user: { username: ad.seller || ad.user?.username || '' },
+    publishedAt: ad.publishedAt || ad.created_at || '',
+    slug: ad.slug || ''
+  };
+}
 
-        // ==================== Scraping Logic ====================
-        let isScraping = false;
-        let scrapedAds = [];
+// ─── Main Fetch ───────────────────────────────────────────
+async function fetchAds() {
+  const slug = document.getElementById('slug').value.trim();
+  const page = parseInt(document.getElementById('pageNum').value) || 1;
+  const count = parseInt(document.getElementById('countPer').value) || 48;
+  const keyword = document.getElementById('keyword').value.trim();
 
-        async function startScraping() {
-            if (isScraping) {
-                logToConsole('⚠️ هناك عملية استخراج جارية بالفعل!', 'warning');
-                return;
-            }
+  if (!slug) { log('⚠️ أدخل الـ slug أولاً', 'warn'); return; }
 
-            const url = document.getElementById('urlInput').value.trim();
-            if (!url) {
-                logToConsole('❌ الرجاء إدخال رابط صحيح', 'error');
-                return;
-            }
+  document.getElementById('fetchBtn').disabled = true;
+  document.getElementById('fetchBtn').textContent = '⏳ ...';
+  resetMethods();
+  showLoading();
+  allAds = [];
 
-            isScraping = true;
-            scrapedAds = [];
-            updateUI(true);
-            clearConsole();
-            resetMethodBadges();
+  log(`🚀 بدء الاستخراج — الفئة: ${slug}, الصفحة: ${page}, العدد: ${count}${keyword ? ', بحث: ' + keyword : ''}`, 'info');
 
-            logToConsole(`🚀 بدء عملية الاستخراج من: ${url}`, 'scraper');
-            logToConsole('📡 سيتم تجربة عدة طرق للوصول إلى الصفحة...', 'info');
-            logToConsole('🔍 معيار النجاح: وجود كلمة "اتصال" في المحتوى (تدل على وجود إعلانات)', 'info');
+  const methods = [
+    { id: 'm1', name: 'GraphQL API', fn: () => tryGraphQL(slug, page, count, keyword) },
+    { id: 'm2', name: 'REST API', fn: () => tryRESTAPI(slug, page, count, keyword) },
+    { id: 'm3', name: 'CORS Proxy', fn: () => tryCORSProxy(slug, page, count, keyword) },
+  ];
 
-            let html = null;
-            let successMethod = null;
-            let totalRetries = 0;
-            let validHtml = null;
+  let result = null;
+  let usedMethod = '-';
 
-            // Try each method with retries
-            for (let methodIndex = 0; methodIndex < retryMethods.length; methodIndex++) {
-                const method = retryMethods[methodIndex];
-                const maxRetries = 2;
-                
-                updateMethodBadge(method.id, 'active');
-                logToConsole(`🔄 المحاولة بطريقة: ${method.name}`, 'retry');
+  for (const m of methods) {
+    setMethod(m.id, 'active');
+    log(`🔄 جاري المحاولة: ${m.name}...`, 'info');
+    try {
+      result = await m.fn();
+      setMethod(m.id, 'ok');
+      usedMethod = m.name;
+      log(`✅ نجحت الطريقة: ${m.name}`, 'success');
+      // Mark rest as skipped
+      break;
+    } catch(e) {
+      setMethod(m.id, 'fail');
+      log(`❌ فشلت ${m.name}: ${e.message}`, 'error');
+      await sleep(600);
+    }
+  }
 
-                let methodSuccess = false;
+  document.getElementById('fetchBtn').disabled = false;
+  document.getElementById('fetchBtn').textContent = '🚀 استخراج';
 
-                for (let retry = 0; retry <= maxRetries; retry++) {
-                    if (retry > 0) {
-                        totalRetries++;
-                        updateStats(0, 0, totalRetries);
-                        logToConsole(`⚠️ إعادة محاولة ${retry}/${maxRetries} بطريقة ${method.name}...`, 'retry');
-                        await sleep(1000 * retry); // Exponential backoff
-                    }
+  if (!result) {
+    log('❌ فشلت جميع الطرق. انظر السجل للتفاصيل.', 'error');
+    log('💡 تأكد من الاتصال بالإنترنت وأن slug صحيح', 'warn');
+    showError('فشلت جميع طرق الاتصال. تحقق من اسم الفئة (slug) ومن اتصالك بالإنترنت.');
+    return;
+  }
 
-                    try {
-                        logToConsole(`📥 جلب البيانات...`, 'info');
-                        html = await method.execute(url);
-                        
-                        // Check if HTML contains real ads (looking for "اتصال" or "اتصال + طلب")
-                        const hasAds = checkIfHasRealAds(html);
-                        
-                        if (html && html.length > 1000 && hasAds) {
-                            successMethod = method.name;
-                            validHtml = html;
-                            updateMethodBadge(method.id, 'success');
-                            logToConsole(`✅ نجحت الطريقة: ${method.name} (${html.length} bytes)`, 'success');
-                            logToConsole(`✅ تم العثور على كلمة "اتصال" - المحتوى يحتوي على إعلانات حقيقية`, 'success');
-                            methodSuccess = true;
-                            break;
-                        } else if (html && html.length > 1000) {
-                            // Got HTML but no ads - might be captcha or empty page
-                            logToConsole(`⚠️ الطريقة ${method.name} جلبت ${html.length} bytes لكن بدون كلمة "اتصال"`, 'warning');
-                            logToConsole(`📝 قد تكون صفحة حماية (Captcha) أو صفحة فارغة`, 'warning');
-                            updateMethodBadge(method.id, 'partial');
-                            
-                            // Save the HTML for inspection but continue trying
-                            if (!validHtml) {
-                                validHtml = html;
-                            }
-                            
-                            // Continue to next retry or method
-                            if (retry === maxRetries) {
-                                logToConsole(`❌ الطريقة ${method.name} لم تجلب إعلانات حقيقية بعد ${maxRetries + 1} محاولات`, 'error');
-                                updateMethodBadge(method.id, 'failed');
-                                updateStats(0, 1, 0);
-                            }
-                        } else {
-                            throw new Error('Response too short or empty');
-                        }
-                    } catch (error) {
-                        logToConsole(`❌ فشلت الطريقة ${method.name}: ${error.message}`, 'error', error.stack);
-                        
-                        if (retry === maxRetries) {
-                            updateMethodBadge(method.id, 'failed');
-                            updateStats(0, 1, 0);
-                        }
-                    }
-                }
+  const ads = result.data || [];
+  const info = result.paginatorInfo || {};
 
-                if (methodSuccess) break;
-                
-                // If we have HTML but no ads, continue to next method
-                if (validHtml && !successMethod) {
-                    logToConsole(`🔄 الانتقال إلى الطريقة التالية للبحث عن إعلانات حقيقية...`, 'info');
-                }
-            }
+  allAds = ads;
+  log(`📦 تم جلب ${ads.length} إعلان من أصل ${info.total || '?'}`, 'data');
+  log(`📄 الصفحة ${info.currentPage} من ${info.lastPage}`, 'data');
 
-            // If no method got ads with "اتصال", try to parse what we have
-            if (!successMethod && validHtml) {
-                logToConsole(`⚠️ لم تنجح أي طريقة في جلب إعلانات تحتوي على "اتصال"`, 'warning');
-                logToConsole(`🔍 سيتم تحليل آخر محتوى تم جلبه (${validHtml.length} bytes)...`, 'info');
-                html = validHtml;
-            }
+  // Stats
+  document.getElementById('statsBox').style.display = 'flex';
+  document.getElementById('sTotal').textContent = info.total || ads.length;
+  document.getElementById('sPage').textContent = ads.length;
+  document.getElementById('sPages').textContent = info.lastPage || 1;
+  document.getElementById('sMethod').textContent = usedMethod;
 
-            if (!html) {
-                logToConsole('❌ فشلت جميع الطرق في الوصول إلى الصفحة', 'error');
-                logToConsole('💡 الحلول المقترحة:', 'info');
-                logToConsole('   1. استخدم إضافة CORS في المتصفح (مثل Allow CORS)', 'info');
-                logToConsole('   2. شغل الصفحة من خلال خادم محلي', 'info');
-                logToConsole('   3. استخدم VPN أو Proxy', 'info');
-                showErrorState();
-                isScraping = false;
-                updateUI(false);
-                return;
-            }
+  renderAds(ads);
+  renderPagination(info, slug, count, keyword);
 
-            // Parse HTML
-            logToConsole('🔍 بدء تحليل HTML واستخراج الإعلانات...', 'scraper');
-            
-            try {
-                const ads = parseOuedknissHTML(html);
-                scrapedAds = ads;
-                
-                if (ads.length > 0) {
-                    logToConsole(`✅ تم استخراج ${ads.length} إعلان بنجاح!`, 'success');
-                } else {
-                    logToConsole(`⚠️ تم تحليل الصفحة لكن لم يتم العثور على إعلانات`, 'warning');
-                    logToConsole(`💡 السبب المحتمل: واد كنيس يستخدم حماية ضد Scraping أو تغير هيكل الصفحة`, 'info');
-                }
-                
-                updateStats(ads.length, 0, totalRetries);
-                displayResults(ads);
-                
-                if (ads.length > 0) {
-                    document.getElementById('exportBtn').style.display = 'inline-flex';
-                }
-                
-            } catch (error) {
-                logToConsole(`❌ خطأ في تحليل HTML: ${error.message}`, 'error', error.stack);
-                updateStats(0, 1, totalRetries);
-            }
+  if (ads.length > 0) {
+    document.getElementById('exportBtn').style.display = 'inline-block';
+    document.getElementById('panelTitle').textContent = `النتائج (${ads.length} إعلان)`;
+  }
+}
 
-            isScraping = false;
-            updateUI(false);
-        }
+// ─── Render ───────────────────────────────────────────────
+function renderAds(ads) {
+  const c = document.getElementById('resultsContainer');
+  if (!ads || ads.length === 0) {
+    c.innerHTML = `<div class="empty"><div class="icon">📭</div><h3>لا توجد إعلانات</h3><p>جرب تغيير الفئة أو الكلمة المفتاحية</p></div>`;
+    return;
+  }
 
-        // Check if HTML contains real ads by looking for "اتصال" keyword
-        function checkIfHasRealAds(html) {
-            if (!html || html.length < 1000) return false;
-            
-            // Look for common indicators of real Ouedkniss ads
-            const indicators = [
-                'اتصال',
-                'اتصال + طلب',
-                'طلب',
-                'annonce',
-                'price',
-                'prix',
-                'دج',
-                'DZD',
-                'da',
-                'السعر'
-            ];
-            
-            const lowerHtml = html.toLowerCase();
-            
-            for (const indicator of indicators) {
-                if (lowerHtml.includes(indicator.toLowerCase())) {
-                    return true;
-                }
-            }
-            
-            return false;
-        }
+  c.innerHTML = `<div class="ads-grid">${ads.map(ad => renderCard(ad)).join('')}</div>`;
+}
 
-        function parseOuedknissHTML(html) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const ads = [];
+function renderCard(ad) {
+  const imgUrl = ad.medias && ad.medias.length > 0 ? ad.medias[0].url : null;
+  const price = ad.price ? `${formatNum(ad.price)} ${ad.priceUnit || 'دج'}` : 'السعر عند الاتصال';
+  const loc = [ad.location?.name, ad.location?.wilaya].filter(Boolean).join('، ');
+  const date = ad.publishedAt ? new Date(ad.publishedAt).toLocaleDateString('ar-DZ') : '';
+  const link = ad.slug ? `https://www.ouedkniss.com/annonce/${ad.slug}` : '#';
 
-            // Multiple selectors for Ouedkniss
-            const selectors = [
-                '.o-annonce-card',
-                '.annonce-card',
-                '[class*="annonce"]',
-                '[class*="listing"] article',
-                '.listing-item',
-                'article',
-                '.card',
-                '[class*="ad-"]',
-                '[class*="product"]'
-            ];
+  return `
+    <div class="ad-card">
+      ${imgUrl
+        ? `<img class="ad-img" src="${esc(imgUrl)}" alt="${esc(ad.title)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+        : ''}
+      <div class="ad-img-placeholder" ${imgUrl ? 'style="display:none"' : ''}>🖼️</div>
+      <div class="ad-body">
+        <div class="ad-title">${esc(ad.title)}</div>
+        <div class="ad-price">${price}</div>
+        <div class="ad-tags">
+          ${loc ? `<span class="tag">📍 ${esc(loc)}</span>` : ''}
+          ${ad.category?.name ? `<span class="tag">🏷️ ${esc(ad.category.name)}</span>` : ''}
+          ${date ? `<span class="tag">📅 ${date}</span>` : ''}
+          ${ad.user?.username ? `<span class="tag">👤 ${esc(ad.user.username)}</span>` : ''}
+          ${ad.delivery ? `<span class="tag" style="color:var(--success)">🚚 توصيل</span>` : ''}
+        </div>
+        ${ad.description ? `<p style="font-size:12px;color:var(--sub);margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(ad.description)}</p>` : ''}
+        <a class="ad-link" href="${esc(link)}" target="_blank" rel="noopener">🔗 عرض الإعلان</a>
+      </div>
+    </div>
+  `;
+}
 
-            let adElements = [];
-            let usedSelector = '';
-            
-            for (const selector of selectors) {
-                adElements = doc.querySelectorAll(selector);
-                if (adElements.length > 0) {
-                    usedSelector = selector;
-                    logToConsole(`📌 استخدام selector: ${selector} (${adElements.length} عنصر)`, 'info');
-                    break;
-                }
-            }
+function renderPagination(info, slug, count, keyword) {
+  const box = document.getElementById('paginationBox');
+  const last = info.lastPage || 1;
+  if (last <= 1) { box.style.display = 'none'; return; }
 
-            adElements.forEach((element, index) => {
-                try {
-                    const ad = extractAdData(element, index);
-                    if (ad.title || ad.price) {
-                        ads.push(ad);
-                    }
-                } catch (e) {
-                    logToConsole(`⚠️ خطأ في استخراج الإعلان ${index + 1}: ${e.message}`, 'warning');
-                }
-            });
+  box.style.display = 'flex';
+  const cur = info.currentPage || 1;
 
-            // If no ads found with selectors, try generic extraction
-            if (ads.length === 0) {
-                logToConsole('⚠️ لم يتم العثور على إعلانات بالـ selectors المحفوظة، جاري المحاولة بطريقة عامة...', 'warning');
-                
-                // Try to find any links with images and text
-                const allLinks = doc.querySelectorAll('a[href*="/annonce/"], a[href*="/ad/"], a[href*="vetements"]');
-                logToConsole(`🔍 تم العثور على ${allLinks.length} رابط محتمل`, 'info');
-                
-                allLinks.forEach((link, index) => {
-                    const ad = extractGenericAdData(link, index);
-                    if (ad.title) ads.push(ad);
-                });
-            }
+  let pages = [];
+  pages.push(1);
+  for (let i = Math.max(2, cur - 2); i <= Math.min(last - 1, cur + 2); i++) pages.push(i);
+  if (last > 1) pages.push(last);
+  pages = [...new Set(pages)];
 
-            // If still no ads, try to find by "اتصال" text
-            if (ads.length === 0) {
-                logToConsole('🔍 البحث عن عناصر تحتوي على كلمة "اتصال"...', 'info');
-                const contactElements = doc.querySelectorAll('*');
-                let foundElements = 0;
-                
-                for (const el of contactElements) {
-                    if (el.textContent && el.textContent.includes('اتصال') && el.children.length < 5) {
-                        // Found element containing "اتصال", try to extract parent as ad
-                        const parent = el.closest('div[class], article, li, section') || el.parentElement;
-                        if (parent) {
-                            const ad = extractAdData(parent, foundElements);
-                            if (ad.title || ad.price) {
-                                ads.push(ad);
-                                foundElements++;
-                            }
-                        }
-                    }
-                }
-                
-                if (foundElements > 0) {
-                    logToConsole(`✅ تم العثور على ${foundElements} إعلان باستخدام كلمة "اتصال"`, 'success');
-                }
-            }
+  box.innerHTML = pages.map(p => `
+    <button class="page-btn ${p === cur ? 'active' : ''}"
+      onclick="goPage(${p})">${p}</button>
+  `).join('');
+}
 
-            return ads;
-        }
+function goPage(p) {
+  document.getElementById('pageNum').value = p;
+  fetchAds();
+}
 
-        function extractAdData(element, index) {
-            const ad = {
-                id: index + 1,
-                title: '',
-                price: '',
-                currency: 'دج',
-                location: '',
-                image: '',
-                link: '',
-                category: '',
-                date: '',
-                description: '',
-                hasContact: false
-            };
+// ─── Helpers ──────────────────────────────────────────────
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function formatNum(n) {
+  return Number(n).toLocaleString('ar-DZ');
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-            // Check if contains "اتصال"
-            if (element.textContent && element.textContent.includes('اتصال')) {
-                ad.hasContact = true;
-            }
+function showLoading() {
+  document.getElementById('resultsContainer').innerHTML = `
+    <div class="empty">
+      <div class="icon" style="animation:spin 1s linear infinite;display:inline-block">⏳</div>
+      <h3>جاري الاستخراج...</h3>
+      <p>يتم الاتصال بـ API الخاص بـ Ouedkniss</p>
+    </div>`;
+  document.getElementById('paginationBox').style.display = 'none';
+}
 
-            // Title extraction
-            const titleSelectors = ['h1', 'h2', 'h3', 'h4', '.title', '[class*="title"]', 'a'];
-            for (const sel of titleSelectors) {
-                const el = element.querySelector(sel);
-                if (el && el.textContent.trim().length > 5) {
-                    ad.title = el.textContent.trim();
-                    break;
-                }
-            }
+function showError(msg) {
+  document.getElementById('resultsContainer').innerHTML = `
+    <div class="error-box">❌ ${esc(msg)}</div>
+    <div class="empty">
+      <div class="icon">🔧</div>
+      <h3>نصائح لحل المشكلة</h3>
+      <p>1. تأكد أن اسم الفئة (slug) صحيح<br>
+         2. جرب slug آخر مثل: <strong>immobilier</strong> أو <strong>informatique</strong><br>
+         3. تأكد من اتصالك بالإنترنت</p>
+    </div>`;
+}
 
-            // Price extraction
-            const priceSelectors = ['.price', '[class*="price"]', '[class*="prix"]', '.amount'];
-            for (const sel of priceSelectors) {
-                const el = element.querySelector(sel);
-                if (el) {
-                    ad.price = el.textContent.trim();
-                    break;
-                }
-            }
+function clearAll() {
+  allAds = [];
+  document.getElementById('resultsContainer').innerHTML = `<div class="empty"><div class="icon">🔎</div><h3>جاهز</h3><p>اضغط "استخراج" للبدء</p></div>`;
+  document.getElementById('statsBox').style.display = 'none';
+  document.getElementById('paginationBox').style.display = 'none';
+  document.getElementById('exportBtn').style.display = 'none';
+  document.getElementById('panelTitle').textContent = 'النتائج';
+  resetMethods();
+  log('🗑️ تم مسح النتائج', 'info');
+}
 
-            // If no price found, look for numbers with currency
-            if (!ad.price) {
-                const text = element.textContent;
-                const priceMatch = text.match(/(\d[\d\s,.]+)\s*(دج|DZD|دينار|DA)/i);
-                if (priceMatch) {
-                    ad.price = priceMatch[0];
-                }
-            }
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(allAds, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ouedkniss_${document.getElementById('slug').value}_p${document.getElementById('pageNum').value}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  log('💾 تم تصدير البيانات', 'success');
+}
 
-            // Image extraction
-            const img = element.querySelector('img');
-            if (img) {
-                ad.image = img.src || img.dataset.src || img.getAttribute('data-lazy-src') || '';
-                // Fix relative URLs
-                if (ad.image && !ad.image.startsWith('http')) {
-                    ad.image = 'https://www.ouedkniss.com' + ad.image;
-                }
-            }
+// Spin animation
+const style = document.createElement('style');
+style.textContent = '@keyframes spin { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }';
+document.head.appendChild(style);
 
-            // Link extraction
-            const link = element.querySelector('a');
-            if (link) {
-                ad.link = link.href || '';
-                if (ad.link && !ad.link.startsWith('http')) {
-                    ad.link = 'https://www.ouedkniss.com' + ad.link;
-                }
-            }
-
-            // Location extraction
-            const locationSelectors = ['.location', '[class*="location"]', '[class*="ville"]', '[class*="city"]', '.place'];
-            for (const sel of locationSelectors) {
-                const el = element.querySelector(sel);
-                if (el) {
-                    ad.location = el.textContent.trim();
-                    break;
-                }
-            }
-
-            // Date extraction
-            const dateSelectors = ['.date', '[class*="date"]', '[class*="time"]', 'time'];
-            for (const sel of dateSelectors) {
-                const el = element.querySelector(sel);
-                if (el) {
-                    ad.date = el.textContent.trim() || el.getAttribute('datetime') || '';
-                    break;
-                }
-            }
-
-            // Category from URL or element
-            const categoryEl = element.querySelector('[class*="category"], [class*="cat"]');
-            if (categoryEl) {
-                ad.category = categoryEl.textContent.trim();
-            }
-
-            // Description
-            const descEl = element.querySelector('p, .description, [class*="desc"]');
-            if (descEl) {
-                ad.description = descEl.textContent.trim().substring(0, 200);
-            }
-
-            return ad;
-        }
-
-        function extractGenericAdData(linkElement, index) {
-            const ad = {
-                id: index + 1,
-                title: linkElement.textContent.trim().substring(0, 100),
-                price: '',
-                location: '',
-                image: '',
-                link: linkElement.href,
-                category: 'ملابس نسائية',
-                date: '',
-                description: '',
-                hasContact: false
-            };
-
-            // Check if contains "اتصال"
-            if (linkElement.textContent && linkElement.textContent.includes('اتصال')) {
-                ad.hasContact = true;
-            }
-
-            const img = linkElement.querySelector('img');
-            if (img) {
-                ad.image = img.src || '';
-            }
-
-            // Try to find price in parent
-            let parent = linkElement.parentElement;
-            for (let i = 0; i < 3 && parent; i++) {
-                const text = parent.textContent;
-                const priceMatch = text.match(/(\d[\d\s,.]+)\s*(دج|DZD|دينار|DA)/i);
-                if (priceMatch) {
-                    ad.price = priceMatch[0];
-                    break;
-                }
-                parent = parent.parentElement;
-            }
-
-            return ad;
-        }
-
-        // ==================== UI Functions ====================
-        function updateUI(isLoading) {
-            const btn = document.getElementById('scrapeBtn');
-            btn.disabled = isLoading;
-            btn.innerHTML = isLoading ? 
-                '<span>⏳</span> جاري الاستخراج...' : 
-                '<span>🚀</span> بدء الاستخراج';
-        }
-
-        function updateMethodBadge(methodId, status) {
-            const badge = document.getElementById(methodId);
-            badge.className = 'method-badge ' + status;
-        }
-
-        function resetMethodBadges() {
-            retryMethods.forEach(m => {
-                document.getElementById(m.id).className = 'method-badge';
-            });
-        }
-
-        function updateStats(total, failed, retries) {
-            document.getElementById('statsPanel').style.display = 'grid';
-            document.getElementById('totalAds').textContent = total;
-            
-            const currentFail = parseInt(document.getElementById('failCount').textContent) || 0;
-            const currentRetry = parseInt(document.getElementById('retryCount').textContent) || 0;
-            
-            if (failed > 0) document.getElementById('failCount').textContent = currentFail + failed;
-            if (retries > 0) document.getElementById('retryCount').textContent = currentRetry + retries;
-        }
-
-        function displayResults(ads) {
-            const container = document.getElementById('resultsContainer');
-            
-            if (ads.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <h3>لم يتم العثور على إعلانات</h3>
-                        <p>قد يكون هناك تغيير في هيكل الموقع أو حماية ضد scraping</p>
-                        <p style="margin-top: 10px; font-size: 14px; color: #999;">
-                            💡 جرب: استخدام إضافة Allow CORS في المتصفح
-                        </p>
-                    </div>
-                `;
-                return;
-            }
-
-            const html = `
-                <div class="ads-grid">
-                    ${ads.map(ad => `
-                        <div class="ad-card">
-                            ${ad.image ? `<img src="${ad.image}" alt="${escapeHtml(ad.title)}" class="ad-image" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22><rect fill=%22%23ddd%22 width=%22200%22 height=%22200%22/><text fill=%22%23999%22 font-family=%22sans-serif%22 font-size=%2214%22 dy=%2210.5%22 font-weight=%22bold%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22>لا توجد صورة</text></svg>'">` : ''}
-                            <div class="ad-content">
-                                <div class="ad-title">${escapeHtml(ad.title)}</div>
-                                ${ad.price ? `<div class="ad-price">${escapeHtml(ad.price)}</div>` : ''}
-                                <div class="ad-meta">
-                                    ${ad.location ? `<span class="ad-tag">📍 ${escapeHtml(ad.location)}</span>` : ''}
-                                    ${ad.category ? `<span class="ad-tag">🏷️ ${escapeHtml(ad.category)}</span>` : ''}
-                                    ${ad.date ? `<span class="ad-tag">📅 ${escapeHtml(ad.date)}</span>` : ''}
-                                    ${ad.hasContact ? `<span class="ad-tag" style="background: #d4edda; color: #155724;">📞 يحتوي على "اتصال"</span>` : ''}
-                                </div>
-                                ${ad.description ? `<p style="font-size: 13px; color: #666; margin-top: 10px;">${escapeHtml(ad.description.substring(0, 100))}...</p>` : ''}
-                                ${ad.link ? `<a href="${ad.link}" target="_blank" class="ad-link">🔗 عرض الإعلان الأصلي</a>` : ''}
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            
-            container.innerHTML = html;
-        }
-
-        function showErrorState() {
-            document.getElementById('resultsContainer').innerHTML = `
-                <div class="empty-state" style="color: #dc3545;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 80px; height: 80px; margin-bottom: 20px;">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="15" y1="9" x2="9" y2="15"></line>
-                        <line x1="9" y1="9" x2="15" y2="15"></line>
-                    </svg>
-                    <h3>فشل الاتصال بالموقع</h3>
-                    <p>تحقق من الكونسول للتفاصيل</p>
-                </div>
-            `;
-        }
-
-        function clearResults() {
-            document.getElementById('resultsContainer').innerHTML = `
-                <div class="empty-state">
-                    <h3>لا توجد نتائج</h3>
-                    <p>اضغط على "بدء الاستخراج" للبدء</p>
-                </div>
-            `;
-            document.getElementById('exportBtn').style.display = 'none';
-            document.getElementById('statsPanel').style.display = 'none';
-            scrapedAds = [];
-            resetMethodBadges();
-            logToConsole('🗑️ تم مسح النتائج', 'info');
-        }
-
-        function exportToJSON() {
-            const dataStr = JSON.stringify(scrapedAds, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `ouedkniss_ads_${new Date().toISOString().slice(0,10)}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            logToConsole('💾 تم تصدير البيانات إلى JSON', 'success');
-        }
-
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
-
-        // Initialize
-        logToConsole('✅ تم تحميل الصفحة بنجاح', 'success');
-        logToConsole('ℹ️ هذا الـ scraper يعمل من المتصفح مباشرة (Client-side)', 'info');
-        logToConsole('⚠️ ملاحظة: بعض المواقع تحظر CORS، لذا قد تحتاج لتفعيل إضافة Allow CORS', 'warning');
-        logToConsole('🔍 معيار النجاح: البحث عن كلمة "اتصال" في المحتوى المجلوب', 'info');
-    </script>
+log('✅ التطبيق جاهز', 'success');
+log('ℹ️ يستخدم GraphQL API الرسمي لـ Ouedkniss — أسرع وأدق من HTML scraping', 'info');
+log('💡 Slug الافتراضي: vetements_mode-femmes — يمكنك تغييره', 'info');
+</script>
 </body>
 </html>
