@@ -12,14 +12,52 @@
 <link rel="stylesheet" href="css/pages.css?v=1.1.0">
 </head>
 <body class="is-gated" data-page="ad-details">
-<main class="container">
-  <section id="gallery"></section>
-  <section id="info"></section>
-  <section class="reviews-section" id="sec-ratings-ad" hidden><h3 data-i18n="ad.rate_ad"></h3><div id="ratings-ad"></div></section>
-  <section class="reviews-section" id="sec-ratings-user" hidden><h3 data-i18n="ad.rate_seller"></h3><div id="ratings-user"></div></section>
-  <section id="similar" class="similar-section" hidden></section>
+<main class="container ad-page">
+
+  <!-- شريط علوي: رجوع + عنوان + (مفضلة، مقارنة، مشاركة، قراءة صوتية، المزيد) — يُملأ من ad-details.js -->
+  <header id="ad-topbar" class="ad-topbar"></header>
+
+  <!-- معرض الصور: صورة رئيسية + عدّاد + فيديو + مشاهدات/إعجابات + مصغّرات (يُملأ بواسطة Gallery.mount) -->
+  <section id="gallery" class="ad-gallery" aria-label="gallery"></section>
+
+  <!-- العنوان + الحالة + السعر (قديم/جديد/تخفيض) + قابل للتفاوض + الموقع + شارات الإعلان -->
+  <section id="info" class="ad-info"></section>
+
+  <!-- بطاقات معلومات سريعة: المقاس / الحالة / التوصيل (أو التنقل للخدمات) + سمات الإعلان -->
+  <section id="ad-facts" class="ad-facts" hidden></section>
+
+  <!-- بطاقة الناشرة: صورة، اسم، توثيق، تقييم، إحصائيات (قابلة للضغط → صفحتها) -->
+  <section id="seller-card" class="ad-seller" hidden></section>
+
+  <!-- أزرار التواصل: محادثة + واتساب + هاتف + فيسبوك + إنستغرام + تيك توك + تلغرام + خريطة -->
+  <section id="contact" class="ad-contact" hidden></section>
+
+  <!-- تقييمات الإعلان -->
+  <section class="reviews-section ad-card" id="sec-ratings-ad" hidden>
+    <h3 data-i18n="ad.rate_ad"></h3>
+    <div id="ratings-ad"></div>
+  </section>
+
+  <!-- وصف الإعلان + عرض المزيد + الأسعار السابقة + الأسئلة الشائعة + تاريخ النشر -->
+  <section id="ad-desc" class="ad-card ad-desc" hidden>
+    <h3 data-i18n="ad.description"></h3>
+    <div id="ad-desc-body"></div>
+  </section>
+
+  <!-- تقييمات الناشرة -->
+  <section class="reviews-section ad-card" id="sec-ratings-user" hidden>
+    <h3 data-i18n="ad.rate_seller"></h3>
+    <div id="ratings-user"></div>
+  </section>
+
+  <!-- إعلانات مشابهة (أفقي قابل للتمرير) -->
+  <section id="similar" class="similar-section ad-similar" hidden></section>
+
 </main>
+
+<!-- شريط الإجراء السفلي: رجوع + طلب شراء (أو تعديل/إحصائيات لصاحبة الإعلان) -->
 <div id="detail-footer" class="detail-footer" hidden></div>
+
 <script src="js/env.js?v=1.1.0"></script>
 <script src="js/config.js?v=1.1.0"></script>
 <script src="js/console-logger.js?v=1.1.0"></script>
