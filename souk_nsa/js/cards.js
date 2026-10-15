@@ -17,7 +17,7 @@
     return s;
   }
 
-  // opts.kind: 'thumb' | 'avatar' — opts.eager: تحميل فوري (أول الشاشة) — opts.high: أولوية عالية (أكبر صورة LCP)
+  // opts.kind: 'thumb' | 'avatar' | 'card' (4:5) — opts.eager: تحميل فوري (أول الشاشة) — opts.high: أولوية عالية (أكبر صورة LCP)
   function img(src, alt, cls, opts) {
     const o = opts || {}, kind = o.kind || 'thumb';
     const attrs = { class: cls, alt: alt || '', loading: o.eager ? 'eager' : 'lazy', decoding: 'async', src: Utils.imgUrl(src, kind) };
@@ -35,7 +35,7 @@
       const p = Price.display(ad), sold = ad.status === 'sold';
       const card = el('article', { class: 'card', 'data-id': ad.id, 'data-uid': ad.user_id });
 
-      const wrap = el('div', { class: 'img-wrap' }, [img(ad.thumb_path, ad.title, '', { eager: first, high: first && pos === 0 })]);
+      const wrap = el('div', { class: 'img-wrap' }, [img(ad.thumb_path, ad.title, '', { kind: 'card', eager: first, high: first && pos === 0 })]);
       if (sold) card.append(el('div', { class: 'badge-sold', text: t('ad.sold') }));
       if (p.pct > 0) card.append(el('div', { class: 'badge-discount', text: '-' + p.pct + '%' }));
 

@@ -15,6 +15,8 @@
       const count = el('span', { class: 'gallery__count' });
       const thumbs = el('div', { class: 'gallery__thumbs' });
       const src = (n, k) => Utils.imgUrl(list[n][k] || list[n].path_medium, k === 'path_large' ? 'large' : 'medium');
+      // الصورة الرئيسية بنسبة 16:9 (قص ذكي عند الجلب)؛ التكبير يبقى بالنسخة الكبيرة الكاملة
+      const mainSrc = n => Utils.imgUrl(list[n].path_large || list[n].path_medium, 'detail');
 
       list.forEach((im, n) => {
         const th = el('img', { alt: '', loading: 'lazy', src: Utils.imgUrl(im.path_thumb, 'thumb') });
@@ -22,12 +24,12 @@
       });
       const show = n => {
         i = (n + list.length) % list.length;
-        main.src = src(i, 'path_medium');
+        main.src = mainSrc(i);
         count.textContent = (i + 1) + ' / ' + list.length;
         thumbs.querySelectorAll('img').forEach((x, k) => x.classList.toggle('active', k === i));
         // تحميل الصورة التالية فورًا في الخلفية
-        preload(src((i + 1) % list.length, 'path_medium'));
-        if (list.length > 2) preload(src((i + 2) % list.length, 'path_medium'));
+        preload(mainSrc((i + 1) % list.length));
+        if (list.length > 2) preload(mainSrc((i + 2) % list.length));
       };
       const nav = (cls, txt, d) => el('button', { class: 'gallery__nav ' + cls, type: 'button', 'aria-label': txt, onclick: () => show(i + d) }, d > 0 ? '›' : '‹');
       const wrap = el('div', { class: 'gallery' }, [main, count]);
