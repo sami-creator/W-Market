@@ -154,6 +154,12 @@
             color: white;
         }
 
+        .method-badge.partial {
+            border-color: #ffc107;
+            background: #ffc107;
+            color: #212529;
+        }
+
         .stats {
             padding: 20px;
             display: grid;
@@ -725,10 +731,12 @@
 
             logToConsole(`🚀 بدء عملية الاستخراج من: ${url}`, 'scraper');
             logToConsole('📡 سيتم تجربة عدة طرق للوصول إلى الصفحة...', 'info');
+            logToConsole('🔍 معيار النجاح: وجود كلمة "اتصال" في المحتوى (تدل على وجود إعلانات)', 'info');
 
             let html = null;
             let successMethod = null;
             let totalRetries = 0;
+            let validHtml = null;
 
             // Try each method with retries
             for (let methodIndex = 0; methodIndex < retryMethods.length; methodIndex++) {
@@ -737,6 +745,8 @@
                 
                 updateMethodBadge(method.id, 'active');
                 logToConsole(`🔄 المحاولة بطريقة: ${method.name}`, 'retry');
+
+                let methodSuccess = false;
 
                 for (let retry = 0; retry <= maxRetries; retry++) {
                     if (retry > 0) {
@@ -750,11 +760,34 @@
                         logToConsole(`📥 جلب البيانات...`, 'info');
                         html = await method.execute(url);
                         
-                        if (html && html.length > 1000) {
+                        // Check if HTML contains real ads (looking for "اتصال" or "اتصال + طلب")
+                        const hasAds = checkIfHasRealAds(html);
+                        
+                        if (html && html.length > 1000 && hasAds) {
                             successMethod = method.name;
+                            validHtml = html;
                             updateMethodBadge(method.id, 'success');
                             logToConsole(`✅ نجحت الطريقة: ${method.name} (${html.length} bytes)`, 'success');
+                            logToConsole(`✅ تم العثور على كلمة "اتصال" - المحتوى يحتوي على إعلانات حقيقية`, 'success');
+                            methodSuccess = true;
                             break;
+                        } else if (html && html.length > 1000) {
+                            // Got HTML but no ads - might be captcha or empty page
+                            logToConsole(`⚠️ الطريقة ${method.name} جلبت ${html.length} bytes لكن بدون كلمة "اتصال"`, 'warning');
+                            logToConsole(`📝 قد تكون صفحة حماية (Captcha) أو صفحة فارغة`, 'warning');
+                            updateMethodBadge(method.id, 'partial');
+                            
+                            // Save the HTML for inspection but continue trying
+                            if (!validHtml) {
+                                validHtml = html;
+                            }
+                            
+                            // Continue to next retry or method
+                            if (retry === maxRetries) {
+                                logToConsole(`❌ الطريقة ${method.name} لم تجلب إعلانات حقيقية بعد ${maxRetries + 1} محاولات`, 'error');
+                                updateMethodBadge(method.id, 'failed');
+                                updateStats(0, 1, 0);
+                            }
                         } else {
                             throw new Error('Response too short or empty');
                         }
@@ -768,7 +801,19 @@
                     }
                 }
 
-                if (html) break;
+                if (methodSuccess) break;
+                
+                // If we have HTML but no ads, continue to next method
+                if (validHtml && !successMethod) {
+                    logToConsole(`🔄 الانتقال إلى الطريقة التالية للبحث عن إعلانات حقيقية...`, 'info');
+                }
+            }
+
+            // If no method got ads with "اتصال", try to parse what we have
+            if (!successMethod && validHtml) {
+                logToConsole(`⚠️ لم تنجح أي طريقة في جلب إعلانات تحتوي على "اتصال"`, 'warning');
+                logToConsole(`🔍 سيتم تحليل آخر محتوى تم جلبه (${validHtml.length} bytes)...`, 'info');
+                html = validHtml;
             }
 
             if (!html) {
@@ -790,11 +835,19 @@
                 const ads = parseOuedknissHTML(html);
                 scrapedAds = ads;
                 
-                logToConsole(`✅ تم استخراج ${ads.length} إعلان بنجاح!`, 'success');
+                if (ads.length > 0) {
+                    logToConsole(`✅ تم استخراج ${ads.length} إعلان بنجاح!`, 'success');
+                } else {
+                    logToConsole(`⚠️ تم تحليل الصفحة لكن لم يتم العثور على إعلانات`, 'warning');
+                    logToConsole(`💡 السبب المحتمل: واد كنيس يستخدم حماية ضد Scraping أو تغير هيكل الصفحة`, 'info');
+                }
+                
                 updateStats(ads.length, 0, totalRetries);
                 displayResults(ads);
                 
-                document.getElementById('exportBtn').style.display = 'inline-flex';
+                if (ads.length > 0) {
+                    document.getElementById('exportBtn').style.display = 'inline-flex';
+                }
                 
             } catch (error) {
                 logToConsole(`❌ خطأ في تحليل HTML: ${error.message}`, 'error', error.stack);
@@ -803,6 +856,35 @@
 
             isScraping = false;
             updateUI(false);
+        }
+
+        // Check if HTML contains real ads by looking for "اتصال" keyword
+        function checkIfHasRealAds(html) {
+            if (!html || html.length < 1000) return false;
+            
+            // Look for common indicators of real Ouedkniss ads
+            const indicators = [
+                'اتصال',
+                'اتصال + طلب',
+                'طلب',
+                'annonce',
+                'price',
+                'prix',
+                'دج',
+                'DZD',
+                'da',
+                'السعر'
+            ];
+            
+            const lowerHtml = html.toLowerCase();
+            
+            for (const indicator of indicators) {
+                if (lowerHtml.includes(indicator.toLowerCase())) {
+                    return true;
+                }
+            }
+            
+            return false;
         }
 
         function parseOuedknissHTML(html) {
@@ -818,14 +900,18 @@
                 '[class*="listing"] article',
                 '.listing-item',
                 'article',
-                '.card'
+                '.card',
+                '[class*="ad-"]',
+                '[class*="product"]'
             ];
 
             let adElements = [];
+            let usedSelector = '';
             
             for (const selector of selectors) {
                 adElements = doc.querySelectorAll(selector);
                 if (adElements.length > 0) {
+                    usedSelector = selector;
                     logToConsole(`📌 استخدام selector: ${selector} (${adElements.length} عنصر)`, 'info');
                     break;
                 }
@@ -848,10 +934,37 @@
                 
                 // Try to find any links with images and text
                 const allLinks = doc.querySelectorAll('a[href*="/annonce/"], a[href*="/ad/"], a[href*="vetements"]');
+                logToConsole(`🔍 تم العثور على ${allLinks.length} رابط محتمل`, 'info');
+                
                 allLinks.forEach((link, index) => {
                     const ad = extractGenericAdData(link, index);
                     if (ad.title) ads.push(ad);
                 });
+            }
+
+            // If still no ads, try to find by "اتصال" text
+            if (ads.length === 0) {
+                logToConsole('🔍 البحث عن عناصر تحتوي على كلمة "اتصال"...', 'info');
+                const contactElements = doc.querySelectorAll('*');
+                let foundElements = 0;
+                
+                for (const el of contactElements) {
+                    if (el.textContent && el.textContent.includes('اتصال') && el.children.length < 5) {
+                        // Found element containing "اتصال", try to extract parent as ad
+                        const parent = el.closest('div[class], article, li, section') || el.parentElement;
+                        if (parent) {
+                            const ad = extractAdData(parent, foundElements);
+                            if (ad.title || ad.price) {
+                                ads.push(ad);
+                                foundElements++;
+                            }
+                        }
+                    }
+                }
+                
+                if (foundElements > 0) {
+                    logToConsole(`✅ تم العثور على ${foundElements} إعلان باستخدام كلمة "اتصال"`, 'success');
+                }
             }
 
             return ads;
@@ -868,8 +981,14 @@
                 link: '',
                 category: '',
                 date: '',
-                description: ''
+                description: '',
+                hasContact: false
             };
+
+            // Check if contains "اتصال"
+            if (element.textContent && element.textContent.includes('اتصال')) {
+                ad.hasContact = true;
+            }
 
             // Title extraction
             const titleSelectors = ['h1', 'h2', 'h3', 'h4', '.title', '[class*="title"]', 'a'];
@@ -964,8 +1083,14 @@
                 link: linkElement.href,
                 category: 'ملابس نسائية',
                 date: '',
-                description: ''
+                description: '',
+                hasContact: false
             };
+
+            // Check if contains "اتصال"
+            if (linkElement.textContent && linkElement.textContent.includes('اتصال')) {
+                ad.hasContact = true;
+            }
 
             const img = linkElement.querySelector('img');
             if (img) {
@@ -1026,6 +1151,9 @@
                     <div class="empty-state">
                         <h3>لم يتم العثور على إعلانات</h3>
                         <p>قد يكون هناك تغيير في هيكل الموقع أو حماية ضد scraping</p>
+                        <p style="margin-top: 10px; font-size: 14px; color: #999;">
+                            💡 جرب: استخدام إضافة Allow CORS في المتصفح
+                        </p>
                     </div>
                 `;
                 return;
@@ -1043,6 +1171,7 @@
                                     ${ad.location ? `<span class="ad-tag">📍 ${escapeHtml(ad.location)}</span>` : ''}
                                     ${ad.category ? `<span class="ad-tag">🏷️ ${escapeHtml(ad.category)}</span>` : ''}
                                     ${ad.date ? `<span class="ad-tag">📅 ${escapeHtml(ad.date)}</span>` : ''}
+                                    ${ad.hasContact ? `<span class="ad-tag" style="background: #d4edda; color: #155724;">📞 يحتوي على "اتصال"</span>` : ''}
                                 </div>
                                 ${ad.description ? `<p style="font-size: 13px; color: #666; margin-top: 10px;">${escapeHtml(ad.description.substring(0, 100))}...</p>` : ''}
                                 ${ad.link ? `<a href="${ad.link}" target="_blank" class="ad-link">🔗 عرض الإعلان الأصلي</a>` : ''}
@@ -1110,6 +1239,7 @@
         logToConsole('✅ تم تحميل الصفحة بنجاح', 'success');
         logToConsole('ℹ️ هذا الـ scraper يعمل من المتصفح مباشرة (Client-side)', 'info');
         logToConsole('⚠️ ملاحظة: بعض المواقع تحظر CORS، لذا قد تحتاج لتفعيل إضافة Allow CORS', 'warning');
+        logToConsole('🔍 معيار النجاح: البحث عن كلمة "اتصال" في المحتوى المجلوب', 'info');
     </script>
 </body>
 </html>
