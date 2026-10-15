@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تجريب الملابس الافتراضي</title>
+    <!-- مكتبة Gradio Client للربط المباشر من المتصفح -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js"></script>
+    <style>
+        body { font-family: Tahoma, sans-serif; background: #f4f7f6; margin: 0; padding: 20px; direction: rtl; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="file"] { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; }
+        button { background: #007bff; color: white; border: none; padding: 12px 20px; width: 100%; border-radius: 6px; font-size: 16px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result-box { margin-top: 20px; text-align: center; }
+        .result-box img { max-width: 100%; border-radius: 8px; border: 1px solid #ddd; }
+        #console { background: #1e1e1e; color: #00ff00; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 13px; height: 120px; overflow-y: auto; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>تجريب الملابس الافتراضي (IDM-VTON)</h2>
+    
+    <div class="form-group">
+        <label>مفتاح Hugging Face Token:</label>
+        <input type="text" id="token" placeholder="أدخل الـ Token هنا (hf_...)">
+    </div>
+
+    <div class="form-group">
+        <label>صورة الشخص:</label>
+        <input type="file" id="personImg" accept="image/*">
+    </div>
+
+    <div class="form-group">
+        <label>صورة قطعة الملابس:</label>
+        <input type="file" id="garmentImg" accept="image/*">
+    </div>
+
+    <button id="submitBtn" onclick="runTryOn()">إرسال وبدء التجريب</button>
+
+    <div class="result-box">
+        <h3>النتيجة:</h3>
+        <div id="resultContainer">لم يتم توليد أي صورة بعد.</div>
+    </div>
+
+    <h3>سجل الأخطاء (Console):</h3>
+    <div id="console">جاهز للاستخدام...</div>
+</div>
+
+<script>
+    function log(message, isError = false) {
+        const consoleBox = document.getElementById('console');
+        const time = new Date().toLocaleTimeString();
+        consoleBox.innerHTML += `<div style="color: ${isError ? '#ff6b6b' : '#00ff00'}">[${time}] ${message}</div>`;
+        consoleBox.scrollTop = consoleBox.scrollHeight;
+    }
+
+    async function runTryOn() {
+        const token = document.getElementById('token').value.trim();
+        const personInput = document.getElementById('personImg').files[0];
+        const garmentInput = document.getElementById('garmentImg').files[0];
+        const resultContainer = document.getElementById('resultContainer');
+
+        if (!token || !personInput || !garmentInput) {
+            log("خطأ: يرجى إدخال الـ Token ورفع كلا الصورتين.", true);
+            alert("يرجى ملء جميع الحقول المطلوبة.");
+            return;
+        }
+
+        log("جاري الاتصال بالنموذج...");
+        resultContainer.innerHTML = "جاري المعالجة، قد يستغرق الأمر بضع ثوانٍ...";
+
+        try {
+            // الاتصال بـ Hugging Face Space باستخدام المكتبة
+            const client = await window.gradio.Client.connect("yisol/IDM-VTON", { hf_token: token });
+            log("تم الاتصال بنجاح، جاري إرسال الصور...");
+
+            // تحويل الملفات إلى صيغة Blob المتوافقة
+            const personBlob = new Blob([personInput], { type: personInput.type });
+            const garmentBlob = new Blob([garmentInput], { type: garmentInput.type });
+
+            const result = await client.predict("/tryon", {
+                dict: {
+                    background: personBlob,
+                    layers: [],
+                    composite: null
+                },
+                garm_img: garmentBlob,
+                garment_des: "Short sleeve t-shirt",
+                is_checked: true,
+                is_checked_crop: false,
+                denoise_steps: 30,
+                seed: 42
+            });
+
+            log("تمت العملية بنجاح!");
+            
+            // استخراج رابط الصورة الناتجة وعرضها
+            if (result && result.data && result.data[0]) {
+                const imgUrl = result.data[0].url || result.data[0];
+                resultContainer.innerHTML = `<img src="${imgUrl}" alt="النتيجة النهائية">`;
+            } else {
+                resultContainer.innerHTML = "تمت العملية ولكن لم يتم العثور على صورة في الرد.";
+            }
+
+        } catch (error) {
+            log("خطأ أثناء التنفيذ: " + error.message, true);
+            resultContainer.innerHTML = "حدث خطأ، راجع مربع الكونسول في الأسفل.";
+        }
+    }
+</script>
+
+</body>
+</html>
