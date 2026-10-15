@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تجريب الملابس الافتراضي</title>
-    <!-- استيراد مكتبة Gradio Client بالشكل الصحيح للمتصفح -->
+    <!-- استيراد مكتبة Gradio Client المتوافقة مع المتصفح -->
     <script type="module">
         import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client@0.1.4/dist/index.min.js";
         window.GradioClient = Client;
@@ -25,7 +25,7 @@
 <body>
 
 <div class="container">
-    <h2>تجريب الملابس الافتراضي (IDM-VTON)</h2>
+    <h2>تجريب الملابس الافتراضي (JavaScript)</h2>
     
     <div class="form-group">
         <label>مفتاح Hugging Face Token:</label>
@@ -42,7 +42,7 @@
         <input type="file" id="garmentImg" accept="image/*">
     </div>
 
-    <button id="submitBtn" onclick="runTryOn()">إرسال وبدء التجريب</button>
+    <button onclick="runTryOn()">إرسال وبدء التجريب</button>
 
     <div class="result-box">
         <h3>النتيجة:</h3>
@@ -50,7 +50,7 @@
     </div>
 
     <h3>سجل الأخطاء (Console):</h3>
-    <div id="console">جاري تحميل المكتبة...</div>
+    <div id="console">جاري التحقق من جاهزية المكتبة...</div>
 </div>
 
 <script>
@@ -61,15 +61,15 @@
         consoleBox.scrollTop = consoleBox.scrollHeight;
     }
 
-    // الانتظار حتى تحميل السكريبت الخارجي
-    window.addEventListener('load', () => {
+    // التحقق من تحميل المكتبة بعد فتح الصفحة
+    window.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             if (window.GradioClient) {
-                log("جاهز للاستخدام...");
+                log("مكتبة الاتصال جاهزة.");
             } else {
-                log("تحذير: قد تأخذ المكتبة وقتاً للتحميل، تأكد من اتصال الإنترنت.", true);
+                log("تنبيه: تأكد من اتصال الإنترنت ليتم جلب مكتبة Gradio عبر الـ CDN.", true);
             }
-        }, 1000);
+        }, 500);
     });
 
     async function runTryOn() {
@@ -85,18 +85,19 @@
         }
 
         if (!window.GradioClient) {
-            log("خطأ: لم يتم تحميل مكتبة الاتصال بعد، أعد تحديث الصفحة.", true);
+            log("خطأ: لم يتم تحميل مكتبة الاتصال بعد.", true);
             return;
         }
 
-        log("جاري الاتصال بالنموذج...");
-        resultContainer.innerHTML = "جاري المعالجة، قد يستغرق الأمر بضع ثوانٍ...";
+        log("جاري الاتصال بـ Hugging Face Space...");
+        resultContainer.innerHTML = "جاري المعالجة...";
 
         try {
-            // الاتصال باستخدام الكلاس المصحح
+            // الاتصال بالنموذج باستخدام الـ Token
             const client = await window.GradioClient.connect("yisol/IDM-VTON", { hf_token: token });
-            log("تم الاتصال بنجاح، جاري إرسال الصور...");
+            log("تم الاتصال بنجاح، جاري معالجة الصور...");
 
+            // تحويل الملفات إلى Blob لتقبلها واجهة العميل
             const personBlob = new Blob([personInput], { type: personInput.type });
             const garmentBlob = new Blob([garmentInput], { type: garmentInput.type });
 
@@ -120,11 +121,9 @@
                 const imgUrl = result.data[0].url || result.data[0];
                 resultContainer.innerHTML = `<img src="${imgUrl}" alt="النتيجة النهائية">`;
             } else {
-                resultContainer.innerHTML = "تمت العملية ولكن لم يتم العثور على صورة في الرد.";
+                resultContainer.innerHTML = "لم يتم إرجاع رابط صورة صالح.";
             }
 
-        } ث (error) { // تم تصحيح الخطأ البرمجي هنا
-            
         } catch (error) {
             log("خطأ أثناء التنفيذ: " + error.message, true);
             resultContainer.innerHTML = "حدث خطأ، راجع مربع الكونسول في الأسفل.";
