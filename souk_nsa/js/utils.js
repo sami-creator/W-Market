@@ -130,28 +130,17 @@
 
   // عرض الصورة المطلوب من ImageKit بالبكسل (ضعف العرض المعروض تقريبًا للشاشات عالية الدقة)
   const IK_W = { thumb: 300, avatar: 90 };
-  // قص بنسبة ثابتة مع تركيز ذكي (fo-auto) — يُطبَّق عند الجلب فقط، والأصل لا يتغير
-  //   card   : 4:5  لبطاقة الإعلان
-  //   detail : 16:9 لصورة صفحة التفاصيل
-  const IK_CROP = { card: 'w-480,h-600,fo-auto', detail: 'w-1200,h-675,fo-auto' };
   const IK_HOST = /^https:\/\/ik\.imagekit\.io\//i;
-
-  // نقطة القص تُؤخذ من النسخة الكبيرة (1600px) لتبقى الجودة عالية بعد القص
-  function ikLarge(path) { return String(path).replace(/_(thumb|medium|large)\.webp(?=$|\?)/, '_large.webp'); }
 
   function imgUrl(path, size) {
     if (!path) return 'assets/images/placeholder.svg';
-    const crop = IK_CROP[size];
     if (/^https?:/i.test(path)) {
-      if (!IK_HOST.test(path) || /[?&]tr=/.test(path)) return path;
-      if (crop) { const u = ikLarge(path); return u + (u.includes('?') ? '&' : '?') + 'tr=' + crop; }
       // روابط ImageKit المطلقة: نطلب نسخة مصغّرة بدل الصورة الأصلية (إن لم يكن الرابط يحمل tr مسبقًا)
       const iw = IK_W[size];
-      if (iw) return path + (path.includes('?') ? '&' : '?') + 'tr=w-' + iw;
+      if (iw && IK_HOST.test(path) && !/[?&]tr=/.test(path)) return path + (path.includes('?') ? '&' : '?') + 'tr=w-' + iw;
       return path;
     }
     const base = (window.__ENV__ && window.__ENV__.IMAGE_CDN_BASE) || '';
-    if (base && crop) return `${base}/${ikLarge(path)}?tr=${crop}`;
     const w = window.CONFIG.UPLOAD.SIZES[size] || IK_W[size] || '';
     if (base) return `${base}/${path}${w ? '?tr=w-' + w : ''}`;
     const sb = (window.__ENV__ && window.__ENV__.SUPABASE_URL) || '';
