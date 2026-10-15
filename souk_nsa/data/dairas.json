@@ -20,14 +20,14 @@
   { "id": 212, "w": 2, "ar": "زيبوجة", "fr": "Zeboudja" },
   { "id": 213, "w": 2, "ar": "بني حواء", "fr": "Beni Haoua" },
 
+  
   { "id": 301, "w": 3, "ar": "الأغواط", "fr": "Laghouat" },
   { "id": 302, "w": 3, "ar": "عين ماضي", "fr": "Ain Madhi" },
-  { "id": 303, "w": 3, "ar": "كردان", "fr": "Kourdane" },
   { "id": 304, "w": 3, "ar": "حاسي الرمل", "fr": "Hassi R'Mel" },
   { "id": 305, "w": 3, "ar": "قصر الحيران", "fr": "Ksar El Hirane" },
   { "id": 306, "w": 3, "ar": "سيدي مخلوف", "fr": "Sidi Makhlouf" },
-  { "id": 307, "w": 3, "ar": "بريدة", "fr": "Brida" },
-  { "id": 308, "w": 3, "ar": "الغيشة", "fr": "El Ghicha" },
+
+
 
   { "id": 401, "w": 4, "ar": "أم البواقي", "fr": "Oum El Bouaghi" },
   { "id": 402, "w": 4, "ar": "عين البيضاء", "fr": "Ain Beida" },
