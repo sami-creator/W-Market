@@ -40,11 +40,55 @@
         if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null;
         if (Math.abs(dx) > 40) show(i + ((dx < 0) === (document.dir !== 'rtl' && document.documentElement.dir !== 'rtl') ? 1 : -1));
       }, { passive: true });
-      // التكبير عند الطلب فقط (النسخة الكبيرة)
-      main.addEventListener('click', () => {
-        const big = el('img', { src: src(i, 'path_large'), alt: '', style: 'max-width:100%;max-height:90vh;border-radius:12px' });
-        const ov = el('div', { class: 'modal-overlay', onclick: () => ov.remove() }, big); document.body.append(ov);
-      });
+      // الصورة الكاملة (النسخة الكبيرة) مع تنقل بالسحب والأسهم ولوحة المفاتيح
+      const isRtl = () => document.dir === 'rtl' || document.documentElement.dir === 'rtl';
+      const openLightbox = start => {
+        let k = start;
+        const big = el('img', { class: 'gallery-lb__img', alt: '', draggable: 'false' });
+        big.addEventListener('error', () => { if (!big.dataset.fb) { big.dataset.fb = '1'; big.src = src(k, 'path_medium'); } });
+        const lbCount = el('span', { class: 'gallery-lb__count' });
+        const ov = el('div', { class: 'gallery-lb', role: 'dialog', 'aria-modal': 'true' }, [big]);
+        const close = () => {
+          document.removeEventListener('keydown', onKey);
+          document.body.style.overflow = prevOverflow;
+          ov.remove();
+          show(k); // الإطار الصغير يتبع آخر صورة شوهدت
+        };
+        const go = n => {
+          k = (n + list.length) % list.length;
+          big.dataset.fb = '';
+          big.src = src(k, 'path_large');
+          lbCount.textContent = (k + 1) + ' / ' + list.length;
+          if (list.length > 1) {
+            preload(src((k + 1) % list.length, 'path_large'));
+            preload(src((k - 1 + list.length) % list.length, 'path_large'));
+          }
+        };
+        const onKey = e => {
+          if (e.key === 'Escape') close();
+          else if (e.key === 'ArrowRight') go(k + (isRtl() ? -1 : 1));
+          else if (e.key === 'ArrowLeft') go(k + (isRtl() ? 1 : -1));
+        };
+        const btn = (cls, label, txt, fn) => el('button', { class: 'gallery-lb__btn ' + cls, type: 'button', 'aria-label': label, onclick: e => { e.stopPropagation(); fn(); } }, txt);
+        ov.append(btn('gallery-lb__close', t('common.close') || 'close', '✕', close), lbCount);
+        if (list.length > 1) ov.append(btn('gallery-lb__prev', t('common.back'), '‹', () => go(k - 1)), btn('gallery-lb__next', t('common.next'), '›', () => go(k + 1)));
+        // النقر على الخلفية يغلق، والنقر على الصورة لا يغلق
+        ov.addEventListener('click', e => { if (e.target === ov) close(); });
+        // السحب يمين/يسار (نفس اتجاه الإطار الصغير)
+        let sx = null, sy = null;
+        ov.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+        ov.addEventListener('touchend', e => {
+          if (sx === null) return;
+          const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null;
+          if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) go(k + ((dx < 0) === !isRtl() ? 1 : -1));
+        }, { passive: true });
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        document.addEventListener('keydown', onKey);
+        document.body.append(ov);
+        go(start);
+      };
+      main.addEventListener('click', () => openLightbox(i));
       container.append(wrap); if (list.length > 1) container.append(thumbs);
       show(0);
     }

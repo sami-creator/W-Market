@@ -135,18 +135,11 @@ body:not([data-page="home"]) main.container{padding-top:16px}
 .gallery__thumbs{display:none}
 .kebab{position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;display:flex;align-items:center;justify-content:center;z-index:4;backdrop-filter:blur(4px)}
 .kebab svg{width:18px;height:18px}
-.detail-icon-row{display:flex;align-items:center;justify-content:center;gap:14px;margin:6px 0 10px;padding:6px 0 12px;border-bottom:1px solid var(--border)}
 .icon-action{width:34px;height:34px;border-radius:50%;background:var(--surface-2);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s;flex:none;padding:0;color:var(--text)}
 .icon-action:active{transform:scale(.88)}
 .icon-action svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .icon-action.liked{color:var(--c-primary);background:color-mix(in srgb,var(--c-primary) 14%,transparent)}
 .icon-action.liked svg{fill:currentColor;stroke-width:0}
-.detail-seller-row{display:flex;align-items:center;gap:10px;margin:2px 0 10px;cursor:pointer}
-.detail-seller-row .seller-avatar{width:46px;height:46px}
-.detail-seller-row .seller-avatar img{border-width:2px}
-.detail-seller-row .mini-dot{left:-2px;right:auto;width:14px;height:14px;border-width:2.5px}
-.detail-seller-row .seller-name{font-size:13px;font-weight:600}
-.detail-seller-row .hint{font-size:11px}
 .detail-title{font-size:20px;font-weight:700;margin:0 0 6px;text-align:right}
 .detail-price{font-size:22px;font-weight:700;color:var(--c-primary);margin:0 0 4px;text-align:right;direction:ltr;unicode-bidi:plaintext}
 .detail-price .old-price{font-size:15px;color:var(--muted);text-decoration:line-through;font-weight:400;margin-inline-end:8px}
@@ -155,8 +148,6 @@ body:not([data-page="home"]) main.container{padding-top:16px}
 .nego-detail.fixed{color:var(--muted)}
 .rent-price{font-size:14px;font-weight:700;margin:0 0 8px;color:var(--text)}
 .detail-desc{font-size:14px;line-height:1.8;color:var(--text);opacity:.88;margin:0 0 12px;text-align:right;white-space:pre-line}
-.detail-meta{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0 14px;padding:12px;background:var(--surface-2);border-radius:14px}
-.detail-meta span{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px}
 .delivery-available{color:#10B981!important;font-weight:600}.delivery-unavailable{color:#EF4444!important;font-weight:600}
 .detail-attrs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
 .detail-contact-row{display:flex;gap:18px;margin:12px 0 8px;align-items:center;overflow-x:auto;scrollbar-width:none;padding:4px 2px}
@@ -183,6 +174,117 @@ body:not([data-page="home"]) main.container{padding-top:16px}
 .btn-buy-full{flex:1;padding:15px;border:none;border-radius:14px;background:var(--c-primary);color:var(--c-on);font-weight:700;font-size:15px;box-shadow:0 10px 20px color-mix(in srgb,var(--c-primary) 35%,transparent);transition:transform .15s;text-align:center}
 .btn-buy-full:active{transform:scale(.97)}
 .btn-buy-full.ghost{background:var(--surface-2);color:var(--text);box-shadow:none}
+
+/* ===== صفحة تفاصيل الإعلان (تصميم جديد) — كل الألوان من متغيرات الثيم، كل الاتجاهات منطقية ===== */
+.ad-page{display:flex;flex-direction:column;gap:12px;padding-bottom:8px}
+.ad-page [hidden]{display:none!important}
+.ad-page .detail-title,.ad-page .detail-price,.ad-page .nego-detail,.ad-page .detail-desc{text-align:start}
+
+/* شريط الأزرار العلوي */
+.ad-topbar{display:flex;align-items:center;justify-content:flex-end}
+.ad-topbar:empty{display:none}
+.ad-topbar__actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.ad-topbar .icon-action{width:38px;height:38px;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow)}
+.ad-topbar .icon-action svg{width:18px;height:18px}
+.ad-topbar .icon-action.liked{border-color:var(--c-primary)}
+
+/* المعرض */
+.ad-gallery .gallery{border-radius:20px;box-shadow:var(--shadow)}
+.ad-gallery .gallery__main{height:auto;aspect-ratio:4/3;max-height:62vh;object-fit:cover}
+.ad-gallery .gallery__count{top:12px;left:auto;right:12px}
+.ad-gallery .gallery__nav{width:38px;height:38px;font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);z-index:3}
+.ov-pill{position:absolute;z-index:3;display:inline-flex;align-items:center;gap:6px;background:rgba(0,0,0,.55);color:#fff;border:0;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:600;backdrop-filter:blur(4px);direction:ltr}
+.ov-pill svg{width:14px;height:14px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ov-pill--video{top:12px;left:12px;padding:6px 12px;font-size:13px;cursor:pointer}
+.ov-pill--video svg{fill:currentColor;stroke:none}
+.ov-pill--views{bottom:12px;left:12px}
+.ov-pill--likes{bottom:12px;right:12px}
+.ad-gallery .gallery__thumbs{display:flex;gap:8px;overflow-x:auto;padding:10px 2px 2px;scrollbar-width:none}
+.ad-gallery .gallery__thumbs::-webkit-scrollbar{display:none}
+.ad-gallery .gallery__thumbs img{flex:none;width:68px;height:68px;object-fit:cover;border-radius:12px;border:2px solid transparent;opacity:.75;cursor:pointer;transition:opacity .15s,border-color .15s}
+.ad-gallery .gallery__thumbs img.active{border-color:var(--c-primary);opacity:1}
+
+/* العنوان + السعر + الموقع */
+.ad-info{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:14px;box-shadow:var(--shadow)}
+.ad-info .detail-title{font-size:clamp(18px,4.8vw,22px);line-height:1.4;overflow-wrap:anywhere}
+.ad-info .detail-price{font-size:clamp(24px,7vw,32px);font-weight:800;line-height:1.2;margin:4px 0}
+.ad-info .price-santim{font-size:12px;font-weight:500;color:var(--muted);direction:rtl}
+.ad-badges{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.ad-loc{display:flex;align-items:center;gap:6px;margin-top:8px;color:var(--muted);font-size:13px}
+.ad-loc svg{width:16px;height:16px;flex:none;color:var(--c-primary);fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* بطاقات المعلومات السريعة */
+.fact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:10px}
+.fact-card{display:flex;align-items:center;gap:8px;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:10px 12px}
+.fact-card__icon{width:34px;height:34px;flex:none;border-radius:12px;background:var(--c-soft);color:var(--c-primary);display:flex;align-items:center;justify-content:center}
+.fact-card__icon svg{width:18px;height:18px}
+.fact-card__txt{min-width:0;display:flex;flex-direction:column;gap:2px}
+.fact-card__label{font-size:11px;color:var(--muted)}
+.fact-card__val{font-size:13px;font-weight:700;overflow-wrap:anywhere}
+.fact-card__val .delivery-btn{padding:2px 10px}
+.ad-facts .detail-attrs{margin:10px 0 0}
+
+/* بطاقة الناشرة */
+.ad-seller{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:12px 14px;box-shadow:var(--shadow)}
+.seller-head{display:flex;align-items:center;gap:12px;cursor:pointer}
+.seller-head .seller-avatar{width:52px;height:52px}
+.seller-head .seller-avatar img{border:2px solid var(--c-primary)}
+.seller-head .mini-dot{width:14px;height:14px;border-width:2.5px}
+.seller-head__txt{flex:1;min-width:0}
+.seller-head .seller-name{font-size:15px;font-weight:700;overflow-wrap:anywhere}
+.seller-head .hint{font-size:11px}
+.seller-rate{flex:none;font-size:14px;font-weight:700}
+.seller-head>svg{width:18px;height:18px;flex:none;color:var(--muted);fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+[dir="rtl"] .seller-head>svg{transform:scaleX(-1)}
+.seller-stats{display:grid;grid-template-columns:repeat(3,1fr);margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.seller-stat{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;padding-inline:4px;text-align:center}
+.seller-stat+.seller-stat{border-inline-start:1px solid var(--border)}
+.seller-stat b{font-size:18px;font-weight:800}
+.seller-stat span{font-size:11px;color:var(--muted)}
+
+/* أزرار التواصل */
+.ad-contact{display:flex;flex-direction:column;gap:10px}
+.btn-chat{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:50px;border:0;border-radius:999px;background:var(--c-primary);color:var(--c-on);font-size:16px;font-weight:700;box-shadow:0 10px 20px color-mix(in srgb,var(--c-primary) 35%,transparent);transition:transform .15s}
+.btn-chat:active{transform:scale(.97)}
+.btn-chat svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ad-contact .detail-contact-row{margin:0;padding:0;gap:14px;flex-wrap:wrap;justify-content:center;overflow:visible}
+.ad-contact .detail-contact-row .icon-btn{width:44px;height:44px}
+.ad-contact .phones{margin:0;justify-content:center}
+
+/* بطاقات الوصف والتقييمات */
+.ad-card,.ad-page .reviews-section{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:14px;box-shadow:var(--shadow)}
+.ad-page .reviews-section{margin-top:0}
+.ad-page .ad-card>h3,.ad-page .reviews-section>h3{margin:0 0 10px;font-size:15px;font-weight:700}
+.ad-desc .detail-desc{margin:0 0 6px}
+.ad-sub{margin:10px 0;padding-top:10px;border-top:1px dashed var(--border)}
+.ad-sub h3{margin:0 0 6px;font-size:14px}
+.ad-desc .hint{margin-top:4px}
+
+/* إعلانات مشابهة: شريط أفقي */
+.ad-page .similar-section{margin-top:0;padding-top:0;border:0}
+.ad-page .similar-section>h3{margin:0 0 10px;padding-inline:2px;font-size:15px}
+.similar-scroll{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity;scrollbar-width:none}
+.similar-scroll::-webkit-scrollbar{display:none}
+.similar-scroll .similar-card{flex:0 0 clamp(120px,34vw,160px);padding:0;background:none;scroll-snap-align:start}
+.similar-scroll .similar-img{position:relative;margin-bottom:6px;border-radius:14px}
+.similar-pricepill{position:absolute;bottom:6px;left:6px;max-width:calc(100% - 12px);padding:3px 10px;border-radius:999px;background:rgba(0,0,0,.62);color:#fff;font-size:12px;font-weight:700;direction:ltr;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.similar-scroll .similar-card h4{text-align:start}
+
+/* الشريط السفلي (طلب شراء) — شريط التنقل الأصلي يبقى مخفيًا في هذه الصفحة كما كان */
+.detail-footer .btn-buy-full{border-radius:999px}
+
+/* استجابة الشاشات */
+@media (max-width:360px){
+  .fact-grid{grid-template-columns:repeat(auto-fit,minmax(92px,1fr))}
+  .seller-stat b{font-size:16px}
+  .ad-topbar__actions{gap:6px}
+}
+@media (min-width:480px){
+  .ad-gallery .gallery__main{aspect-ratio:16/10}
+}
+@media (prefers-reduced-motion:reduce){
+  .btn-chat,.ad-gallery .gallery__thumbs img{transition:none}
+}
 
 /* ===== رسائل منبثقة ونوافذ ===== */
 #toast-host{position:fixed;inset-inline:0;bottom:calc(100px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;gap:6px;z-index:100;pointer-events:none}
