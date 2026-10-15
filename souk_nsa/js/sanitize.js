@@ -51,7 +51,7 @@
     'كوس', 'بوزي', 'قحبتك', 'نيكها', 'كوسها', 'طيزك', 'طيزها',
     'يتنيك', 'تتنيك', 'نيكك', 'هبل', 'مهبول', 'شاذ',
     // Obfuscated variants
-    'f*ck', 'sh*t', 'b*tch', 'f**k', 's**t', 'fck', 'sht'
+    'f*ck', 'sh*t', 'b*tch', 'fck', 'sht'
   ];
 
   const BAD_WORDS = (window.__BAD_WORDS__ || []).concat(BAD_WORDS_BASE);
