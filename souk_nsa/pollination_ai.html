@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مصمم القندورة الجزائرية بالذكاء الاصطناعي</title>
+<style>
+  :root{
+    --rose:#DB2777; --rose-d:#9D174D; --blush:#FFF1F7; --wash:#FCE7F3;
+    --ink:#2B1021; --muted:#6B5560; --line:#F5D0E4;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'IBM Plex Sans Arabic',Tahoma,sans-serif;background:linear-gradient(180deg,var(--blush),#fff);margin:0;padding:20px;color:var(--ink);direction:rtl;line-height:1.7}
+  .container{max-width:900px;margin:auto;background:#fff;padding:28px;border-radius:20px;box-shadow:0 10px 40px rgba(157,23,77,.12)}
+  h1{color:var(--rose-d);text-align:center;margin:0 0 8px;font-size:26px}
+  .sub{text-align:center;color:var(--muted);font-size:14px;margin-bottom:24px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .full{grid-column:1/-1}
+  .form-group{margin-bottom:14px}
+  label{display:block;margin-bottom:6px;font-weight:700;font-size:14px;color:var(--rose-d)}
+  input[type="text"],select,textarea{width:100%;padding:11px 14px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;outline:none;transition:.2s}
+  input:focus,select:focus,textarea:focus{border-color:var(--rose);box-shadow:0 0 0 3px rgba(219,39,119,.15)}
+  textarea{resize:vertical;min-height:70px}
+  .colors-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .color-swatch{width:38px;height:38px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:.2s}
+  .color-swatch:hover{transform:scale(1.1)}
+  .color-swatch.active{border-color:var(--rose-d);box-shadow:0 0 0 3px rgba(219,39,119,.2)}
+  button{background:var(--rose);color:#fff;border:none;padding:14px 24px;width:100%;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:10px;transition:.2s}
+  button:hover{background:var(--rose-d)}
+  button:disabled{opacity:.6;cursor:wait}
+  .result-box{margin-top:24px;text-align:center;min-height:200px;display:flex;align-items:center;justify-content:center;background:var(--blush);border-radius:16px;padding:20px}
+  .result-box img{max-width:100%;border-radius:12px;box-shadow:0 8px 30px rgba(157,23,77,.25)}
+  .placeholder{color:var(--muted);font-size:14px}
+  #console{background:#1e1e1e;color:#00ff00;padding:12px;border-radius:10px;font-family:monospace;font-size:12px;height:130px;overflow-y:auto;margin-top:20px;direction:ltr;text-align:left}
+  .prompt-preview{background:var(--wash);padding:14px;border-radius:10px;font-size:13px;color:var(--rose-d);margin-top:14px;word-break:break-word}
+  .badge{display:inline-block;background:var(--rose);color:#fff;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700}
+  @media(max-width:600px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🧵 مصمم القندورة الجزائرية</h1>
+  <p class="sub">اختاري النوع، الألوان، التطريز... ودعي الذكاء الاصطناعي يصمم لك</p>
+
+  <div class="grid">
+    <div class="form-group full">
+      <label for="garmentType">نوع اللباس</label>
+      <select id="garmentType">
+        <option value="قندورة تقليدية جزائرية مطرزة">قندورة تقليدية</option>
+        <option value="قندورة مجبود (تطريز مجبود)">قندورة مجبود</option>
+        <option value="قندورة فرقاني بالفضة">قندورة فرقاني</option>
+        <option value="شدة تلمسانية بالخرز والفضة">شدة تلمسانية</option>
+        <option value="قندورة قطيفة مطرزة بالخيط الذهبي">قندورة قطيفة</option>
+        <option value="بيجامة تقليدية جزائرية">بيجامة تقليدية</option>
+        <option value="كاراكو تقليدي جزائري">كاراكو</option>
+        <option value="بلوزة وروبة تقليدية">بلوزة وروبة</option>
+        <option value="قندورة عصرية بلمسة تقليدية">قندورة عصرية</option>
+        <option value="فسخة (قندورة العرس)">فسخة العرس</option>
+        <option value="قندورة مساء طويلة">قندورة مساء</option>
+      </select>
+    </div>
+
+    <div class="form-group full">
+      <label>الألوان المفضلة (اختاري عدة)</label>
+      <div class="colors-row" id="colorsRow"></div>
+    </div>
+
+    <div class="form-group">
+      <label for="embroidery">نوع التطريز / الرسومات</label>
+      <select id="embroidery">
+        <option value="تطريز مجبود (خيوط ذهبية وفضية)">مجبود (خيوط ذهبية/فضية)</option>
+        <option value="تطريز بالخرز والترتر">خرز وترتر</option>
+        <option value="تطريز رقعة (تعصبة)">رقعة (تعصبة)</option>
+        <option value="تطريز بالخيط الحراري">خيط حراري</option>
+        <option value="تطريز الفتلة التقليدية">فتلة</option>
+        <option value="نقش بالخيط الذهبي">خيط ذهبي</option>
+        <option value="نقش هندسي أمازيغي">رموز أمازيغية</option>
+        <option value="زخرفة بالفضة الحقيقية">زخرفة بالفضة</option>
+        <option value="نقش ورود ونباتات">ورود ونباتات</option>
+        <option value="بسيط بدون تطريز">بسيط بدون تطريز</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="threadType">نوع الخيط</label>
+      <select id="threadType">
+        <option value="خيط ذهبي لامع">خيط ذهبي</option>
+        <option value="خيط فضي لامع">خيط فضي</option>
+        <option value="خيط حريري">خيط حريري</option>
+        <option value="خيط قطني">خيط قطني</option>
+        <option value="خيط مطرز بالخرز">خيط بالخرز</option>
+        <option value="خيط الفتلة الفاخر">خيط الفتلة</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="fabric">نوع القماش</label>
+      <select id="fabric">
+        <option value="قطيفة فاخرة">قطيفة</option>
+        <option value="حرير طبيعي">حرير</option>
+        <option value="ساتان لامع">ساتان</option>
+        <option value="شيفون">شيفون</option>
+        <option value="كريب">كريب</option>
+        <option value="دونتيل">دونتيل</option>
+        <option value="كتان">كتان</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="size">المقاس</label>
+      <select id="size">
+        <option value="small size">S</option>
+        <option value="medium size" selected>M</option>
+        <option value="large size">L</option>
+        <option value="extra large size">XL</option>
+        <option value="XXL size">XXL</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="occasion">المناسبة</label>
+      <select id="occasion">
+        <option value="for a wedding">عرس</option>
+        <option value="for a henna party">حنة</option>
+        <option value="for Eid celebration">عيد</option>
+        <option value="for daily wear">يومي</option>
+        <option value="for a formal evening">سهرة رسمية</option>
+        <option value="for Ramadan evenings">ليالي رمضان</option>
+      </select>
+    </div>
+
+    <div class="form-group full">
+      <label for="extra">تفاصيل إضافية (اختياري)</label>
+      <textarea id="extra" placeholder="مثال: أكمام طويلة، فتحة رقبة مربعة، ذيل طويل، حزام على الخصر..."></textarea>
+    </div>
+  </div>
+
+  <button id="generateBtn" onclick="generateDress()">✨ صمّمي القندورة</button>
+
+  <div class="prompt-preview" id="promptPreview" style="display:none"></div>
+
+  <div class="result-box" id="resultBox">
+    <div class="placeholder">لم يتم توليد أي صورة بعد</div>
+  </div>
+
+  <div id="console">[جاهز] املئي الخيارات واضغطي "صمّمي القندورة"</div>
+</div>
+
+<script>
+const COLORS = [
+  {name:'أحمر', en:'red', hex:'#C41E3A'},
+  {name:'أسود', en:'black', hex:'#1a1a1a'},
+  {name:'أبيض', en:'white', hex:'#FFFFFF'},
+  {name:'ذهبي', en:'gold', hex:'#D4AF37'},
+  {name:'فضي', en:'silver', hex:'#C0C0C0'},
+  {name:'أزرق ملكي', en:'royal blue', hex:'#1E3A8A'},
+  {name:'أخضر زمردي', en:'emerald green', hex:'#046A38'},
+  {name:'بنفسجي', en:'purple', hex:'#7C3AED'},
+  {name:'وردي', en:'pink', hex:'#EC4899'},
+  {name:'برتقالي', en:'orange', hex:'#EA580C'},
+  {name:'بني', en:'brown', hex:'#78350F'},
+  {name:'كحلي', en:'navy blue', hex:'#0F172A'},
+  {name:'تركوازي', en:'turquoise', hex:'#06B6D4'},
+  {name:'عنابي', en:'burgundy', hex:'#7F1D1D'},
+  {name:'بيج', en:'beige', hex:'#D4B896'}
+];
+
+let selectedColors = [];
+
+function renderColors(){
+  const row = document.getElementById('colorsRow');
+  row.innerHTML = '';
+  COLORS.forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'color-swatch';
+    d.style.background = c.hex;
+    d.title = c.name;
+    d.onclick = () => toggleColor(c, d);
+    row.appendChild(d);
+  });
+}
+
+function toggleColor(c, el){
+  const idx = selectedColors.findIndex(x => x.en === c.en);
+  if(idx >= 0){
+    selectedColors.splice(idx,1);
+    el.classList.remove('active');
+  } else {
+    if(selectedColors.length >= 3){
+      log('⚠️ يمكنك اختيار 3 ألوان كحد أقصى', true);
+      return;
+    }
+    selectedColors.push(c);
+    el.classList.add('active');
+  }
+}
+
+function log(msg, isError=false){
+  const c = document.getElementById('console');
+  const t = new Date().toLocaleTimeString();
+  c.innerHTML += `<div style="color:${isError?'#ff6b6b':'#00ff00'}">[${t}] ${msg}</div>`;
+  c.scrollTop = c.scrollHeight;
+}
+
+function buildPrompt(){
+  const type = document.getElementById('garmentType').value;
+  const emb = document.getElementById('embroidery').value;
+  const thread = document.getElementById('threadType').value;
+  const fabric = document.getElementById('fabric').value;
+  const size = document.getElementById('size').value;
+  const occ = document.getElementById('occasion').value;
+  const extra = document.getElementById('extra').value.trim();
+
+  const colorStr = selectedColors.length
+    ? selectedColors.map(c => c.en).join(' and ')
+    : 'traditional';
+
+  let prompt = `A professional fashion photography of a ${type}, `;
+  prompt += `made of luxurious ${fabric}, `;
+  prompt += `color: ${colorStr}, `;
+  prompt += `with ${emb}, `;
+  prompt += `using ${thread}, `;
+  prompt += `${size}, `;
+  prompt += `designed ${occ}, `;
+  if(extra) prompt += `details: ${extra}, `;
+  prompt += `full body shot, elegant Algerian traditional dress, high quality, ultra realistic, studio lighting, white clean background, 8k detail`;
+
+  return prompt;
+}
+
+async function generateDress(){
+  const btn = document.getElementById('generateBtn');
+  const box = document.getElementById('resultBox');
+  const preview = document.getElementById('promptPreview');
+
+  if(selectedColors.length === 0){
+    log('⚠️ اختاري لوناً واحداً على الأقل', true);
+    alert('اختاري لوناً واحداً على الأقل');
+    return;
+  }
+
+  const prompt = buildPrompt();
+  preview.style.display = 'block';
+  preview.textContent = '📝 الوصف: ' + prompt;
+
+  btn.disabled = true;
+  btn.textContent = '⏳ جاري التوليد...';
+  box.innerHTML = '<div class="placeholder">⏳ جاري تصميم القندورة... قد يستغرق 10-30 ثانية</div>';
+  log('بدء التوليد...');
+
+  try{
+    const seed = Math.floor(Math.random()*1000000);
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=1024&seed=${seed}&nologo=true&model=flux`;
+
+    log('الرابط: ' + url.substring(0,80) + '...');
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = () => reject(new Error('فشل تحميل الصورة'));
+      img.src = url;
+      setTimeout(() => reject(new Error('انتهت المهلة')), 90000);
+    });
+
+    box.innerHTML = '';
+    box.appendChild(img);
+    log('✅ تم توليد الصورة بنجاح');
+
+  } catch(err){
+    log('❌ خطأ: ' + err.message, true);
+    box.innerHTML = '<div class="placeholder" style="color:#9B1C1C">حدث خطأ أثناء التوليد. حاولي مرة أخرى.</div>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✨ صمّمي القندورة';
+  }
+}
+
+renderColors();
+</script>
+
+</body>
+</html>
