@@ -251,7 +251,7 @@ async function generateDress(){
 
   try{
     const seed = Math.floor(Math.random()*1000000);
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=1024&seed=${seed}&nologo=true&model=flux`;
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=1024&seed=${seed}&nologo=true&model=flux-realism`;
 
     log('الرابط: ' + url.substring(0,80) + '...');
 
