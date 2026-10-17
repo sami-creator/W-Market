@@ -57,12 +57,35 @@ p{margin:0}
 .badge::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok)}
 .hero h1{margin-bottom:18px;color:var(--ink)}
 .hero .lead{margin-bottom:28px;font-size:17px}
-.cta-row{display:flex;gap:12px;flex-wrap:wrap}
-.hero-visual{position:relative;width:100%;max-width:320px;margin-inline:auto}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:40px}
+
+.hero-visual{
+  position:relative;
+  width:100%;
+  max-width:320px;
+  margin-inline:auto;
+  display:flex;
+  flex-direction:column;
+}
 .ph{background:linear-gradient(160deg,#F9A8D4,#EC4899 62%,#BE185D);overflow:hidden;position:relative}
-.ph img{width:100%;height:100%;object-fit:fill;position:absolute;inset:0}
-.hero-img{aspect-ratio:9/16;border-radius:24px}
-.demo{position:relative;margin-top:-18px;background:#fff;border-radius:18px;padding:12px 14px;box-shadow:0 20px 50px rgba(157,23,77,.22);border:1px solid var(--line)}
+.ph img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.hero-img{
+  aspect-ratio:9/16;
+  border-radius:24px;
+  margin-bottom:-30px;
+  z-index:1;
+}
+.demo{
+  position:relative;
+  z-index:2;
+  inset:auto;
+  margin-inline:-6%;
+  background:#fff;
+  border-radius:18px;
+  padding:12px 14px;
+  box-shadow:0 20px 50px rgba(157,23,77,.22);
+  border:1px solid var(--line);
+}
 .demo-bar{display:flex;align-items:center;gap:10px;background:var(--blush);border-radius:12px;padding:10px 12px;min-height:46px}
 .demo-bar svg{flex:none;color:var(--rose-d)}
 .demo-q{flex:1;font-weight:500;font-size:14px;min-height:1.6em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
@@ -90,11 +113,29 @@ section.alt{background:var(--blush)}
 
 /* features */
 .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.feat{background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px 22px;transition:transform .2s,box-shadow .2s}
+.feat{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:20px 18px;
+  max-width:280px;
+  width:100%;
+  margin-inline:auto;
+  transition:transform .2s,box-shadow .2s;
+}
 .feat:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(157,23,77,.10)}
 .feat .ic{width:50px;height:50px;border-radius:14px;background:var(--blush);display:grid;place-items:center;margin-bottom:14px;color:var(--rose-dd);font-size:22px}
 .feat h3{margin-bottom:8px}
 .feat p{color:var(--muted);font-size:15px;line-height:1.8}
+.feat-img{
+  position:relative;
+  aspect-ratio:9/16;
+  border-radius:12px;
+  margin-top:14px;
+  overflow:hidden;
+  width:100%;
+}
+.feat-img img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
 
 /* trust */
 .trust{background:var(--ink);color:#fff}
@@ -155,9 +196,10 @@ footer nav{display:flex;gap:22px;color:var(--rose-dd);font-weight:700}
   .hero .lead{margin-inline:auto}
   .cta-row{justify-content:center}
   .hero-visual{max-width:280px}
+  .demo{margin-inline:-4%}
   .trust .wrap,.join .wrap{grid-template-columns:1fr;gap:36px}
   .ai-grid{grid-template-columns:1fr;max-width:340px;margin-inline:auto;gap:20px}
-  .feat-grid{grid-template-columns:1fr 1fr;gap:16px}
+  .feat-grid{grid-template-columns:repeat(2, 1fr);gap:16px}
   .compare-grid{grid-template-columns:1fr;max-width:340px;margin-inline:auto;gap:20px}
   .quality .cols{grid-template-columns:1fr;gap:18px}
   .quality .col,.quality .col:first-child{border-inline-start:0;padding:0 0 18px;border-bottom:2px solid var(--line)}
@@ -182,13 +224,13 @@ footer nav{display:flex;gap:22px;color:var(--rose-dd);font-weight:700}
   section{padding:48px 0}
   .hero{padding:28px 0 56px}
   .hero-visual{max-width:260px}
-  .demo{padding:10px 12px}
   .demo-q{font-size:13px}
   .demo-bar{padding:9px 10px;min-height:42px}
+  .demo{padding:10px 12px; margin-inline:-2%}
   .hero-img{border-radius:20px}
   .shot .txt{padding:16px 18px 20px}
   .shot p{font-size:14px}
-  .feat{padding:20px 18px}
+  .feat{padding:20px 18px; max-width:100%}
   .checks li{font-size:14px;padding:12px 14px}
   details{padding:14px 16px}
   summary{font-size:15px}
@@ -312,6 +354,30 @@ footer nav{display:flex;gap:22px;color:var(--rose-dd);font-weight:700}
         <h3>اقتراح الأفضل</h3>
         <p>نظام ذكي يقترح لك المنتج الأنسب بناءً على بحثك وميزانيتك واهتماماتك.</p>
       </div>
+      <div class="feat">
+        <div class="ic">🌐</div>
+        <h3>ترجمة فورية للإعلانات</h3>
+        <p>ترجمي أي إعلان من الإنجليزية أو الفرنسية أو حتى الدارجة المكتوبة بالفرنسية إلى الدارجة العربية بضغطة واحدة.</p>
+        <div class="ph feat-img"><img src="landing/translate.webp" alt="ترجمة إعلان من الفرنسية إلى الدارجة العربية" loading="lazy" width="540" height="960" onerror="this.hidden=true"></div>
+      </div>
+      <div class="feat">
+        <div class="ic">🔔</div>
+        <h3>تنبيه نزول منتج</h3>
+        <p>حدّدي المنتج والسعر والمكان مسبقاً، ونراسلك فور نزول منتج مطابق للبيع.</p>
+        <div class="ph feat-img"><img src="landing/alert-product.webp" alt="تنبيه عند نزول منتج بالسعر والمكان المحددين" loading="lazy" width="540" height="960" onerror="this.hidden=true"></div>
+      </div>
+      <div class="feat">
+        <div class="ic">📉</div>
+        <h3>إشعار انخفاض السعر</h3>
+        <p>أضيفي السلع التي تعجبك إلى المفضلة، ونشعرك فوراً عند تخفيض أسعارها.</p>
+        <div class="ph feat-img"><img src="landing/price-drop.webp" alt="إشعار عند تخفيض سعر سلعة في المفضلة" loading="lazy" width="540" height="960" onerror="this.hidden=true"></div>
+      </div>
+      <div class="feat">
+        <div class="ic">🏷️</div>
+        <h3>السعر إجباري</h3>
+        <p>لا إعلان بدون سعر واضح. نضمن لك معرفة الثمن قبل التواصل مع البائعة.</p>
+        <div class="ph feat-img"><img src="landing/price-required.webp" alt="حقل السعر إجباري عند نشر إعلان" loading="lazy" width="540" height="960" onerror="this.hidden=true"></div>
+      </div>
     </div>
   </div>
 </section>
@@ -421,6 +487,8 @@ footer nav{display:flex;gap:22px;color:var(--rose-dd);font-weight:700}
       <details><summary>هل يوجد دعم على مدار الساعة؟</summary><p>نعم، الدعم متواجد 24/7 للإجابة على أسئلتك ومساعدتك في أي مشكلة.</p></details>
       <details><summary>هل يمكنني البحث في بلديتي؟</summary><p>نعم، يمكنك البحث حتى مستوى البلدية لتجدي ما هو قريب منك بالضبط.</p></details>
       <details><summary>لماذا أترك وسيلة تواصل؟</summary><p>لنرسل لك الرابط الجديد عند الانتقال إلى الدومين الرسمي، وبموافقتك فقط.</p></details>
+      <details><summary>هل يمكنني ترجمة إعلان؟</summary><p>نعم، يمكنك ترجمة أي إعلان من الإنجليزية أو الفرنسية أو الدارجة المكتوبة بالفرنسية إلى الدارجة العربية بضغطة واحدة.</p></details>
+      <details><summary>هل السعر إجباري في الإعلان؟</summary><p>نعم، تحديد السعر إجباري عند نشر أي إعلان، حتى تعرفي الثمن قبل التواصل.</p></details>
     </div>
   </div>
 </section>
