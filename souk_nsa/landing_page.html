@@ -147,13 +147,7 @@ section.alt{background:var(--blush)}
 .checks li::before{content:"✓";flex:none;width:26px;height:26px;border-radius:50%;background:var(--rose);color:#fff;display:grid;place-items:center;font-size:14px;font-weight:700}
 
 /* comparison */
-.compare-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;max-width:720px;margin-inline:auto}
-.compare-item{background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 4px 16px rgba(157,23,77,.06)}
-.compare-item .ph{aspect-ratio:9/16}
-.compare-item .cap{padding:18px 22px 22px}
-.compare-item h3{margin-bottom:6px;font-size:18px}
-.compare-item p{color:var(--muted);font-size:14px}
-.compare-tag{display:inline-block;background:var(--rose);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;margin-bottom:10px}
+
 
 /* quality */
 .quality .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
@@ -270,10 +264,10 @@ footer nav{display:flex;gap:22px;color:var(--rose-dd);font-weight:700}
       <div class="demo" aria-label="مثال توضيحي على البحث الذكي">
         <div class="demo-bar">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <span class="demo-q" id="dq">نحب صباط كعب عالي كحلي نمرو 38</span>
+          <span class="demo-q" id="dq">نحب صباط كعب عالي أكحل نمرو 38</span>
           <span class="cam" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span>
         </div>
-        <div class="tags" id="dt" aria-live="off"><span>أحذية</span><span>كعب عالي</span><span>اللون: كحلي</span><span>المقاس: 38</span></div>
+        <div class="tags" id="dt" aria-live="off"><span>أحذية</span><span>كعب عالي</span><span>اللون: أكحل</span><span>المقاس: 38</span></div>
         <small>أمثلة توضيحية لطريقة عمل البحث</small>
       </div>
     </div>
@@ -399,32 +393,7 @@ footer nav{display:flex;gap:22px;color:var(--rose-dd);font-weight:700}
 </section>
 
 <!-- ============ COMPARISON ============ -->
-<section id="compare">
-  <div class="wrap">
-    <div class="head center">
-      <h2>كيف نقارَن بغيرنا؟</h2>
-      <p>لقطات حقيقية من تجربة الاستخدام تُظهر الفرق في السرعة والوضوح والسهولة.</p>
-    </div>
-    <div class="compare-grid">
-      <div class="compare-item">
-        <div class="ph"><img src="landing/compare-souq-nissa.webp" alt="لقطة من سوق نسا" loading="lazy" width="720" height="1280" onerror="this.hidden=true"></div>
-        <div class="cap">
-          <span class="compare-tag">سوق نسا</span>
-          <h3>بحث فوري بالدارجة</h3>
-          <p>واجهة نظيفة، نتائج دقيقة من أول محاولة، وسرعة تحميل عالية.</p>
-        </div>
-      </div>
-      <div class="compare-item">
-        <div class="ph"><img src="landing/compare-other.webp" alt="لقطة من موقع آخر" loading="lazy" width="720" height="1280" onerror="this.hidden=true"></div>
-        <div class="cap">
-          <span class="compare-tag" style="background:#6B5560">مواقع أخرى</span>
-          <h3>بحث تقليدي محدود</h3>
-          <p>واجهة مزدحمة، فلاتر محدودة، ونتائج لا تطابق ما تبحثين عنه.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+
 
 <!-- ============ QUALITY ============ -->
 <section class="alt quality">
@@ -514,7 +483,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
   /* ---- demo typing ---- */
   var D = [
-    {q:'نحب صباط كعب عالي كحلي نمرو 38', t:['أحذية','كعب عالي','اللون: كحلي','المقاس: 38']},
+    {q:'نحب صباط كعب عالي أكحل نمرو 38', t:['أحذية','كعب عالي','اللون: أكحل','المقاس: 38']},
     {q:'robe de soirée verte taille M', t:['فساتين السهرة','اللون: أخضر','المقاس: M']},
     {q:'gold earrings under 3000 DA', t:['إكسسوارات','أقراط','اللون: ذهبي','السعر: أقل من 3000 دج']}
   ];
