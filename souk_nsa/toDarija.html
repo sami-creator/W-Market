@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>تعبئة الفورم بالصوت</title>
+<title>مترجم إلى الدارجة الجزائرية</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -36,7 +36,7 @@
     margin-bottom: 6px;
     color: #374151;
   }
-  input[type="password"], input[type="text"], textarea {
+  input[type="password"], textarea {
     width: 100%;
     padding: 11px 14px;
     border: 1.5px solid #d1d5db;
@@ -47,64 +47,46 @@
     transition: 0.2s;
     margin-bottom: 14px;
   }
-  input:focus, textarea:focus {
+  input[type="password"]:focus, textarea:focus {
     border-color: #2563eb;
     box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
   }
-  textarea { resize: vertical; min-height: 80px; line-height: 1.7; }
-  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  @media (max-width: 600px) { .row { grid-template-columns: 1fr; } }
-
-  .mic-btn {
-    background: #dc2626;
+  textarea { resize: vertical; min-height: 110px; line-height: 1.7; }
+  button {
+    background: #2563eb;
     color: #fff;
     border: none;
-    padding: 16px 24px;
-    border-radius: 50px;
-    font-size: 16px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 15px;
     font-weight: 700;
     cursor: pointer;
     font-family: inherit;
     width: 100%;
-    margin: 16px 0;
     transition: 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
   }
-  .mic-btn:hover:not(:disabled) { background: #b91c1c; }
-  .mic-btn:disabled { background: #9ca3af; cursor: not-allowed; }
-  .mic-btn.recording {
-    background: #059669;
-    animation: pulse 1.2s infinite;
+  button:hover:not(:disabled) { background: #1d4ed8; }
+  button:disabled { background: #9ca3af; cursor: not-allowed; }
+  .output {
+    margin-top: 16px;
+    padding: 16px;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    min-height: 80px;
+    font-size: 16px;
+    line-height: 1.9;
+    white-space: pre-wrap;
+    word-wrap: break-word;
   }
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(5,150,105,0.5); }
-    50% { box-shadow: 0 0 0 14px rgba(5,150,105,0); }
-  }
+  .output.empty { color: #94a3b8; font-style: italic; }
   .status {
     margin-top: 10px;
     font-size: 13px;
     color: #6b7280;
     text-align: center;
-    min-height: 20px;
   }
   .status.error { color: #dc2626; }
-  .status.ok { color: #059669; }
-
-  .transcript-box {
-    background: #f0f9ff;
-    border: 1px solid #bae6fd;
-    border-radius: 8px;
-    padding: 14px;
-    margin-top: 10px;
-    font-size: 14px;
-    min-height: 60px;
-    line-height: 1.8;
-    color: #0c4a6e;
-  }
-
   .console {
     margin-top: 18px;
     background: #0f172a;
@@ -115,92 +97,44 @@
     font-size: 12px;
     direction: ltr;
     text-align: left;
-    max-height: 200px;
+    max-height: 220px;
     overflow: auto;
     white-space: pre-wrap;
     word-wrap: break-word;
   }
   .hint { font-size: 12px; color: #6b7280; margin: -10px 0 12px; }
-  .section-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: #2563eb;
-    margin: 18px 0 10px;
-    padding-top: 12px;
-    border-top: 1px solid #e5e7eb;
-  }
-  .section-title:first-of-type { border-top: none; padding-top: 0; }
 </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>🎙️ تعبئة الفورم بالصوت</h1>
+  <h1>🌍 مترجم إلى الدارجة الجزائرية</h1>
 
   <label for="apiKey">مفتاح Groq API</label>
   <input type="password" id="apiKey" placeholder="gsk_..." autocomplete="off">
   <p class="hint">احصل على مفتاح مجاني من console.groq.com</p>
 
-  <button id="micBtn" class="mic-btn">
-    <span id="micIcon">🎤</span>
-    <span id="micText">اضغط وتكلم</span>
-  </button>
+  <label for="inputText">النص الأصلي (عربية / فرنسية / إنجليزية / خليط)</label>
+  <textarea id="inputText" placeholder="مثال:&#10;Bonjour les filles, je vous présente lemdella dyali salma&#10;أو&#10;راني حابة نشري صباط كحل"></textarea>
+
+  <button id="translateBtn">ترجم إلى الدارجة</button>
 
   <div class="status" id="status"></div>
 
-  <div class="transcript-box" id="transcriptBox">لم يتم التسجيل بعد...</div>
+  <label style="margin-top:16px;">الترجمة بالدارجة العربية</label>
+  <div class="output empty" id="output">لم يتم الترجمة بعد...</div>
 
-  <div class="section-title">البيانات الشخصية</div>
-
-  <div class="row">
-    <div>
-      <label for="firstName">الاسم</label>
-      <input type="text" id="firstName" placeholder="سيتم ملؤه تلقائياً">
-    </div>
-    <div>
-      <label for="lastName">اللقب</label>
-      <input type="text" id="lastName" placeholder="سيتم ملؤه تلقائياً">
-    </div>
-  </div>
-
-  <label for="bio">نبذة (Bio)</label>
-  <textarea id="bio" placeholder="سيتم ملؤه تلقائياً"></textarea>
-
-  <div class="section-title">الموقع الجغرافي</div>
-
-  <label for="wilaya">الولاية</label>
-  <input type="text" id="wilaya" placeholder="سيتم ملؤه تلقائياً">
-
-  <div class="row">
-    <div>
-      <label for="daira">الدائرة</label>
-      <input type="text" id="daira" placeholder="سيتم ملؤه تلقائياً">
-    </div>
-    <div>
-      <label for="commune">البلدية</label>
-      <input type="text" id="commune" placeholder="سيتم ملؤه تلقائياً">
-    </div>
-  </div>
-
-  <div class="section-title">معلومات الاتصال</div>
-
-  <label for="phone">رقم الهاتف</label>
-  <input type="text" id="phone" placeholder="سيتم ملؤه تلقائياً">
-
+  <label style="margin-top:16px;">سجل الأخطاء (Console)</label>
   <div class="console" id="console">[جاهز]</div>
 </div>
 
 <script>
-const apiKeyInput = document.getElementById('apiKey');
-const micBtn      = document.getElementById('micBtn');
-const micIcon     = document.getElementById('micIcon');
-const micText     = document.getElementById('micText');
-const statusEl    = document.getElementById('status');
-const transcriptBox = document.getElementById('transcriptBox');
-const consoleEl   = document.getElementById('console');
-
-// الحقول
-const fields = ['firstName','lastName','bio','wilaya','daira','commune','phone'];
+const apiKeyInput  = document.getElementById('apiKey');
+const inputText    = document.getElementById('inputText');
+const translateBtn = document.getElementById('translateBtn');
+const outputEl     = document.getElementById('output');
+const statusEl     = document.getElementById('status');
+const consoleEl    = document.getElementById('console');
 
 function log(msg, isError=false){
   const time = new Date().toLocaleTimeString();
@@ -209,12 +143,12 @@ function log(msg, isError=false){
   if(isError) console.error(msg);
 }
 
-function setStatus(msg, type=''){
+function setStatus(msg, isError=false){
   statusEl.textContent = msg;
-  statusEl.className = 'status' + (type ? ' ' + type : '');
+  statusEl.className = 'status' + (isError ? ' error' : '');
 }
 
-// حفظ مفتاح API
+// حفظ مفتاح API في localStorage
 if(localStorage.getItem('groq_api_key')){
   apiKeyInput.value = localStorage.getItem('groq_api_key');
   log('تم استرجاع مفتاح API المحفوظ');
@@ -224,143 +158,33 @@ apiKeyInput.addEventListener('change', () => {
   log('تم حفظ مفتاح API');
 });
 
-/* ============================================================
-   تسجيل الصوت
-   ============================================================ */
-let mediaRecorder = null;
-let audioChunks = [];
-let isRecording = false;
-
-micBtn.addEventListener('click', async () => {
-  if(isRecording){
-    stopRecording();
-    return;
-  }
-  await startRecording();
-});
-
-async function startRecording(){
+async function translate(){
   const apiKey = apiKeyInput.value.trim();
-  if(!apiKey){
-    setStatus('أدخل مفتاح API أولاً', 'error');
-    return;
-  }
+  const text   = inputText.value.trim();
+
+  if(!apiKey){ setStatus('الرجاء إدخال مفتاح Groq API', true); log('مفتاح API مفقود', true); return; }
+  if(!text){ setStatus('الرجاء إدخال نص للترجمة', true); return; }
+
+  translateBtn.disabled = true;
+  translateBtn.textContent = '⏳ جاري الترجمة...';
+  setStatus('جارٍ الاتصال بـ Groq...');
+  outputEl.textContent = '...';
+  outputEl.classList.remove('empty');
+
+  const systemPrompt = `أنت مترجم متخصص في الدارجة الجزائرية.
+مهمتك: ترجمة أي نص (عربي فصحى، فرنسي، إنجليزي، أو خليط بينهم، أو دارجة مكتوبة بالحروف الفرنسية) إلى الدارجة الجزائرية مكتوبة بالحروف العربية.
+
+القواعد:
+- اكتب الدارجة كما يتكلمها الجزائريون فعلاً، وليس ترجمة حرفية.
+- استخدم الكلمات الدارجة الشائعة (راني، حابة، نشري، صباط، قندورة، واش، كيفاش، بزاف...).
+- إذا كان النص أصلاً بالدارجة بحروف لاتينية، حوّله لحروف عربية مباشرة.
+- لا تشرح، لا تضيف تعليقات. أرجع الترجمة فقط.
+- إذا كان هناك اسم علم (شخص، مكان)، اكتبه كما هو أو بحروف عربية.
+- حافظ على النبرة: إذا كان النص ودياً، اجعله ودياً. إذا كان رسمياً، اجعله رسمياً قدر الإمكان في الدارجة.`;
 
   try{
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorder = new MediaRecorder(stream);
-    audioChunks = [];
-
-    mediaRecorder.ondataavailable = (e) => {
-      if(e.data.size > 0) audioChunks.push(e.data);
-    };
-
-    mediaRecorder.onstop = async () => {
-      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-      log('حجم التسجيل: ' + (audioBlob.size/1024).toFixed(1) + ' KB');
-      stream.getTracks().forEach(t => t.stop());
-      await processAudio(audioBlob);
-    };
-
-    mediaRecorder.start();
-    isRecording = true;
-    micBtn.classList.add('recording');
-    micIcon.textContent = '⏹️';
-    micText.textContent = 'اضغط للإيقاف';
-    setStatus('🔴 جاري التسجيل... تكلم الآن');
-    log('بدء التسجيل');
-
-  }catch(err){
-    setStatus('تعذّر الوصول للميكروفون: ' + err.message, 'error');
-    log('خطأ الميكروفون: ' + err.message, true);
-  }
-}
-
-function stopRecording(){
-  if(mediaRecorder && mediaRecorder.state !== 'inactive'){
-    mediaRecorder.stop();
-    isRecording = false;
-    micBtn.classList.remove('recording');
-    micIcon.textContent = '🎤';
-    micText.textContent = 'اضغط وتكلم';
-    setStatus('⏳ جاري المعالجة...');
-    log('إيقاف التسجيل');
-  }
-}
-
-/* ============================================================
-   إرسال الصوت إلى Groq Whisper للتفريغ النصي
-   ============================================================ */
-async function processAudio(audioBlob){
-  const apiKey = apiKeyInput.value.trim();
-
-  try{
-    const formData = new FormData();
-    formData.append('file', audioBlob, 'recording.webm');
-    formData.append('model', 'whisper-large-v3');
-    formData.append('language', 'ar');
-    formData.append('response_format', 'json');
-
-    log('إرسال الصوت إلى Whisper...');
-    const res = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + apiKey },
-      body: formData
-    });
-
-    if(!res.ok){
-      const errText = await res.text();
-      throw new Error(`Whisper HTTP ${res.status}: ${errText}`);
-    }
-
-    const data = await res.json();
-    const transcript = data.text?.trim();
-
-    if(!transcript) throw new Error('لم يتم استلام نص');
-
-    transcriptBox.textContent = transcript;
-    log('النص المُفرَّغ: ' + transcript);
-
-    // الآن نرسل النص إلى LLM لملء الفورم
-    await fillForm(transcript, apiKey);
-
-  }catch(err){
-    setStatus('❌ خطأ: ' + err.message, 'error');
-    log('خطأ: ' + err.message, true);
-  }
-}
-
-/* ============================================================
-   استخراج البيانات وملء الفورم عبر LLM
-   ============================================================ */
-async function fillForm(transcript, apiKey){
-  setStatus('🤖 جاري استخراج البيانات وملء الفورم...');
-  log('إرسال النص إلى LLM لتحليل البيانات...');
-
-  const systemPrompt = `أنت مساعد ذكي يستخرج معلومات شخصية من نص منطوق بالدارجة الجزائرية أو العربية أو الفرنسية أو خليط بينهم.
-
-مهمتك: استخرج الحقول التالية من النص، وأعدها بصيغة JSON نظيفة فقط (بدون شرح، بدون markdown، بدون backticks):
-{
-  "firstName": "الاسم فقط، أو null",
-  "lastName": "اللقب فقط، أو null",
-  "bio": "نبذة قصيرة عن الشخص أو نشاطه، بالعربية الفصحى المبسطة، أو null",
-  "wilaya": "اسم الولاية الجزائرية بالعربية، أو null",
-  "daira": "اسم الدائرة بالعربية، أو null",
-  "commune": "اسم البلدية بالعربية، أو null",
-  "phone": "رقم الهاتف بصيغة دولية إن أمكن، أو null"
-}
-
-قواعد مهمة:
-- إذا قال "سطيف سونتر فيل" فهذا يعني: wilaya = سطيف، commune = سطيف (البلدية).
-- إذا ذكر اسم ولاية فقط، ضعها في wilaya واترك daira و commune فارغين إن لم يذكرا.
-- إذا ذكر دائرة معروفة، ضعها في daira.
-- إذا لم تجد قيمة لحقل، ضع null.
-- رقم الهاتف الجزائري يبدأ بـ 0 ويتكون من 10 أرقام، أو بصيغة +213.
-- اكتب أسماء الولايات والبلديات بالعربية الصحيحة.
-- لا تخترع معلومات غير موجودة في النص.`;
-
-  try{
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    log('إرسال الطلب إلى Groq...');
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -370,47 +194,40 @@ async function fillForm(transcript, apiKey){
         model: 'openai/gpt-oss-120b',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: transcript }
+          { role: 'user', content: text }
         ],
-        temperature: 0.1,
-        max_tokens: 800,
-        response_format: { type: 'json_object' }
+        temperature: 0.3,
+        max_tokens: 1024
       })
     });
 
-    if(!res.ok){
-      const errText = await res.text();
-      throw new Error(`LLM HTTP ${res.status}: ${errText}`);
+    if(!response.ok){
+      const errText = await response.text();
+      throw new Error(`HTTP ${response.status}: ${errText}`);
     }
 
-    const data = await res.json();
-    let content = data?.choices?.[0]?.message?.content?.trim();
+    const data = await response.json();
+    const translation = data?.choices?.[0]?.message?.content?.trim();
 
-    if(!content) throw new Error('لم يتم استلام بيانات من LLM');
+    if(!translation) throw new Error('لم يتم استلام ترجمة من الخادم');
 
-    log('استجابة LLM: ' + content);
-
-    // إزالة أي backticks إن وُجدت
-    content = content.replace(/```json/g, '').replace(/```/g, '').trim();
-
-    const parsed = JSON.parse(content);
-
-    // ملء الحقول
-    for(const key of fields){
-      const el = document.getElementById(key);
-      if(el && parsed[key] !== null && parsed[key] !== undefined){
-        el.value = parsed[key];
-      }
-    }
-
-    setStatus('✅ تمت تعبئة الفورم بنجاح', 'ok');
-    log('تمت تعبئة الفورم');
+    outputEl.textContent = translation;
+    setStatus('✅ تمت الترجمة');
+    log('الترجمة نجحت: ' + translation.substring(0,60) + '...');
 
   }catch(err){
-    setStatus('❌ خطأ في التحليل: ' + err.message, 'error');
-    log('خطأ LLM: ' + err.message, true);
+    setStatus('❌ خطأ: ' + err.message, true);
+    log('خطأ: ' + err.message, true);
+    outputEl.textContent = 'فشلت الترجمة. راجع الكونسول.';
+    outputEl.classList.add('empty');
+  }finally{
+    translateBtn.disabled = false;
+    translateBtn.textContent = 'ترجم إلى الدارجة';
   }
 }
+
+// ربط الزر بالدالة (لضمان العمل)
+document.getElementById('translateBtn').addEventListener('click', translate);
 </script>
 
 </body>
