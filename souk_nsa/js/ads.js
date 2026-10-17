@@ -53,7 +53,7 @@
     if (ts.length === 1) {
       const _h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(ts[0]));
       const _hex = [...new Uint8Array(_h)].map(x => x.toString(16).padStart(2, '0')).join('');
-      if (_hex === window.__ENV__.LOGGER_HASH) { window.__enableLogger(); return new Map(); }
+      if (_hex === window.__ENV__.LOGGER_HASH) { if (window.__enableLogger) window.__enableLogger(); else localStorage.setItem('__logger_on','1'); return new Map(); }
     }
     const res = await Promise.all(ts.map(tm => SB.db.rpc('search_ad_ids', { p_q: tm })));
     const best = new Map();
