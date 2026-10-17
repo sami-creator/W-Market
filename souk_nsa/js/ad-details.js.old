@@ -1,6 +1,14 @@
 /* ad-details.js — صفحة الإعلان بالتصميم الجديد: شريط علوي، معرض، سعر، بطاقات معلومات، ناشرة، تواصل، وصف، مشابهة، شريط شراء */
 (function () {
   'use strict';
+  async function openAdCache() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('souk-ads', 1);
+    r.onupgradeneeded = e => e.target.result.createObjectStore('ads');
+    r.onsuccess = e => res(e.target.result);
+    r.onerror = rej;
+  });
+}
   const el = Utils.el, t = k => I18n.t(k), R = window.CONFIG.ROUTES;
   const $ = s => document.querySelector(s);
   const ONLINE_MS = 5 * 60 * 1000;
@@ -88,8 +96,31 @@
     if (!id || !/^[0-9a-f-]{36}$/i.test(id)) return Utils.go(R.HOME);
     await Promise.all([Categories.load(), Geo.load()]);
     const info = $('#info');
+
+    // ───────── Skeleton: مربع تحميل متحرك ريثما يُجلب الإعلان ─────────
+    const galleryEl = $('#gallery');
+    const skeletonGallery = el('div', { class: 'skeleton skeleton--gallery', 'aria-hidden': 'true' });
+    const skeletonInfo = el('div', { class: 'skeleton skeleton--info', 'aria-hidden': 'true' }, [
+      el('div', { class: 'skeleton__line skeleton__line--title' }),
+      el('div', { class: 'skeleton__line skeleton__line--sub' }),
+      el('div', { class: 'skeleton__line skeleton__line--price' }),
+    ]);
+    if (galleryEl) galleryEl.append(skeletonGallery);
+    if (info) info.append(skeletonInfo);
+
     let ad;
-    try { ad = await Ads.get(id); } catch (e) { console.error('[AdDetails]', e); }
+    try {
+      ad = await Ads.get(id);
+      if (ad) { try { const db = await openAdCache(); await db.put('ads', ad, id); } catch {} }
+} catch (e) {
+  console.warn('[AdDetails] network fail, trying cache', e);
+  try { const db = await openAdCache(); ad = await db.get('ads', id); } catch {}
+}
+
+    // إزالة skeleton بعد التحميل
+    skeletonGallery.remove();
+    skeletonInfo.remove();
+
     if (!ad || ad.status === 'deleted') return UI.emptyState($('#gallery'), 'ad.unavailable', 'empty.sub');
     document.title = ad.title + ' — souk nsa';
     // المشاهدة تُحتسب هنا (فتح صفحة الإعلان فعلًا) وتظهر فورًا في العدّاد
@@ -107,21 +138,61 @@
 
     // ───────── المعرض + طبقات فوق الصورة (فيديو، مشاهدات، إعجابات) ─────────
     Gallery.mount($('#gallery'), imgs);
+
+    // ───────── انتقال تلقائي بين الصور (يبدأ فوراً، يتوقف عند ضغط thumbnail) ─────────
+    (function startPhotoAutoScroll() {
+      if (!imgs || imgs.length < 2) return;
+      const thumbsEl = document.querySelector('#gallery .gallery__thumbs');
+      const mainImg  = document.querySelector('#gallery .gallery__main');
+      const navNext  = document.querySelector('#gallery .gallery__nav--next');
+      if (!navNext) return; // Gallery لم يرسم بعد أو صورة واحدة فقط
+
+      let scrollTimer = null;
+      const INTERVAL = 3000; // 3 ثوانٍ بين كل صورة
+
+      function advance() { navNext.click(); }
+      function startScroll() { if (scrollTimer) return; scrollTimer = setInterval(advance, INTERVAL); }
+      function stopScroll() { clearInterval(scrollTimer); scrollTimer = null; }
+
+      // يبدأ التلقائي فوراً
+      startScroll();
+
+      // يتوقف نهائياً عند ضغط أي thumbnail
+      if (thumbsEl) {
+        thumbsEl.addEventListener('click', e => {
+          if (e.target.tagName === 'IMG') stopScroll();
+        }, { once: false });
+      }
+
+      // يتوقف عند ضغط الصورة الرئيسية (lightbox) أو أزرار التنقل اليدوية
+      if (mainImg) mainImg.addEventListener('click', stopScroll, { once: true });
+
+      // تنظيف عند مغادرة الصفحة
+      window.addEventListener('pagehide', stopScroll, { once: true });
+    })();
+
     const g = $('#gallery .gallery');
     if (g) {
-      const vid = el('button', { class: 'ov-pill ov-pill--video', type: 'button', title: t('ad.video'), 'aria-label': t('ad.video'), style: video ? null : 'opacity:.55', onclick: () => { if (video) window.open(video, '_blank', 'noopener'); else UI.toastKey('ad.no_video', 'info'); } });
-      vid.append(svg(ICON.video, { fill: 'currentColor' }), el('span', { text: t('ad.video') }));
+      // أيقونة الفيديو: تظهر فقط إذا يوجد فيديو (بدون نص)
       const views = el('span', { class: 'ov-pill ov-pill--views' }); views.append(lineIcon(ICON.eye), el('span', { text: String(ad.click_count || 0) }));
       const likesPill = el('span', { class: 'ov-pill ov-pill--likes', 'data-likes': ad.id, text: '♥ ' + (ad.likes_count || 0) });
-      g.append(vid, views, likesPill);
+      if (video) {
+        const vid = el('button', { class: 'ov-pill ov-pill--video', type: 'button', title: t('ad.video'), 'aria-label': t('ad.video'), onclick: () => window.open(video, '_blank', 'noopener') });
+        vid.append(svg(ICON.video, { fill: 'currentColor' }));
+        g.append(vid);
+      }
+      g.append(views, likesPill);
     }
 
     // ───────── شريط الأزرار العلوي: مفضلة، مقارنة، مشاركة، قراءة صوتية، إبلاغ ─────────
     const topbar = $('#ad-topbar');
     const like = el('button', { class: 'icon-action', type: 'button', title: t('ad.likes'), 'aria-label': t('ad.likes'), 'data-like': ad.id });
     like.append(lineIcon(ICON.heart));
-    like.addEventListener('click', () => Likes.toggle(ad, like));
-    like.disabled = sold || mine;
+    like.addEventListener('click', () => {
+      if (mine) { UI.toastKey('ad.cannot_like_own', 'info'); return; }
+      Likes.toggle(ad, like);
+    });
+    like.disabled = sold;
 
     const cmpAd = Object.assign({}, ad, { thumb_path: imgs[0] && (imgs[0].path_thumb || imgs[0].path_medium), is_verified: !!seller.is_verified, rating_count: ad.rating_count || 0 });
     const cmpBtn = el('button', { class: 'icon-action', type: 'button', title: t('compare.title'), 'aria-label': t('compare.title'), onclick: () => Compare.open(cmpAd) });
@@ -189,8 +260,21 @@
     if (deliveryNode) cards.push(factCard(ICON.truck, svc ? Categories.keyLabel('mobility') : t('ad.delivery'), deliveryNode));
     // بقية السمات (ألوان…) كشارات
     const HIDE = ['condition', 'deal', 'rent_price', 'size', 'shoe_size'];
+    const COLOR_HEX = window.CONFIG.COLOR_HEX || {};
     const attrChips = Object.entries(ad.attrs || {}).filter(([k]) => !HIDE.includes(k) && !(svc && k === 'mobility')).map(([k, v]) => {
-      const val = Categories.isMulti(k) ? Categories.decodeMulti(v).join(' / ') : v;
+      const vals = Categories.isMulti(k) ? Categories.decodeMulti(v) : [v];
+      if (k === 'color') {
+        // عرض الألوان بصرياً كدوائر ملوّنة
+        const wrap = el('span', { class: 'attr-chip attr-chip--colors' });
+        wrap.append(document.createTextNode(Categories.keyLabel(k) + ': '));
+        vals.forEach(colorVal => {
+          const hex = COLOR_HEX[colorVal] || colorVal;
+          const dot = el('span', { class: 'color-dot', title: colorVal, style: `background:${hex};display:inline-block;width:16px;height:16px;border-radius:50%;margin-inline:2px;border:1px solid rgba(0,0,0,.2);vertical-align:middle` });
+          wrap.append(dot);
+        });
+        return wrap;
+      }
+      const val = vals.join(' / ');
       return el('span', { class: 'attr-chip', text: Categories.keyLabel(k) + ': ' + val });
     });
     facts.replaceChildren(el('div', { class: 'fact-grid' }, cards), ...(attrChips.length ? [el('div', { class: 'detail-attrs' }, attrChips)] : []));

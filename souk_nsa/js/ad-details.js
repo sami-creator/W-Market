@@ -1,14 +1,17 @@
 /* ad-details.js — صفحة الإعلان بالتصميم الجديد: شريط علوي، معرض، سعر، بطاقات معلومات، ناشرة، تواصل، وصف، مشابهة، شريط شراء */
 (function () {
   'use strict';
+
+  // ───────── IndexedDB: حفظ بيانات الإعلان للعمل offline ─────────
   async function openAdCache() {
-  return new Promise((res, rej) => {
-    const r = indexedDB.open('souk-ads', 1);
-    r.onupgradeneeded = e => e.target.result.createObjectStore('ads');
-    r.onsuccess = e => res(e.target.result);
-    r.onerror = rej;
-  });
-}
+    return new Promise((res, rej) => {
+      const r = indexedDB.open('souk-ads', 1);
+      r.onupgradeneeded = e => e.target.result.createObjectStore('ads');
+      r.onsuccess = e => res(e.target.result);
+      r.onerror = rej;
+    });
+  }
+
   const el = Utils.el, t = k => I18n.t(k), R = window.CONFIG.ROUTES;
   const $ = s => document.querySelector(s);
   const ONLINE_MS = 5 * 60 * 1000;
@@ -34,7 +37,8 @@
     truck: '<rect x="1" y="6" width="13" height="10" rx="1"/><path d="M14 9h4l4 4v3h-8z"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/>',
     chevron: '<polyline points="9 18 15 12 9 6"/>',
     chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8 11h8M8 14h5"/>',
-    dots: '<circle cx="12" cy="5" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="19" r="1.8" fill="currentColor"/>'
+    dots: '<circle cx="12" cy="5" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="19" r="1.8" fill="currentColor"/>',
+    translate: '<path d="M3 5h12M9 3v2m4.5 13-2-4-2 4m-1-2h6M3 5l6 9"/><path d="M18 9h3l-3 8"/>'
   };
 
   // أيقونات التواصل: دوائر ملونة بشعارات مبسّطة
@@ -90,6 +94,124 @@
     return el('div', { class: 'fact-card' + (mod ? ' ' + mod : '') }, [ic, el('div', { class: 'fact-card__txt' }, [el('span', { class: 'fact-card__label', text: label }), el('div', { class: 'fact-card__val' }, [valueNode])])]);
   }
 
+  // ───────── زر الترجمة إلى الدارجة ─────────
+  function makeTranslateBtn(adId, getTitleEl, getDescEl) {
+    // حالة: null=أصلي، 'loading'، 'translated'
+    let state = null;
+    let origTitle = null, origDesc = null;
+    let translatedTitle = null, translatedDesc = null;
+
+    // حد الاستخدام: مفتاح في localStorage
+    const RATE_KEY = 'darija_rate';
+    function getRateData() {
+      try { return JSON.parse(localStorage.getItem(RATE_KEY) || '{}'); } catch { return {}; }
+    }
+    function saveRateData(d) { try { localStorage.setItem(RATE_KEY, JSON.stringify(d)); } catch {} }
+    function checkRate() {
+      const now = Date.now();
+      let d = getRateData();
+      // تنظيف اليوم
+      if (!d.dayStart || now - d.dayStart > 86400000) { d = { dayStart: now, dayCount: 0, minStart: now, minCount: 0 }; }
+      if (now - d.minStart > 60000) { d.minStart = now; d.minCount = 0; }
+      if (d.dayCount >= 30) return 'day';
+      if (d.minCount >= 2) return 'min';
+      return 'ok';
+    }
+    function incrementRate() {
+      const now = Date.now();
+      let d = getRateData();
+      if (!d.dayStart || now - d.dayStart > 86400000) d = { dayStart: now, dayCount: 0, minStart: now, minCount: 0 };
+      if (now - d.minStart > 60000) { d.minStart = now; d.minCount = 0; }
+      d.dayCount = (d.dayCount || 0) + 1;
+      d.minCount = (d.minCount || 0) + 1;
+      saveRateData(d);
+    }
+
+    const btn = el('button', {
+      class: 'translate-btn',
+      type: 'button',
+      title: t('ad.translate_darija'),
+      'aria-label': t('ad.translate_darija')
+    });
+    btn.append(svg(ICON.translate, { fill: 'none', stroke: 'currentColor', 'stroke-width': 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', width: 18, height: 18 }));
+
+    btn.addEventListener('click', async () => {
+      // إذا كان مترجماً → رجوع للأصلي
+      if (state === 'translated') {
+        getTitleEl().textContent = origTitle;
+        getDescEl().replaceChildren(boldNumbers(origDesc));
+        state = null;
+        btn.classList.remove('is-active');
+        btn.title = t('ad.translate_darija');
+        return;
+      }
+      // إذا كان جاري التحميل → تجاهل
+      if (state === 'loading') return;
+
+      // فحص تسجيل الدخول
+      await Auth.ready();
+      if (!Auth.isLogged()) {
+        Utils.Store.set(window.CONFIG.STORAGE_KEYS.RETURN_TO, R.AD + '?id=' + adId);
+        return Router.toLogin();
+      }
+
+      // فحص الحد
+      const rateCheck = checkRate();
+      if (rateCheck === 'day') { UI.toastKey('translate.limit_day', 'warning'); return; }
+      if (rateCheck === 'min') { UI.toast(t('translate.limit_min'), 'warning', 5000); return; }
+
+      // إذا عندنا ترجمة محفوظة → عرضها مباشرة
+      if (translatedTitle !== null) {
+        origTitle = origTitle || getTitleEl().textContent;
+        origDesc  = origDesc  || getDescEl().textContent;
+        getTitleEl().textContent = translatedTitle;
+        getDescEl().replaceChildren(document.createTextNode(translatedDesc));
+        state = 'translated';
+        btn.classList.add('is-active');
+        btn.title = t('ad.show_original');
+        return;
+      }
+
+      // حفظ النص الأصلي
+      origTitle = getTitleEl().textContent;
+      origDesc  = getDescEl().textContent;
+
+      state = 'loading';
+      btn.classList.add('is-loading');
+      btn.disabled = true;
+
+      try {
+        const { data, error } = await SB.fn('translate-darija', {
+          title: origTitle,
+          description: origDesc
+        });
+        if (error) throw error;
+        if (data && data.error === 'rate_limit_min') { UI.toast(t('translate.limit_min'), 'warning', 5000); state = null; return; }
+        if (data && data.error === 'rate_limit_day') { UI.toastKey('translate.limit_day', 'warning'); state = null; return; }
+        if (!data || !data.title) throw new Error('empty response');
+
+        translatedTitle = data.title;
+        translatedDesc  = data.description;
+        incrementRate();
+
+        getTitleEl().textContent = translatedTitle;
+        getDescEl().replaceChildren(document.createTextNode(translatedDesc));
+        state = 'translated';
+        btn.classList.add('is-active');
+        btn.title = t('ad.show_original');
+      } catch (e) {
+        console.error('[Translate]', e);
+        UI.toastKey('err.generic', 'error');
+        state = null;
+      } finally {
+        btn.classList.remove('is-loading');
+        btn.disabled = false;
+      }
+    });
+
+    return btn;
+  }
+
   App.pages['ad-details'] = async function () {
     await App.boot();
     const id = Utils.qs('id');
@@ -112,10 +234,10 @@
     try {
       ad = await Ads.get(id);
       if (ad) { try { const db = await openAdCache(); await db.put('ads', ad, id); } catch {} }
-} catch (e) {
-  console.warn('[AdDetails] network fail, trying cache', e);
-  try { const db = await openAdCache(); ad = await db.get('ads', id); } catch {}
-}
+    } catch (e) {
+      console.warn('[AdDetails] network fail, trying cache', e);
+      try { const db = await openAdCache(); ad = await db.get('ads', id); } catch {}
+    }
 
     // إزالة skeleton بعد التحميل
     skeletonGallery.remove();
@@ -145,35 +267,29 @@
       const thumbsEl = document.querySelector('#gallery .gallery__thumbs');
       const mainImg  = document.querySelector('#gallery .gallery__main');
       const navNext  = document.querySelector('#gallery .gallery__nav--next');
-      if (!navNext) return; // Gallery لم يرسم بعد أو صورة واحدة فقط
+      if (!navNext) return;
 
       let scrollTimer = null;
-      const INTERVAL = 3000; // 3 ثوانٍ بين كل صورة
+      const INTERVAL = 3000;
 
       function advance() { navNext.click(); }
       function startScroll() { if (scrollTimer) return; scrollTimer = setInterval(advance, INTERVAL); }
       function stopScroll() { clearInterval(scrollTimer); scrollTimer = null; }
 
-      // يبدأ التلقائي فوراً
       startScroll();
 
-      // يتوقف نهائياً عند ضغط أي thumbnail
       if (thumbsEl) {
         thumbsEl.addEventListener('click', e => {
           if (e.target.tagName === 'IMG') stopScroll();
         }, { once: false });
       }
 
-      // يتوقف عند ضغط الصورة الرئيسية (lightbox) أو أزرار التنقل اليدوية
       if (mainImg) mainImg.addEventListener('click', stopScroll, { once: true });
-
-      // تنظيف عند مغادرة الصفحة
       window.addEventListener('pagehide', stopScroll, { once: true });
     })();
 
     const g = $('#gallery .gallery');
     if (g) {
-      // أيقونة الفيديو: تظهر فقط إذا يوجد فيديو (بدون نص)
       const views = el('span', { class: 'ov-pill ov-pill--views' }); views.append(lineIcon(ICON.eye), el('span', { text: String(ad.click_count || 0) }));
       const likesPill = el('span', { class: 'ov-pill ov-pill--likes', 'data-likes': ad.id, text: '♥ ' + (ad.likes_count || 0) });
       if (video) {
@@ -218,7 +334,7 @@
       kb.append(svg(ICON.dots, { fill: 'currentColor' }));
       actions.append(kb);
     }
-    topbar.replaceChildren(actions);   // الرجوع والعنوان تضيفهما ترويسة الصفحة العامة (.page-header) من app.js
+    topbar.replaceChildren(actions);
 
     // ───────── العنوان + الشارات + السعر + الموقع ─────────
     const p = Price.display(ad);
@@ -239,8 +355,21 @@
     const rentLine = x.deal === 'both' && x.rent ? el('div', { class: 'rent-price', text: t('ad.rent_price') + ': ' + Utils.formatPrice(x.rent) }) : null;
     const locLine = loc ? el('div', { class: 'ad-loc' }, [lineIcon(ICON.pin), el('span', { text: loc })]) : null;
 
+    // العنوان مع زر الترجمة
+    const titleEl = el('h2', { class: 'detail-title', text: ad.title });
+    const descBodyEl = el('p', { class: 'detail-desc is-clamped' });
+    descBodyEl.append(boldNumbers(ad.description));
+
+    const translateBtn = makeTranslateBtn(
+      id,
+      () => titleEl,
+      () => descBodyEl
+    );
+
+    const titleRow = el('div', { class: 'detail-title-row' }, [titleEl, translateBtn]);
+
     info.replaceChildren(...[
-      el('h2', { class: 'detail-title', text: ad.title }),
+      titleRow,
       badges.children.length ? badges : null,
       priceEl, nego, rentLine, locLine
     ].filter(Boolean));
@@ -258,13 +387,11 @@
     if (x.sizes.length) cards.push(factCard(ICON.shirt, Categories.keyLabel(ad.attrs && ad.attrs.size ? 'size' : 'shoe_size'), document.createTextNode(x.sizes.join(' / '))));
     cards.push(factCard(ICON.star, t('ad.condition'), document.createTextNode(x.condition ? t('ad.used') + ' ' + x.condition : t('compare.new'))));
     if (deliveryNode) cards.push(factCard(ICON.truck, svc ? Categories.keyLabel('mobility') : t('ad.delivery'), deliveryNode));
-    // بقية السمات (ألوان…) كشارات
     const HIDE = ['condition', 'deal', 'rent_price', 'size', 'shoe_size'];
     const COLOR_HEX = window.CONFIG.COLOR_HEX || {};
     const attrChips = Object.entries(ad.attrs || {}).filter(([k]) => !HIDE.includes(k) && !(svc && k === 'mobility')).map(([k, v]) => {
       const vals = Categories.isMulti(k) ? Categories.decodeMulti(v) : [v];
       if (k === 'color') {
-        // عرض الألوان بصرياً كدوائر ملوّنة
         const wrap = el('span', { class: 'attr-chip attr-chip--colors' });
         wrap.append(document.createTextNode(Categories.keyLabel(k) + ': '));
         vals.forEach(colorVal => {
@@ -303,7 +430,6 @@
     const sellerBox = $('#seller-card');
     sellerBox.replaceChildren(sellerHead, el('div', { class: 'seller-stats' }, [stFollowers.node, stRating.node, stCount.node]));
     sellerBox.hidden = false;
-    // إحصائيات الناشرة تُحمَّل في الخلفية دون تعطيل الصفحة
     SB.db.rpc('profile_stats', { p_user: ad.user_id }).then(({ data }) => {
       const s = (data && data[0]) || {};
       stFollowers.v.textContent = String(s.followers || 0);
@@ -341,18 +467,17 @@
     if (contactNodes.length) { contactBox.replaceChildren(...contactNodes); contactBox.hidden = false; }
 
     // ───────── الوصف: أول سطور مع "عرض المزيد" + الأسعار السابقة + الأسئلة الشائعة ─────────
-    const desc = el('p', { class: 'detail-desc is-clamped' }); desc.append(boldNumbers(ad.description));
     const more = el('button', { class: 'more-btn', type: 'button', text: t('ad.show_more') });
-    more.addEventListener('click', () => { const open = desc.classList.toggle('is-clamped'); more.textContent = open ? t('ad.show_more') : t('ad.show_less'); });
+    more.addEventListener('click', () => { const open = descBodyEl.classList.toggle('is-clamped'); more.textContent = open ? t('ad.show_more') : t('ad.show_less'); });
     const oldPrices = hist.length ? el('div', { class: 'ad-sub' }, [el('b', { text: t('ad.old_prices') }), el('ul', { class: 'price-hist' }, hist.map(h => el('li', { text: Utils.formatPrice(h.old_price) + ' → ' + Utils.formatPrice(h.new_price) + ' · ' + Utils.formatDate(h.changed_at) })))]) : null;
     const faq = (ad.faq || []).length ? el('div', { class: 'ad-sub' }, [el('h3', { text: t('ad.faq') }), ...ad.faq.map(q => el('div', { class: 'faq-item' }, [el('b', { text: q.q }), el('span', { text: q.a })]))]) : null;
     $('#ad-desc-body').replaceChildren(...[
-      desc, more, oldPrices, faq,
+      descBodyEl, more, oldPrices, faq,
       el('div', { class: 'hint', text: Categories.path(ad.category_id, ad.subcategory_id) }),
       el('div', { class: 'hint', text: t('ad.published_on') + ' ' + Utils.formatDate(ad.created_at) })
     ].filter(Boolean));
     $('#ad-desc').hidden = false;
-    requestAnimationFrame(() => { if (desc.scrollHeight <= desc.clientHeight + 2) { more.hidden = true; desc.classList.remove('is-clamped'); } });
+    requestAnimationFrame(() => { if (descBodyEl.scrollHeight <= descBodyEl.clientHeight + 2) { more.hidden = true; descBodyEl.classList.remove('is-clamped'); } });
     Likes.load().then(() => Likes.paint(document));
 
     // ───────── شريط سفلي ثابت: رجوع + طلب شراء (أو تعديل/إحصائيات لصاحبة الإعلان) ─────────
@@ -365,7 +490,7 @@
       const order = el('button', { class: 'btn-buy-full', type: 'button', text: '🛒 ' + t('ad.order') });
       order.addEventListener('click', async () => {
         await Auth.ready(); if (!Auth.isLogged()) return Router.toLogin();
-        order.disabled = true; order.classList.add('is-busy');      // تفاعل فوري عند الضغط
+        order.disabled = true; order.classList.add('is-busy');
         const { data, error } = await SB.db.rpc('get_or_create_conversation', { p_ad: ad.id });
         if (error) { order.disabled = false; order.classList.remove('is-busy'); return UI.toastKey(UI.errKey(error), 'error'); }
         await SB.db.from('messages').insert({ conversation_id: data, sender_id: Auth.uid(), content: t('ad.order_msg') });
