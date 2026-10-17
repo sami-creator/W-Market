@@ -25,7 +25,7 @@
       RETURN_TO: 'sn_return', LOGIN_PENDING: 'sn_login_pending', VIEWED: 'sn_viewed',
       SMART_AGENT_HISTORY: 'sn_agent_history', SMART_AGENT_DRAFT: 'sn_agent_draft'
     },
-    DEFAULTS: { LANG: 'ar', THEME: 'light', COLOR: 'rose', FONT: 'proto' },
+    DEFAULTS: { LANG: 'ar', THEME: 'dark', COLOR: 'rose', FONT: 'proto' },
     LANGS: ['ar', 'fr', 'en'],
     COLORS: ['rose', 'fuchsia', 'red', 'orange', 'gold', 'green', 'teal', 'sky', 'blue', 'indigo', 'violet', 'brown', 'beige', 'slate'],
     COLOR_HEX: { rose: '#F472B6', fuchsia: '#D946EF', red: '#EF4444', orange: '#F97316', gold: '#D4A017', green: '#16A34A', teal: '#0D9488', sky: '#0EA5E9', blue: '#2563EB', indigo: '#4F46E5', violet: '#8B5CF6', brown: '#92613A', beige: '#B89B72', slate: '#475569' },
