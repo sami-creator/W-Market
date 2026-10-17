@@ -438,5 +438,6 @@
   "agent.thinking": "جارٍ الكتابة...",
   "agent.chars_left": "متبقٍّ {n} حرف",
   "agent.clear_confirm": "هل تريدين مسح المحادثة؟",
-  "agent.clear": "مسح المحادثة"
+  "agent.clear": "مسح المحادثة",
+  "err.avatar_ratio": "الصورة يجب أن تكون شبه مربعة"
 }

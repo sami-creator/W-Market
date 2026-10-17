@@ -438,5 +438,6 @@
   "agent.thinking": "En cours de rédaction...",
   "agent.chars_left": "{n} caractères restants",
   "agent.clear_confirm": "Voulez-vous effacer la conversation ?",
-  "agent.clear": "Effacer la conversation"
+  "agent.clear": "Effacer la conversation",
+  "err.avatar_ratio": "La photo doit être presque carrée"
 }
