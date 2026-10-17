@@ -1,6 +1,14 @@
 /* ad-details.js — صفحة الإعلان بالتصميم الجديد: شريط علوي، معرض، سعر، بطاقات معلومات، ناشرة، تواصل، وصف، مشابهة، شريط شراء */
 (function () {
   'use strict';
+  async function openAdCache() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('souk-ads', 1);
+    r.onupgradeneeded = e => e.target.result.createObjectStore('ads');
+    r.onsuccess = e => res(e.target.result);
+    r.onerror = rej;
+  });
+}
   const el = Utils.el, t = k => I18n.t(k), R = window.CONFIG.ROUTES;
   const $ = s => document.querySelector(s);
   const ONLINE_MS = 5 * 60 * 1000;
@@ -101,7 +109,13 @@
     if (info) info.append(skeletonInfo);
 
     let ad;
-    try { ad = await Ads.get(id); } catch (e) { console.error('[AdDetails]', e); }
+    try {
+      ad = await Ads.get(id);
+      if (ad) { try { const db = await openAdCache(); await db.put('ads', ad, id); } catch {} }
+} catch (e) {
+  console.warn('[AdDetails] network fail, trying cache', e);
+  try { const db = await openAdCache(); ad = await db.get('ads', id); } catch {}
+}
 
     // إزالة skeleton بعد التحميل
     skeletonGallery.remove();
