@@ -160,7 +160,7 @@
           el('label', { class: 'row' }, [ng, t('ad.negotiable')]),
           svc ? null : field(t('ad.condition'), el('div', { class: 'row' }, [el('label', { class: 'row' }, [us, t('ad.used')]), gr]), el('div', { class: 'hint', text: t('ad.condition_hint') }), true),
           svc ? null : el('label', { class: 'row', style: 'margin:10px 0' }, [dl, t('ad.delivery_yes')]),
-          ...(dBox ? [dBox] : []),
+          dBox,
           el('label', { class: 'row' }, [sp, t('ad.show_phone')]));
       };
       paint();
@@ -362,7 +362,7 @@
           for (const it of imgs) {
             if (it.file) {
               files.push(it.file);
-              modResults.push(it.mod || { ok: true });
+              modResults.push(it.mod && it.mod.ok !== false ? { ok: true, description: it.mod.description, tags: it.mod.tags } : { ok: true });
               continue;
             }
             const url = Utils.imgUrl(it.old.path_large || it.old.path_medium, 'large');
@@ -370,7 +370,19 @@
             files.push(new File([blob], 'old.' + (blob.type.split('/')[1] || 'webp'), { type: blob.type || 'image/webp' }));
             modResults.push({ ok: true });
           }
+          /* جمع fileIds الصور الممنوعة لحذفها من ImageKit بعد النشر */
+          const bannedFileIds = [];
+          for (const it of imgs) {
+            if (it.file && it.mod && it.mod.ok === false && it.mod.verdict === 'UNSAFE' && it._imagekitFileId) {
+              bannedFileIds.push(it._imagekitFileId);
+            }
+          }
           images = await Upload.putAdImages(id, files, null, _modPromise, modResults);
+          console.log('[DEBUG] images:', JSON.stringify(images));
+          /* حذف الصور الممنوعة من ImageKit بشكل غير متزامن */
+          if (bannedFileIds.length) {
+            SB.fn('imagekit-delete', { fileIds: bannedFileIds }).catch(e => console.warn('[PostAd] imagekit-delete', e));
+          }
         }
         const ad = { category_id: S.category_id, subcategory_id: S.subcategory_id, attrs: buildAttrs(), title: S.title, description: S.description, price: S.price, discount_pct: S.discount_pct, negotiable: S.negotiable, delivery: Categories.isService(S.category_id) ? false : !!S.delivery, show_phone: S.show_phone, video_url: S.video_url, faq: S.faq, wilaya_id: S.wilaya_id, daira_id: S.daira_id, commune_id: S.commune_id, lat: S.lat, lng: S.lng };
         const { data, error } = await SB.fn('submit-ad', { mode: editId ? 'update' : 'create', id, ad, images });

@@ -28,6 +28,53 @@
     return i;
   }
 
+  // ─── Long-press photo scroll: بطاقة واحدة نشطة في الوقت ───────────────
+  let activeCardStop = null; // دالة توقف بطاقة الصور النشطة حالياً
+
+  function bindLongPress(card, wrap) {
+    // صور الإعلان في wrap > img (صورة واحدة في الحالة العادية — تنزيل lazy)
+    // لا نحتاج صور متعددة في البطاقة؛ نحرّك خلفية css أو نضع عدة صور.
+    // الحل: نجلب صور الإعلان من Ads.images عند أول long-press، ثم نعرض slideshow
+    let pressTimer = null, imgs = null, idx = 0, timer = null;
+
+    function stopCurrent() { clearInterval(timer); timer = null; wrap.classList.remove('is-scrolling'); }
+    function stopActive() { if (activeCardStop) { activeCardStop(); activeCardStop = null; } }
+
+    function startScroll() {
+      stopActive(); // أوقف البطاقة السابقة
+      activeCardStop = () => { stopCurrent(); if (imgEl) imgEl.src = Utils.imgUrl(ad_imgs[0], 'thumb'); };
+      wrap.classList.add('is-scrolling');
+      idx = 0;
+      timer = setInterval(() => {
+        if (!imgs || imgs.length < 2) { stopCurrent(); return; }
+        idx = (idx + 1) % imgs.length;
+        const mainImg = wrap.querySelector('img');
+        if (mainImg) mainImg.src = Utils.imgUrl(imgs[idx].path_thumb || imgs[idx].path_medium || imgs[idx].path, 'thumb');
+      }, 800);
+    }
+
+    async function loadAndStart(adId) {
+      if (!imgs) {
+        try { imgs = await Ads.images(adId); } catch { imgs = []; }
+      }
+      if (imgs.length > 1) startScroll();
+    }
+
+    let adId = card.dataset.id;
+    let imgEl = wrap.querySelector('img');
+    let ad_imgs = [imgEl && (imgEl.dataset.src || imgEl.src)]; // fallback
+
+    // Mouse long-press (desktop)
+    card.addEventListener('mousedown', () => { pressTimer = setTimeout(() => loadAndStart(adId), 500); });
+    card.addEventListener('mouseup',   () => { clearTimeout(pressTimer); });
+    card.addEventListener('mouseleave',() => { clearTimeout(pressTimer); });
+
+    // Touch long-press (mobile)
+    card.addEventListener('touchstart', () => { pressTimer = setTimeout(() => loadAndStart(adId), 500); }, { passive: true });
+    card.addEventListener('touchend',   () => { clearTimeout(pressTimer); }, { passive: true });
+    card.addEventListener('touchcancel',() => { clearTimeout(pressTimer); }, { passive: true });
+  }
+
   const Cards = {
     // pos: ترتيب البطاقة في أول عرض للقائمة (0 = الأولى)؛ undefined = بطاقة عادية (تحميل كسول)
     render(ad, pos, rec) {
@@ -38,6 +85,9 @@
       const wrap = el('div', { class: 'img-wrap' }, [img(ad.thumb_path, ad.title, '', { eager: first, high: first && pos === 0 })]);
       if (sold) card.append(el('div', { class: 'badge-sold', text: t('ad.sold') }));
       if (p.pct > 0) card.append(el('div', { class: 'badge-discount', text: '-' + p.pct + '%' }));
+
+      // ربط long-press لتبديل الصور
+      bindLongPress(card, wrap);
 
       const dot = el('div', { class: 'mini-dot', 'data-presence': ad.user_id });
       const seller = el('div', { class: 'seller-row' }, [
@@ -51,7 +101,8 @@
       const near = !!(me && ad.wilaya_id && me.wilaya_id === ad.wilaya_id && ad.user_id !== me.id);
       // "مقترح لك": أفضل إعلان في مجموعته بحسب السعر والتقييم والقرب والتوثيق والحداثة
       if (rec) wrap.append(el('div', { class: 'badge-rec', text: '★ ' + t('card.recommended') }));
-      const priceEl = el('div', { class: 'price' }, [p.old ? el('span', { class: 'old-price', text: p.oldText }) : null, p.text]);
+      // السعر: السعر الجديد (أخضر) على اليسار، القديم (رمادي مشطوب) على اليمين
+      const priceEl = el('div', { class: 'price' }, [p.text, p.old ? el('span', { class: 'old-price', text: p.oldText }) : null]);
 
       const star = svg(STAR, 14, { fill: '#F5A623' });
       const heartBtn = el('button', { class: 'heart', type: 'button', 'aria-label': t('ad.likes'), 'data-like': ad.id });

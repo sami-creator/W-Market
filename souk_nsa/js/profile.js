@@ -168,6 +168,13 @@
   P['edit-profile'] = async function () {
     const st = await App.boot({ guard: true });
     if (!st) return;
+    // إذا جاء المستخدم من post-ad: زر الرجوع يعود إليها
+    const _retKey = window.CONFIG.STORAGE_KEYS.RETURN_TO;
+    const _retUrl = Utils.Store.get(_retKey);
+    if (_retUrl) {
+      const backBtn = document.querySelector('.page-header .back');
+      if (backBtn) backBtn.addEventListener('click', e => { e.stopImmediatePropagation(); Utils.Store.remove(_retKey); Utils.go(_retUrl); }, { once: true });
+    }
     const p = st.profile;
     const f = { name: $('#name'), gender: $('#gender'), year: $('#year'), w: $('#wilaya'), d: $('#daira'), c: $('#commune'), avatar: $('#avatar-file'), show: $('#show-phone'), phone: $('#phone') };
     // نبذة (حتى 100 كلمة)
@@ -198,6 +205,14 @@
       const file = f.avatar.files[0];
       const v = await Upload.validate(file);
       if (!v.ok) { f.avatar.value = ''; return UI.toastKey(v.error, 'error'); }
+      // التحقق من نسبة أبعاد الصورة (لا تقبل 9:16 وما شابه)
+      const aspectOk = await new Promise(res => {
+        const img = new Image(), url = URL.createObjectURL(file);
+        img.onload = () => { URL.revokeObjectURL(url); const r = img.width / img.height; res(r >= 0.5 && r <= 2); };
+        img.onerror = () => { URL.revokeObjectURL(url); res(true); };
+        img.src = url;
+      });
+      if (!aspectOk) { f.avatar.value = ''; return UI.toastKey('err.avatar_ratio', 'error'); }
       // ابدأ جلسة جديدة: أي نتيجة قديمة ستُتجاهل
       const myToken = ++_avatarToken;
       newAvatar = file; _avatarBlocked = false;
@@ -265,7 +280,11 @@
           if (!error) UI.toastKey('edit.bio_unavailable', 'info', 4500);
         }
         if (error) throw error;
-        UI.toastKey('edit.saved', 'success'); setTimeout(() => Utils.go(R.PROFILE), 700);
+        UI.toastKey('edit.saved', 'success');
+        // إذا جاء المستخدم من صفحة نشر إعلان → يعود إليها، وإلا → الملف الشخصي
+        const ret = Utils.Store.get(window.CONFIG.STORAGE_KEYS.RETURN_TO);
+        if (ret) { Utils.Store.remove(window.CONFIG.STORAGE_KEYS.RETURN_TO); setTimeout(() => Utils.go(ret), 700); }
+        else setTimeout(() => Utils.go(R.PROFILE), 700);
       } catch (err) { console.error('[Edit]', err); UI.toastKey(UI.errKey(err), 'error'); }
       finally { UI.setLoading(btn, false); }
     });

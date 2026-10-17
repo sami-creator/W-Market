@@ -292,8 +292,7 @@
           missing.map(k => el('span', { class: 'badge', text: (SOCIAL_ICONS[k] || '') + ' ' + (k === 'maps_url' ? 'Maps' : k === 'phone' ? t('ad.phone') : k.charAt(0).toUpperCase() + k.slice(1)) }))
         ),
         el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => {
-          const returnUrl = location.href;
-          Utils.Store.set('post_ad_return', returnUrl);
+          Utils.Store.set(window.CONFIG.STORAGE_KEYS.RETURN_TO, R.POST + (location.search || ''));
           Utils.go(R.EDIT_PROFILE);
         }}, t('ad.contact_setup_go'))
       ]) : null;

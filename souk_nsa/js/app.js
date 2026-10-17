@@ -78,8 +78,28 @@
         top.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
         document.body.append(bar, fab, top);
         this.bindScroll(bar, fab, top); this.syncNotch(bar);
+        this.bindSwipe(bar);
       }
       I18n.apply();
+    },
+
+    // السحب يمين/يسار بين الصفحات الرئيسية الأربع (موبايل فقط)
+    bindSwipe(bar) {
+      const R = window.CONFIG.ROUTES;
+      const PAGES = [R.HOME, R.FAVS, R.NOTIFS, R.PROFILE];
+      const cur = location.pathname.split('/').pop() || R.HOME;
+      const idx = PAGES.findIndex(p => cur === p || cur === '' && p === R.HOME);
+      if (idx < 0) return;
+      let sx = 0, sy = 0;
+      document.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+      document.addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].clientX - sx;
+        const dy = Math.abs(e.changedTouches[0].clientY - sy);
+        if (Math.abs(dx) < 60 || dy > 60) return; // ليس سحبًا أفقيًا
+        const dir = dx < 0 ? 1 : -1; // سحب لليسار = الأمام، لليمين = الخلف
+        const next = PAGES[idx + dir];
+        if (next) Utils.go(next);
+      }, { passive: true });
     },
 
     // الأشرطة العلوية والسفلية: تختفي فورًا عند النزول وتعود فورًا عند الصعود (حد 4px تراكمي لتفادي الارتجاج)
@@ -299,5 +319,9 @@
   document.addEventListener('DOMContentLoaded', () => {
     const p = document.body.dataset.page;
     if (p && App.pages[p]) App.pages[p]().catch(e => console.error('[App] page', p, e));
+    // تسجيل Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(e => console.warn('[SW]', e));
+    }
   });
 })();

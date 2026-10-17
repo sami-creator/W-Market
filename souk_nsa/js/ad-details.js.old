@@ -1,4 +1,4 @@
-/* ad-details.js — صفحة الإعلان بتصميم prototype: معرض، شريط أيقونات، ناشرة قابلة للضغط، تواصل، مشابهة، مشاركة، إبلاغ */
+/* ad-details.js — صفحة الإعلان بالتصميم الجديد: شريط علوي، معرض، سعر، بطاقات معلومات، ناشرة، تواصل، وصف، مشابهة، شريط شراء */
 (function () {
   'use strict';
   const el = Utils.el, t = k => I18n.t(k), R = window.CONFIG.ROUTES;
@@ -6,9 +6,28 @@
   const ONLINE_MS = 5 * 60 * 1000;
   const NS = 'http://www.w3.org/2000/svg';
 
+  // روابط خارجية: https فقط
   function safeLink(u) { try { const x = new URL(u); return x.protocol === 'https:' ? x.toString() : null; } catch { return null; } }
+  // أيقونات SVG ثابتة (نصوص مكتوبة في الكود فقط، لا مدخلات مستخدم)
   const svg = (inner, attrs = {}) => { const s = document.createElementNS(NS, 'svg'); s.setAttribute('viewBox', '0 0 24 24'); Object.entries(attrs).forEach(([k, v]) => s.setAttribute(k, v)); s.innerHTML = inner; return s; };
   const lineIcon = inner => svg(inner, { fill: 'none', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+
+  const ICON = {
+    back: '<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',
+    heart: '<path d="M12 21s-6.7-4.35-9.33-8.02C.86 10.6 1.2 7.3 3.6 5.4 5.8 3.66 8.9 4.1 10.6 6.1L12 7.7l1.4-1.6c1.7-2 4.8-2.44 7-.7 2.4 1.9 2.74 5.2 0.93 7.58C18.7 16.65 12 21 12 21z"/>',
+    share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>',
+    compare: '<path d="M7 4v14M3 14l4 4 4-4M17 20V6M13 10l4-4 4 4"/>',
+    speaker: '<path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>',
+    video: '<polygon points="7 4 20 12 7 20" fill="currentColor"/>',
+    eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    pin: '<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+    shirt: '<path d="M8 3L3 6l2 4 3-1v11h8V9l3 1 2-4-5-3a4 4 0 0 1-8 0z"/>',
+    star: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+    truck: '<rect x="1" y="6" width="13" height="10" rx="1"/><path d="M14 9h4l4 4v3h-8z"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/>',
+    chevron: '<polyline points="9 18 15 12 9 6"/>',
+    chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8 11h8M8 14h5"/>',
+    dots: '<circle cx="12" cy="5" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="19" r="1.8" fill="currentColor"/>'
+  };
 
   // أيقونات التواصل: دوائر ملونة بشعارات مبسّطة
   const BRAND = {
@@ -28,7 +47,7 @@
     return node;
   }
 
-  // أرقام الوصف بخط عريض (كما في prototype)
+  // أرقام الوصف بخط عريض
   function boldNumbers(text) {
     const f = document.createDocumentFragment();
     String(text || '').split(/(\d[\d\s.,]*\d|\d)/).forEach((p, i) => f.append(i % 2 ? el('strong', { text: p }) : document.createTextNode(p)));
@@ -57,6 +76,12 @@
     ov.append(box); ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); }); document.body.append(ov);
   }
 
+  // بطاقة معلومة صغيرة: أيقونة + عنوان + قيمة
+  function factCard(icon, label, valueNode, mod) {
+    const ic = el('span', { class: 'fact-card__icon' }); ic.append(lineIcon(icon));
+    return el('div', { class: 'fact-card' + (mod ? ' ' + mod : '') }, [ic, el('div', { class: 'fact-card__txt' }, [el('span', { class: 'fact-card__label', text: label }), el('div', { class: 'fact-card__val' }, [valueNode])])]);
+  }
+
   App.pages['ad-details'] = async function () {
     await App.boot();
     const id = Utils.qs('id');
@@ -77,33 +102,37 @@
     const seller = sellerRes.data || {};
     const mine = Auth.uid() === ad.user_id, sold = ad.status === 'sold', paused = ad.status === 'paused';
     const x = extras(ad);
-    Gallery.mount($('#gallery'), imgs);
+    const svc = Categories.isService(ad.category_id);
+    const video = ad.video_url && safeLink(ad.video_url);
 
-    // نقاط ثلاث عمودية أعلى يمين الصور → الإبلاغ
+    // ───────── المعرض + طبقات فوق الصورة (فيديو، مشاهدات، إعجابات) ─────────
+    Gallery.mount($('#gallery'), imgs);
     const g = $('#gallery .gallery');
-    if (g && !mine) {
-      const kb = el('button', { class: 'kebab', type: 'button', 'aria-label': t('report.title'), onclick: () => Reports.openMenu(ad.id, ad.user_id) });
-      kb.append(svg('<circle cx="12" cy="5" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="19" r="1.8" fill="currentColor"/>'));
-      g.append(kb);
+    if (g) {
+      const vid = el('button', { class: 'ov-pill ov-pill--video', type: 'button', title: t('ad.video'), 'aria-label': t('ad.video'), style: video ? null : 'opacity:.55', onclick: () => { if (video) window.open(video, '_blank', 'noopener'); else UI.toastKey('ad.no_video', 'info'); } });
+      vid.append(svg(ICON.video, { fill: 'currentColor' }), el('span', { text: t('ad.video') }));
+      const views = el('span', { class: 'ov-pill ov-pill--views' }); views.append(lineIcon(ICON.eye), el('span', { text: String(ad.click_count || 0) }));
+      const likesPill = el('span', { class: 'ov-pill ov-pill--likes', 'data-likes': ad.id, text: '♥ ' + (ad.likes_count || 0) });
+      g.append(vid, views, likesPill);
     }
 
-    // شريط الأيقونات: مشاركة، فيديو، إعجاب
-    const video = ad.video_url && safeLink(ad.video_url);
-    const like = el('button', { class: 'icon-action', type: 'button', title: t('ad.likes'), 'data-like': ad.id });
-    like.append(lineIcon('<path d="M12 21s-6.7-4.35-9.33-8.02C.86 10.6 1.2 7.3 3.6 5.4 5.8 3.66 8.9 4.1 10.6 6.1L12 7.7l1.4-1.6c1.7-2 4.8-2.44 7-.7 2.4 1.9 2.74 5.2 0.93 7.58C18.7 16.65 12 21 12 21z"/>'));
+    // ───────── شريط الأزرار العلوي: مفضلة، مقارنة، مشاركة، قراءة صوتية، إبلاغ ─────────
+    const topbar = $('#ad-topbar');
+    const like = el('button', { class: 'icon-action', type: 'button', title: t('ad.likes'), 'aria-label': t('ad.likes'), 'data-like': ad.id });
+    like.append(lineIcon(ICON.heart));
     like.addEventListener('click', () => Likes.toggle(ad, like));
     like.disabled = sold || mine;
-    const shareBtn = el('button', { class: 'icon-action', type: 'button', title: t('ad.share'), onclick: () => shareMenu(ad) });
-    shareBtn.append(lineIcon('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>'));
-    const vidBtn = el('button', { class: 'icon-action', type: 'button', title: t('ad.video'), style: video ? null : 'opacity:.4', onclick: () => { if (video) window.open(video, '_blank', 'noopener'); else UI.toastKey('ad.no_video', 'info'); } });
-    vidBtn.append(lineIcon('<rect x="2" y="5" width="15" height="14" rx="2"/><path d="M17 9.5l5-3v11l-5-3z"/>'));
+
     const cmpAd = Object.assign({}, ad, { thumb_path: imgs[0] && (imgs[0].path_thumb || imgs[0].path_medium), is_verified: !!seller.is_verified, rating_count: ad.rating_count || 0 });
     const cmpBtn = el('button', { class: 'icon-action', type: 'button', title: t('compare.title'), 'aria-label': t('compare.title'), onclick: () => Compare.open(cmpAd) });
-    cmpBtn.append(lineIcon('<path d="M7 4v14M3 14l4 4 4-4M17 20V6M13 10l4-4 4 4"/>'));
-    const svc = Categories.isService(ad.category_id);
+    cmpBtn.append(lineIcon(ICON.compare));
+
+    const shareBtn = el('button', { class: 'icon-action', type: 'button', title: t('ad.share'), 'aria-label': t('ad.share'), onclick: () => shareMenu(ad) });
+    shareBtn.append(lineIcon(ICON.share));
+
     // قراءة مواصفات الإعلان بصوت عالٍ
     const readBtn = el('button', { class: 'icon-action', type: 'button', title: t('voice.read'), 'aria-label': t('voice.read') });
-    readBtn.append(lineIcon('<path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>'));
+    readBtn.append(lineIcon(ICON.speaker));
     readBtn.addEventListener('click', () => {
       const attrsTxt = Object.entries(ad.attrs || {}).filter(([k]) => !['condition', 'deal', 'rent_price'].includes(k)).map(([k, v]) => Categories.keyLabel(k) + ' ' + (Categories.isMulti(k) ? Categories.decodeMulti(v).join(' ') : v)).join('. ');
       const place = [ad.wilaya_id && Geo.label(Geo.wilaya(ad.wilaya_id)), ad.commune_id && Geo.label(Geo.commune(ad.commune_id))].filter(Boolean).join(' ');
@@ -111,99 +140,143 @@
       readBtn.classList.toggle('is-rec', !!on);
     });
     window.addEventListener('pagehide', () => Voice.stopSpeak());
-    const iconRow = el('div', { class: 'detail-icon-row' }, [shareBtn, vidBtn, cmpBtn, readBtn, like]);
 
-    // الناشرة (قابلة للضغط → صفحة حسابها وإعلاناتها)
-    const online = seller.last_seen && (Date.now() - new Date(seller.last_seen).getTime() < ONLINE_MS);
-    const sellerRow = el('div', { class: 'detail-seller-row', role: 'link', tabindex: 0 }, [
-      el('div', { class: 'seller-avatar' }, [el('img', { src: Utils.imgUrl(seller.avatar_url || 'assets/images/avatar.svg', 'thumb'), alt: '' }), el('div', { class: 'mini-dot' + (online ? ' online' : '') })]),
-      el('div', {}, [
-        el('span', { class: 'seller-name' }, [seller.name || ad.user_name || '', seller.is_verified ? el('span', { class: 'verified-tick', text: ' ✓' }) : null]),
-        el('div', { class: 'hint', text: online ? t('ad.online') : (seller.last_seen ? t('ad.last_seen') + ' ' + Utils.timeAgo(seller.last_seen) : '') })
-      ])
-    ]);
-    sellerRow.addEventListener('click', () => Utils.go(R.PROFILE, { u: ad.user_id }));
+    const actions = el('div', { class: 'ad-topbar__actions' }, [like, cmpBtn, shareBtn, readBtn]);
+    if (!mine) {
+      const kb = el('button', { class: 'icon-action kebab-inline', type: 'button', title: t('report.title'), 'aria-label': t('report.title'), onclick: () => Reports.openMenu(ad.id, ad.user_id) });
+      kb.append(svg(ICON.dots, { fill: 'currentColor' }));
+      actions.append(kb);
+    }
+    topbar.replaceChildren(actions);   // الرجوع والعنوان تضيفهما ترويسة الصفحة العامة (.page-header) من app.js
 
-    // السعر
+    // ───────── العنوان + الشارات + السعر + الموقع ─────────
     const p = Price.display(ad);
-    const priceEl = el('div', { class: 'detail-price' }, [p.old ? el('span', { class: 'old-price', text: p.oldText }) : null, p.text, p.pct > 0 ? el('span', { class: 'pct', text: ' -' + p.pct + '%' }) : null, el('div', { class: 'price-santim', text: p.santim })]);
-    const nego = el('div', { class: 'nego-detail' + (ad.negotiable ? '' : ' fixed'), text: ad.negotiable ? t('ad.negotiable') : t('ad.fixed_price') });
-    const rentLine = x.deal === 'both' && x.rent ? el('div', { class: 'rent-price', text: t('ad.rent_price') + ': ' + Utils.formatPrice(x.rent) }) : null;
-    const dealBadges = el('div', { class: 'row', style: 'flex-wrap:wrap;margin-bottom:8px' }, [
+    const loc = [ad.wilaya_id && Geo.wlabel(Geo.wilaya(ad.wilaya_id)), ad.daira_id && Geo.label(Geo.daira(ad.daira_id)), ad.commune_id && Geo.label(Geo.commune(ad.commune_id))].filter(Boolean).join('، ');
+    const badges = el('div', { class: 'ad-badges' }, [
       x.condition ? el('span', { class: 'badge badge--used', text: t('ad.used') + ' ' + x.condition }) : null,
       x.deal === 'rent' ? el('span', { class: 'badge badge--nego', text: t('ad.deal_rent_only') }) : null,
       x.deal === 'both' ? el('span', { class: 'badge badge--nego', text: t('ad.deal_both') }) : null,
       ad.is_edited ? el('span', { class: 'badge badge--edited', text: t('ad.edited') }) : null,
       sold ? el('span', { class: 'badge badge--sale', text: t('ad.sold') }) : null
+    ].filter(Boolean));
+    const priceEl = el('div', { class: 'detail-price' }, [
+      p.old ? el('span', { class: 'old-price', text: p.oldText }) : null, p.text,
+      p.pct > 0 ? el('span', { class: 'pct', text: ' -' + p.pct + '%' }) : null,
+      el('div', { class: 'price-santim', text: p.santim })
     ]);
+    const nego = el('div', { class: 'nego-detail' + (ad.negotiable ? '' : ' fixed'), text: ad.negotiable ? t('ad.negotiable') : t('ad.fixed_price') });
+    const rentLine = x.deal === 'both' && x.rent ? el('div', { class: 'rent-price', text: t('ad.rent_price') + ': ' + Utils.formatPrice(x.rent) }) : null;
+    const locLine = loc ? el('div', { class: 'ad-loc' }, [lineIcon(ICON.pin), el('span', { text: loc })]) : null;
 
-    // الشريط المعلوماتي: الخدمات تعرض "التنقل" بدل التوصيل؛ والتوصيل يعرض زر أسعار الولايات أو "مجاني"
-    const loc = [ad.wilaya_id && Geo.wlabel(Geo.wilaya(ad.wilaya_id)), ad.daira_id && Geo.label(Geo.daira(ad.daira_id)), ad.commune_id && Geo.label(Geo.commune(ad.commune_id))].filter(Boolean).join('، ');
+    info.replaceChildren(...[
+      el('h2', { class: 'detail-title', text: ad.title }),
+      badges.children.length ? badges : null,
+      priceEl, nego, rentLine, locLine
+    ].filter(Boolean));
+
+    // ───────── بطاقات المعلومات السريعة: المقاس / الحالة / التوصيل (أو التنقل للخدمات) ─────────
     const prices = seller.delivery_prices || null;
     let deliveryNode;
-    if (svc) deliveryNode = (ad.attrs && ad.attrs.mobility) ? el('span', { class: 'delivery-available', text: '🚗 ' + Categories.keyLabel('mobility') + ': ' + ad.attrs.mobility }) : null;
-    else if (ad.delivery && Delivery.isFree(prices)) deliveryNode = el('span', { class: 'delivery-available', text: '🚚 ' + t('delivery.free') });
-    else if (ad.delivery && Delivery.has(prices)) deliveryNode = el('button', { class: 'delivery-btn', type: 'button', onclick: () => Delivery.openInfo(prices) }, '🚚 ' + t('delivery.info'));
-    else deliveryNode = el('span', { class: ad.delivery ? 'delivery-available' : 'delivery-unavailable', text: t('ad.delivery') + ' ' + (ad.delivery ? t('ad.available') + ' ✅' : t('ad.unavailable_short') + ' ❌') });
-    const meta = el('div', { class: 'detail-meta' }, [
-      el('span', { text: '⭐ ' + Number(ad.rating_avg || 0).toFixed(1) }), el('span', { text: '❤️ ' + (ad.likes_count || 0) }), el('span', { text: '👁 ' + (ad.click_count || 0) }),
-      el('span', { text: '📍 ' + loc }), deliveryNode
-    ]);
+    if (svc) deliveryNode = (ad.attrs && ad.attrs.mobility) ? el('span', { class: 'delivery-available', text: ad.attrs.mobility }) : null;
+    else if (ad.delivery && Delivery.isFree(prices)) deliveryNode = el('span', { class: 'delivery-available', text: t('delivery.free') });
+    else if (ad.delivery && Delivery.has(prices)) deliveryNode = el('button', { class: 'delivery-btn', type: 'button', onclick: () => Delivery.openInfo(prices) }, t('delivery.info'));
+    else deliveryNode = el('span', { class: ad.delivery ? 'delivery-available' : 'delivery-unavailable', text: ad.delivery ? t('ad.available') : t('ad.unavailable_short') });
 
-    // السمات (ألوان/مقاسات متعددة…)
-    const HIDE = ['condition', 'deal', 'rent_price'];
+    const facts = $('#ad-facts');
+    const cards = [];
+    if (x.sizes.length) cards.push(factCard(ICON.shirt, Categories.keyLabel(ad.attrs && ad.attrs.size ? 'size' : 'shoe_size'), document.createTextNode(x.sizes.join(' / '))));
+    cards.push(factCard(ICON.star, t('ad.condition'), document.createTextNode(x.condition ? t('ad.used') + ' ' + x.condition : t('compare.new'))));
+    if (deliveryNode) cards.push(factCard(ICON.truck, svc ? Categories.keyLabel('mobility') : t('ad.delivery'), deliveryNode));
+    // بقية السمات (ألوان…) كشارات
+    const HIDE = ['condition', 'deal', 'rent_price', 'size', 'shoe_size'];
     const attrChips = Object.entries(ad.attrs || {}).filter(([k]) => !HIDE.includes(k) && !(svc && k === 'mobility')).map(([k, v]) => {
       const val = Categories.isMulti(k) ? Categories.decodeMulti(v).join(' / ') : v;
       return el('span', { class: 'attr-chip', text: Categories.keyLabel(k) + ': ' + val });
     });
+    facts.replaceChildren(el('div', { class: 'fact-grid' }, cards), ...(attrChips.length ? [el('div', { class: 'detail-attrs' }, attrChips)] : []));
+    facts.hidden = false;
 
-    // التواصل
-    const links = [];
-    if (!mine && !sold && !paused) links.push(brandBtn('chat', { onclick: () => Chat.start(ad.id, ad.user_id) }, t('ad.chat')));
+    // ───────── بطاقة الناشرة (قابلة للضغط → صفحة حسابها) ─────────
+    const online = seller.last_seen && (Date.now() - new Date(seller.last_seen).getTime() < ONLINE_MS);
+    const rate = el('span', { class: 'seller-rate', text: '⭐ ' + Number(seller.rating_avg || ad.rating_avg || 0).toFixed(1) });
+    const sellerHead = el('div', { class: 'seller-head', role: 'link', tabindex: 0 }, [
+      el('div', { class: 'seller-avatar' }, [el('img', { src: Utils.imgUrl(seller.avatar_url || 'assets/images/avatar.svg', 'thumb'), alt: '' }), el('div', { class: 'mini-dot' + (online ? ' online' : '') })]),
+      el('div', { class: 'seller-head__txt' }, [
+        el('span', { class: 'seller-name' }, [seller.name || ad.user_name || '', seller.is_verified ? el('span', { class: 'verified-tick', text: ' ✓' }) : null]),
+        el('div', { class: 'hint', text: online ? t('ad.online') : (seller.last_seen ? t('ad.last_seen') + ' ' + Utils.timeAgo(seller.last_seen) : '') })
+      ]),
+      rate
+    ]);
+    sellerHead.append(lineIcon(ICON.chevron));
+    const goSeller = () => Utils.go(R.PROFILE, { u: ad.user_id });
+    sellerHead.addEventListener('click', goSeller);
+    sellerHead.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goSeller(); } });
+
+    const stat = (n, label) => { const v = el('b', { text: String(n) }); return { v, node: el('div', { class: 'seller-stat' }, [v, el('span', { text: label })]) }; };
+    const stFollowers = stat(0, t('profile.followers'));
+    const stRating = stat(Number(seller.rating_avg || 0).toFixed(1), t('profile.rating'));
+    const stCount = stat(seller.rating_count || 0, t('ad.rate_seller'));
+    const sellerBox = $('#seller-card');
+    sellerBox.replaceChildren(sellerHead, el('div', { class: 'seller-stats' }, [stFollowers.node, stRating.node, stCount.node]));
+    sellerBox.hidden = false;
+    // إحصائيات الناشرة تُحمَّل في الخلفية دون تعطيل الصفحة
+    SB.db.rpc('profile_stats', { p_user: ad.user_id }).then(({ data }) => {
+      const s = (data && data[0]) || {};
+      stFollowers.v.textContent = String(s.followers || 0);
+      if (s.rating_count != null) stCount.v.textContent = String(s.rating_count);
+      if (s.rating_avg != null) stRating.v.textContent = Number(s.rating_avg).toFixed(1);
+    }).catch(() => {});
+
+    // ───────── أزرار التواصل ─────────
     const showPhone = ad.show_phone && seller.show_phone && seller.phone;
     const digits = showPhone ? seller.phone.replace(/\D/g, '') : '';
+    const waUrl = showPhone ? 'https://wa.me/' + (digits.startsWith('0') ? '213' + digits.slice(1) : digits) : null;
+    const links = [];
     if (showPhone) {
-      links.push(brandBtn('whatsapp', { href: 'https://wa.me/' + (digits.startsWith('0') ? '213' + digits.slice(1) : digits), target: '_blank', rel: 'noopener noreferrer' }, 'WhatsApp'));
+      links.push(brandBtn('whatsapp', { href: waUrl, target: '_blank', rel: 'noopener noreferrer' }, 'WhatsApp'));
       links.push(brandBtn('phone', { href: 'tel:' + seller.phone.replace(/[^\d+]/g, '') }, t('ad.phone')));
     }
     [['facebook', 'Facebook'], ['instagram', 'Instagram'], ['tiktok', 'TikTok'], ['telegram', 'Telegram'], ['maps_url', 'Maps']].forEach(([k, n]) => {
-      const u = k === 'maps_url' ?
-  (ad.lat && ad.lng ? `https://www.google.com/maps?q=${ad.lat},${ad.lng}` : seller[k] && safeLink(seller[k])) :
-  seller[k] && safeLink(seller[k]);
-  if (u) links.push(brandBtn(k === 'maps_url' ? 'maps' : k, { href: u, target: '_blank', rel: 'noopener noreferrer' }, n));
+      const u = k === 'maps_url'
+        ? (ad.lat && ad.lng ? 'https://www.google.com/maps?q=' + encodeURIComponent(ad.lat) + ',' + encodeURIComponent(ad.lng) : seller[k] && safeLink(seller[k]))
+        : seller[k] && safeLink(seller[k]);
+      if (u) links.push(brandBtn(k === 'maps_url' ? 'maps' : k, { href: u, target: '_blank', rel: 'noopener noreferrer' }, n));
     });
-    const contactRow = links.length ? el('div', { class: 'detail-contact-row' }, links) : null;
-    const phones = showPhone ? el('div', { class: 'phones' }, [
+    const contactBox = $('#contact');
+    const contactNodes = [];
+    if (!mine && !sold && !paused) {
+      const chatBtn = el('button', { class: 'btn-chat', type: 'button', onclick: () => Chat.start(ad.id, ad.user_id) });
+      chatBtn.append(lineIcon(ICON.chat), el('span', { text: t('ad.chat') }));
+      contactNodes.push(chatBtn);
+    }
+    if (links.length) contactNodes.push(el('div', { class: 'detail-contact-row' }, links));
+    if (showPhone) contactNodes.push(el('div', { class: 'phones' }, [
       el('a', { href: 'tel:' + seller.phone.replace(/[^\d+]/g, ''), text: '📞 ' + seller.phone }),
-      el('a', { href: 'https://wa.me/' + (digits.startsWith('0') ? '213' + digits.slice(1) : digits), target: '_blank', rel: 'noopener noreferrer', text: '💬 WhatsApp ' + seller.phone })
-    ]) : null;
+      el('a', { href: waUrl, target: '_blank', rel: 'noopener noreferrer', text: '💬 WhatsApp ' + seller.phone })
+    ]));
+    if (contactNodes.length) { contactBox.replaceChildren(...contactNodes); contactBox.hidden = false; }
 
-    // الوصف الطويل: أول سطور فقط مع زر "عرض المزيد"
+    // ───────── الوصف: أول سطور مع "عرض المزيد" + الأسعار السابقة + الأسئلة الشائعة ─────────
     const desc = el('p', { class: 'detail-desc is-clamped' }); desc.append(boldNumbers(ad.description));
     const more = el('button', { class: 'more-btn', type: 'button', text: t('ad.show_more') });
     more.addEventListener('click', () => { const open = desc.classList.toggle('is-clamped'); more.textContent = open ? t('ad.show_more') : t('ad.show_less'); });
-    const oldPrices = hist.length ? el('div', {}, [el('b', { text: t('ad.old_prices') }), el('ul', { class: 'price-hist' }, hist.map(h => el('li', { text: Utils.formatPrice(h.old_price) + ' → ' + Utils.formatPrice(h.new_price) + ' · ' + Utils.formatDate(h.changed_at) })))]) : null;
-    const faq = (ad.faq || []).length ? el('div', {}, [el('h3', { text: t('ad.faq') }), ...ad.faq.map(q => el('div', { class: 'faq-item' }, [el('b', { text: q.q }), el('span', { text: q.a })]))]) : null;
-
-    // الترتيب: الأهم أولًا (العنوان والسعر) ← التواصل بأقل جهد ← معلومات سريعة ← الناشرة ← السمات ← الوصف
-    info.replaceChildren(...[
-      iconRow,
-      el('h2', { class: 'detail-title', text: ad.title }), dealBadges, priceEl, nego, rentLine,
-      contactRow, phones, meta, sellerRow,
-      attrChips.length ? el('div', { class: 'detail-attrs' }, attrChips) : null,
-      el('div', { class: 'hint', text: Categories.path(ad.category_id, ad.subcategory_id) }),
+    const oldPrices = hist.length ? el('div', { class: 'ad-sub' }, [el('b', { text: t('ad.old_prices') }), el('ul', { class: 'price-hist' }, hist.map(h => el('li', { text: Utils.formatPrice(h.old_price) + ' → ' + Utils.formatPrice(h.new_price) + ' · ' + Utils.formatDate(h.changed_at) })))]) : null;
+    const faq = (ad.faq || []).length ? el('div', { class: 'ad-sub' }, [el('h3', { text: t('ad.faq') }), ...ad.faq.map(q => el('div', { class: 'faq-item' }, [el('b', { text: q.q }), el('span', { text: q.a })]))]) : null;
+    $('#ad-desc-body').replaceChildren(...[
       desc, more, oldPrices, faq,
-      el('div', { class: 'hint', style: 'margin-bottom:12px', text: t('ad.published_on') + ' ' + Utils.formatDate(ad.created_at) })
+      el('div', { class: 'hint', text: Categories.path(ad.category_id, ad.subcategory_id) }),
+      el('div', { class: 'hint', text: t('ad.published_on') + ' ' + Utils.formatDate(ad.created_at) })
     ].filter(Boolean));
+    $('#ad-desc').hidden = false;
     requestAnimationFrame(() => { if (desc.scrollHeight <= desc.clientHeight + 2) { more.hidden = true; desc.classList.remove('is-clamped'); } });
-    Likes.load().then(() => Likes.paint(info));
+    Likes.load().then(() => Likes.paint(document));
 
-    // شريط سفلي ثابت: رجوع + طلب الآن (أو تعديل/إحصائيات لصاحبة الإعلان)
+    // ───────── شريط سفلي ثابت: رجوع + طلب شراء (أو تعديل/إحصائيات لصاحبة الإعلان) ─────────
     const foot = $('#detail-footer');
-    const back = el('button', { class: 'btn-back-small', type: 'button', title: t('common.back'), onclick: () => Router.back() });
-    back.append(svg('<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>', { fill: 'none', stroke: 'currentColor' }));
+    const back = el('button', { class: 'btn-back-small', type: 'button', title: t('common.back'), 'aria-label': t('common.back'), onclick: () => Router.back() });
+    back.append(svg(ICON.back, { fill: 'none', stroke: 'currentColor' }));
     const row = el('div', { class: 'buy-row' }, [back]);
-    if (mine) row.append(el('a', { class: 'btn-buy-full', href: R.POST + '?id=' + ad.id, text: t('ad.edit') }), el('a', { class: 'btn-buy-full ghost', href: R.STATS + '?id=' + ad.id, text: t('ad.stats') }));
+    if (mine) row.append(el('a', { class: 'btn-buy-full', href: R.POST + '?id=' + encodeURIComponent(ad.id), text: t('ad.edit') }), el('a', { class: 'btn-buy-full ghost', href: R.STATS + '?id=' + encodeURIComponent(ad.id), text: t('ad.stats') }));
     else if (!sold && !paused) {
       const order = el('button', { class: 'btn-buy-full', type: 'button', text: '🛒 ' + t('ad.order') });
       order.addEventListener('click', async () => {
@@ -218,27 +291,30 @@
     }
     foot.append(row); foot.hidden = false;
 
-    // التقييمات
+    // ───────── التقييمات ─────────
     if (!sold) {
       Ratings.mount($('#ratings-ad'), { type: 'ad', id: ad.id, ownerId: ad.user_id });
       Ratings.mount($('#ratings-user'), { type: 'user', id: ad.user_id, ownerId: ad.user_id });
     }
 
-    // إعلانات مشابهة (نفس الصنف الفرعي أولًا ثم الصنف)
+    // ───────── إعلانات مشابهة (نفس الصنف الفرعي أولًا ثم الصنف) — شريط أفقي ─────────
     try {
       let list = (await Ads.list({ category_id: ad.category_id, subcategory_id: ad.subcategory_id }, 0)).items.filter(a => a.id !== ad.id);
-      if (list.length < 4) {
-        const more = (await Ads.list({ category_id: ad.category_id }, 0)).items.filter(a => a.id !== ad.id && !list.some(b => b.id === a.id));
-        list = list.concat(more);
+      if (list.length < 6) {
+        const extra = (await Ads.list({ category_id: ad.category_id }, 0)).items.filter(a => a.id !== ad.id && !list.some(b => b.id === a.id));
+        list = list.concat(extra);
       }
-      list = list.slice(0, 4);
+      list = list.slice(0, 8);
       if (list.length) {
         const box = $('#similar');
-        box.append(el('h3', { text: t('ad.similar') }), el('div', { class: 'similar-grid' }, list.map(sa => {
+        box.append(el('h3', { text: t('ad.similar') }), el('div', { class: 'similar-grid similar-scroll' }, list.map(sa => {
           const im = el('img', { src: Utils.imgUrl(sa.thumb_path, 'thumb'), alt: sa.title, loading: 'lazy' });
           im.addEventListener('error', () => { im.src = 'assets/images/placeholder.svg'; }, { once: true });
-          const c = el('div', { class: 'similar-card' }, [el('div', { class: 'similar-img' }, [im]), el('h4', { text: sa.title }), el('div', { class: 'similar-price', text: Price.display(sa).text })]);
-          c.addEventListener('click', () => Utils.go(R.AD, { id: sa.id })); return c;
+          const c = el('div', { class: 'similar-card', role: 'link', tabindex: 0 }, [el('div', { class: 'similar-img' }, [im, el('span', { class: 'similar-pricepill', text: Price.display(sa).text })]), el('h4', { text: sa.title })]);
+          const open = () => Utils.go(R.AD, { id: sa.id });
+          c.addEventListener('click', open);
+          c.addEventListener('keydown', e => { if (e.key === 'Enter') open(); });
+          return c;
         })));
         box.hidden = false;
       }

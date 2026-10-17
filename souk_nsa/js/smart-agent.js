@@ -183,8 +183,9 @@
   }
 
   // ─── مسح المحادثة ─────────────────────────────────────────────────────────────
-  function clearChat() {
-    if (!confirm(t('agent.clear_confirm'))) return;
+  async function clearChat() {
+    const ok = await UI.confirmDialog(t('agent.clear_confirm'), 'common.ok', 'common.cancel');
+    if (!ok) return;
     history = [];
     saveHistory();
     chatEl.innerHTML = '';

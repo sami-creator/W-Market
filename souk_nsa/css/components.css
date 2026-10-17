@@ -13,7 +13,7 @@
 .filter-btn.has-filters{background:var(--c-accent);box-shadow:0 8px 16px rgba(16,185,129,.35)}
 .search-box{order:1;flex:1;min-width:0;display:flex;align-items:center;gap:10px;background:var(--surface-2);border-radius:16px;padding:0 16px;position:relative}
 .search-box .search-ico{flex:none;background:none;border:0;padding:0;display:flex;opacity:.55}
-.search-box input{border:none;outline:none;background:transparent;font-size:14px;color:var(--text);width:auto;font-family:inherit;text-align:start;padding:12px 0;min-width:0;flex:1}
+.search-box input{border:none;outline:none;background:transparent;font-size:14px;color:var(--text);width:auto;font-family:inherit;text-align:start;padding:12px 0;min-width:0;flex:1;unicode-bidi:plaintext}
 .search-box input::placeholder{color:var(--muted);opacity:.8;font-weight:500}
 .settings-btn{order:2;flex:none;width:46px;height:46px;border-radius:14px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;border:none;transition:transform .15s,background .15s}
 .settings-btn:active{transform:scale(.92)}
@@ -75,8 +75,10 @@
 .card .loc{margin:1px 0 2px;font-size:10px;color:var(--muted);font-weight:500;text-align:right;display:flex;align-items:center;gap:4px;justify-content:flex-end}
 .card .nego-tag{font-size:9px;color:#F59E0B;font-weight:600;text-align:right;margin:0 0 4px}
 .card .nego-tag.fixed{color:var(--muted)}
-.card .price{text-align:center;font-size:14px;font-weight:700;color:var(--text);margin:2px 0 8px;direction:ltr;unicode-bidi:plaintext}
-.card .price .old-price{font-size:11px;color:var(--muted);text-decoration:line-through;font-weight:400;margin-inline-end:4px}
+.card .price{display:flex;align-items:baseline;gap:6px;font-size:14px;font-weight:700;color:var(--c-success,#16a34a);margin:2px 0 8px;direction:ltr;unicode-bidi:plaintext}
+.card .price .old-price{font-size:11px;color:var(--muted);text-decoration:line-through;font-weight:400;margin-inline-start:auto}
+/* Long-press scroll feedback */
+.img-wrap.is-scrolling::after{content:'';position:absolute;inset:0;border-radius:inherit;outline:2px solid var(--c-primary);pointer-events:none}
 .card-footer{display:flex;align-items:center;justify-content:space-between}
 .rating{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--text)}
 .rating svg{flex:none;width:14px;height:14px}
@@ -88,6 +90,15 @@
 .heart:active{transform:scale(.85)}
 .card .date{font-size:9px;color:var(--muted);text-align:left;margin-top:3px}
 .card--skeleton{padding:12px}
+/* ─── Skeleton loading — صفحة تفاصيل الإعلان ──────────────────────────── */
+@keyframes sk-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skeleton--gallery,.skeleton__line{background:linear-gradient(90deg,var(--surface-2) 25%,var(--surface-3,#e0e0e0) 50%,var(--surface-2) 75%);background-size:200% 100%;animation:sk-shimmer 1.4s infinite linear;border-radius:16px}
+.skeleton--gallery{width:100%;aspect-ratio:16/9;max-height:62vh}
+.skeleton--info{padding:12px 0;display:flex;flex-direction:column;gap:10px}
+.skeleton__line{height:18px;border-radius:8px}
+.skeleton__line--title{width:70%}
+.skeleton__line--sub{width:45%}
+.skeleton__line--price{width:35%;height:24px}
 .badge{display:inline-flex;align-items:center;font-size:11px;font-weight:700;border-radius:8px;padding:2px 7px}
 .badge--sale{background:var(--danger);color:#fff}
 .badge--nego{background:var(--c-soft);color:var(--c-primary-2)}

@@ -26,8 +26,11 @@
         el('span', { class: 'toggle__track' })
       ]);
       const darkInput = darkToggle.querySelector('input');
-      darkInput.checked = document.documentElement.dataset.theme === 'dark';
-      darkInput.addEventListener('change', () => Theme.setTheme(darkInput.checked ? 'dark' : 'light'));
+      darkInput.checked = (document.documentElement.dataset.theme || C.DEFAULTS.THEME) === 'dark';
+      darkInput.addEventListener('change', () => {
+        Theme.setMode(darkInput.checked ? 'dark' : 'light');
+        darkInput.checked = document.documentElement.dataset.theme === 'dark';
+      });
 
       const sw = el('div', { class: 'color-swatches' });
       C.COLORS.forEach(c => {
