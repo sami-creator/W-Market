@@ -395,6 +395,7 @@
         const wrap = el('span', { class: 'attr-chip attr-chip--colors' });
         wrap.append(document.createTextNode(Categories.keyLabel(k) + ': '));
         vals.forEach(colorVal => {
+          console.log('colorVal:', colorVal);
           const hex = COLOR_HEX[colorVal] || COLOR_HEX[colorVal?.toLowerCase()] || colorVal;
           const dot = el('span', { class: 'color-dot', title: colorVal, style: `background:${hex};display:inline-block;width:16px;height:16px;border-radius:50%;margin-inline:2px;border:1px solid rgba(0,0,0,.2);vertical-align:middle` });
           wrap.append(dot);
