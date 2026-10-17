@@ -79,8 +79,12 @@
         if (!input.value && window.Filters && (Filters.get().q || Filters.get().qraw)) { SearchState.clearScroll(); onSearch({ q: '', qx: [], qraw: '' }); }
       });
       if (btn) btn.addEventListener('click', () => this.submit());
-      document.addEventListener('click', e => { if (!sugBox.contains(e.target) && e.target !== input) sugBox.hidden = true; });
-      document.addEventListener('scroll', () => { sugBox.hidden = true; }, { passive: true, capture: true });
+      document.addEventListener('touchstart', e => {
+        if (!sugBox.contains(e.target) && e.target !== input) {
+          sugBox.hidden = true;
+          input.blur();
+        }
+}, { passive: true });
       document.addEventListener('feeddone', () => setBusy(false));
       if (voiceBtn) {
         if (!Voice.supported()) voiceBtn.hidden = true;
