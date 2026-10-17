@@ -85,22 +85,28 @@
 
     // السحب يمين/يسار بين الصفحات الرئيسية الأربع (موبايل فقط)
     bindSwipe(bar) {
-      const R = window.CONFIG.ROUTES;
-      const PAGES = [R.HOME, R.FAVS, R.NOTIFS, R.PROFILE];
-      const cur = location.pathname.split('/').pop() || R.HOME;
-      const idx = PAGES.findIndex(p => cur === p || cur === '' && p === R.HOME);
-      if (idx < 0) return;
-      let sx = 0, sy = 0;
-      document.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
-      document.addEventListener('touchend', e => {
-        const dx = e.changedTouches[0].clientX - sx;
-        const dy = Math.abs(e.changedTouches[0].clientY - sy);
-        if (Math.abs(dx) < 60 || dy > 60) return; // ليس سحبًا أفقيًا
-        const dir = dx < 0 ? -1 : 1;// سحب لليسار = الأمام، لليمين = الخلف
-        const next = PAGES[idx + dir];
-        if (next) Utils.go(next);
-      }, { passive: true });
-    },
+  const R = window.CONFIG.ROUTES;
+  const PAGES = [R.HOME, R.FAVS, R.NOTIFS, R.PROFILE];
+  const cur = location.pathname.split('/').pop() || R.HOME;
+  const idx = PAGES.findIndex(p => cur === p || cur === '' && p === R.HOME);
+  if (idx < 0) return;
+  let sx = 0, sy = 0, blocked = false;
+  document.addEventListener('touchstart', e => {
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+    // تحقق إذا بدأ اللمس داخل عنصر قابل للتمرير أفقياً
+    blocked = !!e.target.closest('#chips-wrap, #sub-wrap, #chips, #sub-chips');
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (blocked) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    const dy = Math.abs(e.changedTouches[0].clientY - sy);
+    if (Math.abs(dx) < 60 || dy > 60) return;
+    const dir = dx < 0 ? -1 : 1;
+    const next = PAGES[idx + dir];
+    if (next) Utils.go(next);
+  }, { passive: true });
+},
 
     // الأشرطة العلوية والسفلية: تختفي فورًا عند النزول وتعود فورًا عند الصعود (حد 4px تراكمي لتفادي الارتجاج)
     bindScroll(bar, fab, top) {
