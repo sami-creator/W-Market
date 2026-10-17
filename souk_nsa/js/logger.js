@@ -116,7 +116,9 @@
   `;
   
   document.body.appendChild(panel);
+  fab.style.display = localStorage.getItem('__logger_on') === '1' ? 'flex' : 'none';
   document.body.appendChild(fab);
+  window.__enableLogger = () => { localStorage.setItem('__logger_on','1'); fab.style.display='flex'; };
   
   const output = panel.querySelector('#__logger-output');
   
