@@ -133,7 +133,7 @@
       title: t('ad.translate_darija'),
       'aria-label': t('ad.translate_darija')
     });
-    btn.append(svg(ICON.translate, { fill: 'none', stroke: 'currentColor', 'stroke-width': 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', width: 18, height: 18 }));
+    btn.append(el('img', { src: 'assets/images/translate.svg', width: 22, height: 22, alt: '' }));
 
     btn.addEventListener('click', async () => {
       // إذا كان مترجماً → رجوع للأصلي
