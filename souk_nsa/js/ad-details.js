@@ -396,8 +396,9 @@
         wrap.append(document.createTextNode(Categories.keyLabel(k) + ': '));
         vals.forEach(colorVal => {
           console.log('colorVal:', colorVal);
-          const hex = COLOR_HEX[colorVal] || COLOR_HEX[colorVal?.toLowerCase()] || colorVal;
-          const dot = el('span', { class: 'color-dot', title: colorVal, style: `background:${hex};display:inline-block;width:16px;height:16px;border-radius:50%;margin-inline:2px;border:1px solid rgba(0,0,0,.2);vertical-align:middle` });
+          const AR_TO_EN = { 'أخضر': 'green', 'أحمر': 'red', 'أبيض': 'white', 'أسود': 'black', 'أزرق': 'blue', 'أصفر': 'yellow', 'برتقالي': 'orange', 'وردي': 'rose', 'بنفسجي': 'violet', 'رمادي': 'slate', 'بني': 'brown', 'بيج': 'beige', 'ذهبي': 'gold', 'سماوي': 'sky', 'نيلي': 'indigo', 'فيروزي': 'teal', 'فوشيا': 'fuchsia' };
+          const hex = COLOR_HEX[AR_TO_EN[colorVal]] || COLOR_HEX[colorVal] || null;
+          const dot = el('span', { class: 'color-dot', title: colorVal, style: hex ? `background:${hex};display:inline-block;width:16px;height:16px;border-radius:50%;margin-inline:2px;border:1px solid rgba(0,0,0,.2);vertical-align:middle` : 'display:none' });
           wrap.append(dot);
         });
         return wrap;
