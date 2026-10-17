@@ -1,190 +1,127 @@
-/**
- * moderate-image — Supabase Edge Function
- * تستقبل صورة (binary body) وتُعيد وصفًا نصيًا من نموذج الرؤية
- * ثم يُحلَّل الوصف على جانب العميل بـ moderate.js
- *
- * استخدام: POST /functions/v1/moderate-image
- *   body : binary (الصورة الخام — JPEG / PNG / WebP)
- *   رد   : { ok, description?, error? }
- *
- * متغيرات البيئة المطلوبة (Supabase Secrets):
- *   OPENAI_API_KEY        — مفتاح OpenAI لاستخدام GPT-4o-mini Vision
- *   IMAGEKIT_PRIVATE_KEY  — المفتاح الخاص لـ ImageKit (للحذف)
- *   (اختياري) MODERATE_SECRET — secret header للتحقق من الطالب
- *
- * المسارات:
- *   POST /functions/v1/moderate-image          — فحص صورة
- *   POST /functions/v1/moderate-image/delete   — حذف ملف من ImageKit
- */
-
+// translate-darija/index.ts — ترجمة العنوان والوصف إلى الدارجة الجزائرية عبر Groq
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const OPENAI_URL  = 'https://api.openai.com/v1/chat/completions';
-const MODEL       = 'gpt-4o-mini';
-const MAX_TOKENS  = 300;
-const TIMEOUT_MS  = 10_000;
-
-const IMAGEKIT_DELETE_URL = 'https://api.imagekit.io/v1/files/';
-
-const SYSTEM_PROMPT = `You are a content moderation assistant.
-Analyze the image and write a concise English description (2-5 sentences) of what you see.
-Focus on: nudity/sexual content, violence/gore, weapons, drugs/drug paraphernalia,
-alcohol, tobacco, hate symbols, disturbing or graphic content.
-Be factual and objective. Do not censor words — use precise terminology.
-If the image is benign, just describe it normally.`;
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin':  '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-moderate-secret',
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req: Request) => {
+const SYSTEM_PROMPT = `أنت مترجم متخصص في الدارجة الجزائرية.
+مهمتك: ترجمة أي نص (عربي فصحى، فرنسي، إنجليزي، أو خليط بينهم، أو دارجة مكتوبة بالحروف الفرنسية) إلى الدارجة الجزائرية مكتوبة بالحروف العربية.
 
-  /* ---- CORS preflight ---- */
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: corsHeaders });
-  }
+القواعد:
+- اكتب الدارجة كما يتكلمها الجزائريون فعلاً، وليس ترجمة حرفية.
+- استخدم الكلمات الدارجة الشائعة (راني، حابة، نشري، صباط، قندورة، واش، كيفاش، بزاف...).
+- إذا كان النص أصلاً بالدارجة بحروف لاتينية، حوّله لحروف عربية مباشرة.
+- لا تشرح، لا تضيف تعليقات. أرجع الترجمة فقط.
+- إذا كان هناك اسم علم (شخص، مكان)، اكتبه كما هو أو بحروف عربية.
+- حافظ على النبرة: إذا كان النص ودياً، اجعله ودياً. إذا كان رسمياً، اجعله رسمياً قدر الإمكان في الدارجة.
+- da معناه دينار جزائري.
+- ترجم العنوان والوصف كل واحد على حدة وأرجعهما بصيغة JSON: {"title":"...","description":"..."}`;
 
-  if (req.method !== 'POST') {
-    return json({ ok: false, error: 'Method not allowed' }, 405);
-  }
+// مفتاح عشوائي من المصفوفة
+function pickKey(keys: string[]): string {
+  return keys[Math.floor(Math.random() * keys.length)];
+}
 
-  /* ---- التحقق من secret (اختياري) ---- */
-  const secret = Deno.env.get('MODERATE_SECRET');
-  if (secret) {
-    const provided = req.headers.get('x-moderate-secret') || '';
-    if (provided !== secret) return json({ ok: false, error: 'Forbidden' }, 403);
-  }
-
-  const url = new URL(req.url);
-
-  /* ================================================================
-     مسار الحذف: POST /moderate-image/delete
-     body: { fileIds: string[] }
-     يحذف الملفات من ImageKit باستخدام Batch Delete API
-     ================================================================ */
-  if (url.pathname.endsWith('/delete')) {
-    const privateKey = Deno.env.get('IMAGEKIT_PRIVATE_KEY');
-    if (!privateKey) return json({ ok: false, error: 'IMAGEKIT_PRIVATE_KEY not set' }, 500);
-
-    let fileIds: string[] = [];
-    try {
-      const body = await req.json();
-      fileIds = Array.isArray(body.fileIds) ? body.fileIds.filter((x: unknown) => typeof x === 'string') : [];
-    } catch {
-      return json({ ok: false, error: 'Invalid JSON body' }, 400);
-    }
-
-    if (!fileIds.length) return json({ ok: true, deleted: 0 });
-
-    /* ImageKit Bulk Delete */
-    const auth = btoa(privateKey + ':');
-    const deleteRes = await fetch('https://api.imagekit.io/v1/files/batch/deleteByFileIds', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${auth}`,
-      },
-      body: JSON.stringify({ fileIds }),
-    });
-
-    if (!deleteRes.ok) {
-      const err = await deleteRes.text();
-      console.error('[moderate-image/delete] ImageKit error:', err);
-      return json({ ok: false, error: 'ImageKit delete failed' }, 502);
-    }
-
-    return json({ ok: true, deleted: fileIds.length });
-  }
-
-  /* ================================================================
-     مسار الفحص الرئيسي: POST /moderate-image
-     ================================================================ */
-  const apiKey = Deno.env.get('OPENAI_API_KEY');
-  if (!apiKey) return json({ ok: false, error: 'Server misconfigured' }, 500);
-
-  let imageBytes: Uint8Array;
-  try {
-    const buf = await req.arrayBuffer();
-    if (!buf.byteLength) return json({ ok: false, error: 'Empty body' }, 400);
-    imageBytes = new Uint8Array(buf);
-  } catch {
-    return json({ ok: false, error: 'Failed to read body' }, 400);
-  }
-
-  /* ---- تحديد نوع الصورة من magic bytes ---- */
-  const mime = detectMime(imageBytes);
-  if (!mime) return json({ ok: false, error: 'Unsupported image type' }, 415);
-
-  /* ---- تحويل إلى base64 ---- */
-  const b64 = toBase64(imageBytes);
-
-  /* ---- استدعاء GPT-4o-mini Vision ---- */
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
   try {
-    const openaiRes = await fetch(OPENAI_URL, {
+    // التحقق من المستخدم
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } }
+    );
+    const { data: { user }, error: authErr } = await supabase.auth.getUser();
+    if (authErr || !user) {
+      return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }
+
+    // ──── حد الاستخدام: جدول translate_rate_limit ────
+    const now = new Date();
+    const dayStart = new Date(now); dayStart.setHours(0, 0, 0, 0);
+    const minStart = new Date(now.getTime() - 60000);
+
+    const { data: rateRows } = await supabase
+      .from('translate_rate_limit')
+      .select('created_at')
+      .eq('user_id', user.id)
+      .gte('created_at', dayStart.toISOString());
+
+    const dayCount = rateRows?.length ?? 0;
+    const minCount = rateRows?.filter(r => new Date(r.created_at) >= minStart).length ?? 0;
+
+    if (dayCount >= 30) {
+      return new Response(JSON.stringify({ error: 'rate_limit_day' }), { status: 429, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }
+    if (minCount >= 2) {
+      return new Response(JSON.stringify({ error: 'rate_limit_min' }), { status: 429, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }
+
+    // ──── جلب الطلب ────
+    const body = await req.json();
+    const { title, description } = body;
+    if (!title && !description) {
+      return new Response(JSON.stringify({ error: 'missing_content' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }
+
+    // ──── مفاتيح Groq: اختيار عشوائي ────
+    const keysRaw = Deno.env.get('GROQ_API_KEYS') ?? '';
+    const keys = keysRaw.split(',').map(k => k.trim()).filter(Boolean);
+    if (!keys.length) {
+      return new Response(JSON.stringify({ error: 'no_api_key' }), { status: 500, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }
+    const apiKey = pickKey(keys);
+
+    // ──── طلب Groq ────
+    const userMessage = `العنوان: ${title || ''}\nالوصف: ${description || ''}`;
+
+    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
       body: JSON.stringify({
-        model: MODEL,
-        max_tokens: MAX_TOKENS,
+        model: 'openai/gpt-oss-120b',
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
-          {
-            role: 'user',
-            content: [
-              { type: 'text',      text: 'Describe this image for content moderation.' },
-              { type: 'image_url', image_url: { url: `data:${mime};base64,${b64}`, detail: 'low' } }
-            ]
-          }
-        ]
+          { role: 'user', content: userMessage }
+        ],
+        temperature: 0.3,
+        max_tokens: 1024
       })
     });
-    clearTimeout(timer);
 
-    if (!openaiRes.ok) {
-      const err = await openaiRes.text();
-      console.error('[moderate-image] OpenAI error:', err);
-      return json({ ok: true, skipped: true, description: '' });
+    if (!groqRes.ok) {
+      const errText = await groqRes.text();
+      console.error('[translate-darija] Groq error:', groqRes.status, errText);
+      return new Response(JSON.stringify({ error: 'groq_error' }), { status: 502, headers: { ...CORS, 'Content-Type': 'application/json' } });
     }
 
-    const data  = await openaiRes.json();
-    const description: string = data?.choices?.[0]?.message?.content?.trim() ?? '';
+    const groqData = await groqRes.json();
+    const content = groqData?.choices?.[0]?.message?.content?.trim() ?? '';
 
-    return json({ ok: true, result: { description } });
+    // استخراج JSON من الرد
+    let translated: { title: string; description: string };
+    try {
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      translated = JSON.parse(jsonMatch ? jsonMatch[0] : content);
+    } catch {
+      // fallback: إذا لم يرجع JSON، نعامل الكل كوصف
+      translated = { title: title || '', description: content };
+    }
+
+    // ──── تسجيل الاستخدام ────
+    await supabase.from('translate_rate_limit').insert({ user_id: user.id });
+
+    return new Response(JSON.stringify({ title: translated.title ?? title, description: translated.description ?? description }), {
+      status: 200,
+      headers: { ...CORS, 'Content-Type': 'application/json' }
+    });
 
   } catch (e) {
-    clearTimeout(timer);
-    console.error('[moderate-image] fetch error:', e);
-    return json({ ok: true, skipped: true, description: '' });
+    console.error('[translate-darija] unexpected:', e);
+    return new Response(JSON.stringify({ error: 'server_error' }), { status: 500, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 });
-
-/* ---- helpers ---- */
-function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-  });
-}
-
-function detectMime(bytes: Uint8Array): string | null {
-  if (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) return 'image/jpeg';
-  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) return 'image/png';
-  if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
-      bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50) return 'image/webp';
-  return null;
-}
-
-function toBase64(bytes: Uint8Array): string {
-  let bin = '';
-  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-  return btoa(bin);
-}
