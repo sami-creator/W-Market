@@ -80,6 +80,7 @@
       });
       if (btn) btn.addEventListener('click', () => this.submit());
       document.addEventListener('click', e => { if (!sugBox.contains(e.target) && e.target !== input) sugBox.hidden = true; });
+      document.addEventListener('scroll', () => { sugBox.hidden = true; }, { passive: true, capture: true });
       document.addEventListener('feeddone', () => setBusy(false));
       if (voiceBtn) {
         if (!Voice.supported()) voiceBtn.hidden = true;
