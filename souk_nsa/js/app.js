@@ -96,7 +96,7 @@
         const dx = e.changedTouches[0].clientX - sx;
         const dy = Math.abs(e.changedTouches[0].clientY - sy);
         if (Math.abs(dx) < 60 || dy > 60) return; // ليس سحبًا أفقيًا
-        const dir = dx < 0 ? 1 : -1; // سحب لليسار = الأمام، لليمين = الخلف
+        const dir = dx < 0 ? -1 : 1;// سحب لليسار = الأمام، لليمين = الخلف
         const next = PAGES[idx + dir];
         if (next) Utils.go(next);
       }, { passive: true });
