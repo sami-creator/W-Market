@@ -494,3 +494,22 @@ button:not(:disabled):active,a.btn:active,.chip:active,.icon-btn:active,.nav-ite
 .mod-footer{display:flex;gap:8px;padding:10px 16px 16px;flex-wrap:wrap}
 .mod-btn-remove{flex:1;background:var(--surface-2)!important;color:var(--danger)!important;border-color:var(--danger)!important}
 .mod-btn-continue{flex:1}
+.translate-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  color: var(--c-hint, #9ca3af);
+  opacity: .6;
+  flex-shrink: 0;
+}
+.translate-btn:hover { opacity: 1; }
+.translate-btn.is-active { color: var(--c-primary); opacity: 1; }
+.translate-btn.is-loading { opacity: .4; pointer-events: none; }
+
+.detail-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.detail-title-row h2 { flex: 1; }
