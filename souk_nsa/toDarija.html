@@ -119,7 +119,7 @@
   <label for="inputText">النص الأصلي (عربية / فرنسية / إنجليزية / خليط)</label>
   <textarea id="inputText" placeholder="مثال:&#10;Bonjour les filles, je vous présente lemdella dyali salma&#10;أو&#10;راني حابة نشري صباط كحل"></textarea>
 
-  <button id="translateBtn" onclick="translate()">ترجم إلى الدارجة</button>
+  <button id="translateBtn">ترجم إلى الدارجة</button>
 
   <div class="status" id="status"></div>
 
@@ -227,6 +227,7 @@ async function translate(){
     translateBtn.textContent = 'ترجم إلى الدارجة';
   }
 }
+document.getElementById('translateBtn').addEventListener('click', translate);
 </script>
 
 </body>
