@@ -5,6 +5,8 @@
   const el = window.Utils.el;
   const $ = s => document.querySelector(s);
   const t = k => I18n.t(k);
+  // نص احتياطي إن لم تُضف مفاتيح الترجمة بعد
+  const tx = (k, fb) => { const v = I18n.t(k); return (!v || v === k) ? fb : v; };
 
   window.Settings = {
     async init() {
@@ -71,6 +73,9 @@
         supportBtns.append(tgBtn);
       }
 
+      // ── ربط إشعارات تلغرام ───────────────────────────────────────────
+      const tgNotify = this.buildTelegramNotify();
+
       function row(label, ctrl) {
         return el('div', { class: 'settings-row' }, [
           el('span', { text: label }),
@@ -83,10 +88,55 @@
         row(t('settings.dark'), darkToggle),
         row(t('settings.color'), sw),
         row(t('settings.font'), font),
-        row(t('settings.support'), supportBtns),
+        row(t('settings.support'), supportBtns)
+      );
+      if (tgNotify) root.append(row(tx('settings.tg_notify', 'إشعارات تلغرام'), tgNotify));
+      root.append(
         el('div', { class: 'settings-row' }, [el('a', { href: C.ROUTES.PRIVACY, text: t('settings.privacy') })]),
         el('div', { class: 'settings-row' }, [el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => this.reportBug(), text: t('settings.report_bug') })])
       );
+    },
+
+    // زر ربط/فك ربط تلغرام (يظهر فقط للمستخدم المسجّل وعند ضبط اسم البوت)
+    buildTelegramNotify() {
+      const bot = window.__ENV__ && window.__ENV__.TELEGRAM_BOT_USERNAME;
+      if (!bot || !window.Auth || !Auth.uid()) return null;
+
+      const btn = el('button', { class: 'btn btn--ghost', type: 'button' });
+      const setState = linked => {
+        btn.dataset.linked = linked ? '1' : '0';
+        btn.textContent = linked ? tx('settings.tg_unlink', 'فك الربط') : tx('settings.tg_link', 'ربط تلغرام');
+      };
+      btn.textContent = '…';
+      btn.disabled = true;
+
+      // حالة الربط الحالية
+      SB.db.from('users').select('telegram_chat_id').eq('id', Auth.uid()).maybeSingle().then(({ data }) => {
+        setState(!!(data && data.telegram_chat_id));
+        btn.disabled = false;
+      });
+
+      btn.addEventListener('click', async () => {
+        UI.setLoading(btn, true);
+        if (btn.dataset.linked === '1') {
+          // فك الربط
+          const { error } = await SB.db.from('users').update({ telegram_chat_id: null, telegram_link_token: null }).eq('id', Auth.uid());
+          UI.setLoading(btn, false);
+          if (error) return UI.toastKey('err.generic', 'error');
+          setState(false);
+          UI.toast(tx('settings.tg_unlinked', 'تم فك ربط تلغرام'), 'success');
+          return;
+        }
+        // ربط: رمز عشوائي ثم فتح البوت
+        const token = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(36).slice(2)).replace(/-/g, '');
+        const { error } = await SB.db.from('users').update({ telegram_link_token: token }).eq('id', Auth.uid());
+        UI.setLoading(btn, false);
+        if (error) return UI.toastKey('err.generic', 'error');
+        window.open('https://t.me/' + encodeURIComponent(bot) + '?start=' + token, '_blank', 'noopener');
+        UI.toast(tx('settings.tg_hint', 'اضغط Start في تلغرام ثم عد وأعد فتح الإعدادات'), 'info', 6000);
+      });
+
+      return btn;
     },
 
     reportBug() {
@@ -107,7 +157,7 @@
     },
 
     // يُستدعى من profile.js بعد حفظ تعديلات الملف الشخصي
-        handlePostAdReturn() {
+    handlePostAdReturn() {
       const key = C.STORAGE_KEYS.RETURN_TO;
       const ret = Utils.Store.get(key);
       if (ret) { Utils.Store.remove(key); Router.go(ret); }
