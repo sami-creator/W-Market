@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Real Scraping — swiga.com</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,Tahoma,Arial;background:#f4f6f9;color:#222;display:flex;flex-direction:column;height:100vh}
+  header{background:#1a73e8;color:#fff;padding:12px 18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  header h1{font-size:15px;margin:0;flex:1}
+  button{background:#fff;color:#1a73e8;border:0;padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px}
+  button:hover{background:#e8f0fe}
+  button:disabled{opacity:.5;cursor:wait}
+  main{flex:1;overflow:auto;padding:14px}
+  .panel{background:#fff;border-radius:8px;padding:12px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  .panel h2{font-size:14px;color:#1a73e8;margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid #eee}
+  pre{background:#f8f9fa;padding:10px;border-radius:4px;font-size:12px;overflow:auto;max-height:520px;direction:ltr;text-align:left;white-space:pre-wrap;word-break:break-word;margin:0}
+  .st{font-size:12px;margin-top:6px}
+  .ok{color:#0f9d58;font-weight:600}
+  .err{color:#d93025;font-weight:600}
+  .ch{background:#161b22;color:#8b949e;padding:6px 12px;font-size:12px;display:flex;justify-content:space-between;border-top:2px solid #1a73e8}
+  #console{height:240px;background:#0d1117;color:#c9d1d9;font-family:Consolas,monospace;font-size:12px;padding:10px;overflow-y:auto}
+  #console .l{white-space:pre-wrap;word-break:break-word;margin-bottom:2px}
+  .log{color:#c9d1d9}.info{color:#58a6ff}.warn2{color:#d29922}.err2{color:#f85149}.suc{color:#3fb950}
+  .kv{font-size:12px;line-height:1.7}
+  .kv b{color:#1a73e8}
+  table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+  td,th{border:1px solid #e3e6ea;padding:5px 8px;text-align:right}
+  th{background:#f1f4f8}
+  a{color:#1a73e8;word-break:break-all}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔍 Scraping حقيقي → https://swiga.com/</h1>
+  <button id="btnScrape" onclick="runScrape()">Scrape الآن</button>
+  <button onclick="clearAll()">مسح</button>
+</header>
+
+<main id="results">
+  <div class="panel">
+    <h2>جاهز</h2>
+    <p style="font-size:13px;line-height:1.7">
+      اضغط <b>Scrape الآن</b>. الصفحة ستجلب HTML الفعلي من <code>https://swiga.com/</code> عبر CORS proxy،
+      ثم تحلله وتستخرج ما هو موجود فعلياً في الرد: العنوان، الروابط، النصوص، التصنيفات (إن وُجدت)، الولايات (إن وُجدت)، الأعداد (إن وُجدت).
+      <br><br>
+      <b>لا يوجد أي بيانات مكتوبة يدوياً في هذا الملف.</b> إذا فشل الجلب، سيظهر خطأ ولن تُعرض أي بيانات.
+    </p>
+  </div>
+</main>
+
+<div class="ch"><span>🖥️ Console — سجل الأخطاء والخطوات</span><span id="cstat"></span></div>
+<div id="console"></div>
+
+<script>
+/* ================= Console ================= */
+const C = document.getElementById('console');
+const R = document.getElementById('results');
+function log(m, t='log'){
+  const d = document.createElement('div');
+  d.className = 'l ' + t;
+  d.textContent = `[${new Date().toLocaleTimeString()}] ${m}`;
+  C.appendChild(d); C.scrollTop = C.scrollHeight;
+}
+const _e=console.error, _l=console.log, _w=console.warn;
+console.error=(...a)=>{_e(...a);log(a.join(' '),'err2')};
+console.log  =(...a)=>{_l(...a);log(a.join(' '),'log')};
+console.warn =(...a)=>{_w(...a);log(a.join(' '),'warn2')};
+window.addEventListener('error', e=>log('Uncaught: '+e.message+' @'+(e.filename||'')+':'+e.lineno,'err2'));
+window.addEventListener('unhandledrejection', e=>log('Rejection: '+(e.reason?.message||e.reason),'err2'));
+
+function clearAll(){ R.innerHTML=''; C.innerHTML=''; document.getElementById('cstat').textContent=''; }
+
+/* ================= UI helpers ================= */
+function addPanel(id, title){
+  let p = document.getElementById(id);
+  if(p) p.remove();
+  p = document.createElement('div');
+  p.className='panel'; p.id=id;
+  p.innerHTML = `<h2>${title}</h2><div id="${id}-body">⏳...</div><div class="st" id="${id}-st"></div>`;
+  R.appendChild(p);
+  return p;
+}
+function setStatus(id, text, cls){ const s=document.getElementById(id+'-st'); if(s){s.textContent=text; s.className='st '+cls;} }
+function setBody(id, html){ const b=document.getElementById(id+'-body'); if(b) b.innerHTML=html; }
+
+/* ================= Proxies (تجلب HTML الحقيقي) ================= */
+const PROXIES = [
+  { name:'allorigins.win', build: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}` },
+  { name:'corsproxy.io',   build: u => `https://corsproxy.io/?${encodeURIComponent(u)}` },
+  { name:'codetabs.com',   build: u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}` },
+  { name:'cors.eu.org',    build: u => `https://cors.eu.org/${u}` },
+  { name:'thingproxy',     build: u => `https://thingproxy.freeboard.io/fetch/${u}` }
+];
+const TARGET = 'https://swiga.com/';
+
+/* ================= الخطوة 1: جلب HTML حقيقي ================= */
+async function fetchRealHTML(){
+  const id = 'p-fetch';
+  addPanel(id, '1) جلب HTML الفعلي من swiga.com');
+  const attempts = [];
+
+  // محاولة Fetch مباشر أولاً (ستفشل غالباً بـ CORS لكنها حقيقية لو نجحت)
+  try{
+    log('→ محاولة Fetch مباشر (بدون proxy)...','info');
+    const t = performance.now();
+    const r = await fetch(TARGET, { mode:'cors', headers:{'Accept':'text/html'} });
+    const dt = (performance.now()-t)|0;
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const html = await r.text();
+    if(html.length < 500) throw new Error('رد قصير جداً');
+    log(`✅ Fetch مباشر نجح: ${html.length} حرف في ${dt}ms`,'suc');
+    attempts.push({ name:'direct-fetch', ok:true, size:html.length, dt });
+    showFetchResult(id, attempts, html, 'direct-fetch');
+    return { html, via:'direct-fetch' };
+  }catch(e){
+    log('❌ Fetch مباشر فشل: '+e.message+' (CORS متوقع)','err2');
+    attempts.push({ name:'direct-fetch', ok:false, err:e.message });
+  }
+
+  // proxies
+  for(const p of PROXIES){
+    const url = p.build(TARGET);
+    try{
+      log(`→ تجربة proxy: ${p.name} ...`,'info');
+      const t = performance.now();
+      const r = await fetch(url, { cache:'no-store' });
+      const dt = (performance.now()-t)|0;
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const html = await r.text();
+      if(html.length < 500) throw new Error('رد قصير جداً ('+html.length+' حرف)');
+      // تحقق أن الرد يحتوي على ما يدل أن هذه صفحة swiga (وليس صفحة خطأ proxy)
+      if(!/swiga|سويقة/i.test(html)) throw new Error('المحتوى لا يبدو صفحة swiga');
+      log(`✅ ${p.name}: ${html.length} حرف في ${dt}ms`,'suc');
+      attempts.push({ name:p.name, ok:true, size:html.length, dt });
+      showFetchResult(id, attempts, html, p.name);
+      return { html, via:p.name };
+    }catch(e){
+      log(`❌ ${p.name}: ${e.message}`,'err2');
+      attempts.push({ name:p.name, ok:false, err:e.message });
+    }
+  }
+
+  // فشل الكل
+  showFetchResult(id, attempts, null, null);
+  setStatus(id, 'فشلت كل المحاولات — لا توجد بيانات لعرضها', 'err');
+  return null;
+}
+
+function showFetchResult(id, attempts, html, via){
+  const rows = attempts.map(a => a.ok
+    ? `<tr><td>${a.name}</td><td>✅</td><td>${a.size} حرف</td><td>${a.dt}ms</td><td>—</td></tr>`
+    : `<tr><td>${a.name}</td><td>❌</td><td>—</td><td>—</td><td>${escapeHTML(a.err||'')}</td></tr>`
+  ).join('');
+  let body = `<table><thead><tr><th>المصدر</th><th>الحالة</th><th>الحجم</th><th>الزمن</th><th>خطأ</th></tr></thead><tbody>${rows}</tbody></table>`;
+  if(html){
+    body += `<div class="kv" style="margin-top:8px"><b>نجح عبر:</b> ${via} — <b>حجم HTML:</b> ${html.length} حرف</div>`;
+    body += `<pre style="margin-top:8px">${escapeHTML(html.slice(0, 1500))}</pre>`;
+    setStatus(id, `نجح عبر ${via} — ${html.length} حرف`, 'ok');
+  }
+  setBody(id, body);
+}
+
+/* ================= الخطوة 2: تحليل HTML الحقيقي ================= */
+function parseRealHTML(html, via){
+  const id = 'p-parse';
+  addPanel(id, '2) تحليل HTML الفعلي واستخراج ما هو موجود');
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  // 1) عنوان الصفحة — كما هو في الرد
+  const title = doc.title || '(لا يوجد عنوان)';
+
+  // 2) روابط — كما هي في الرد
+  const anchors = [...doc.querySelectorAll('a')];
+  const links = anchors.map(a => ({
+    text: (a.textContent || '').replace(/\s+/g,' ').trim(),
+    href: a.getAttribute('href') || ''
+  })).filter(x => x.text || x.href);
+
+  // 3) النصوص الظاهرة
+  const bodyText = doc.body ? (doc.body.innerText || doc.body.textContent || '') : '';
+  const cleanText = bodyText.replace(/\s+/g,' ').trim();
+
+  // 4) استخراج الأعداد بصيغة "N الإعلان" — فقط ما هو موجود فعلاً
+  const adCounts = [];
+  const re = /(\d[\d.,]{0,10})\s*الإعلان/g;
+  let m;
+  while((m = re.exec(cleanText)) !== null){
+    adCounts.push(m[0]);
+    if(adCounts.length > 50) break;
+  }
+
+  // 5) عناصر <title> و <h1> و <h2> — كما هي
+  const headings = [...doc.querySelectorAll('h1,h2,h3')]
+    .map(h => h.textContent.replace(/\s+/g,' ').trim())
+    .filter(Boolean)
+    .slice(0, 100);
+
+  // 6) meta description
+  const metaDesc = doc.querySelector('meta[name="description"]')?.content || '';
+
+  // 7) lang / dir
+  const htmlLang = doc.documentElement.getAttribute('lang') || '';
+  const htmlDir  = doc.documentElement.getAttribute('dir') || '';
+
+  // 8) عدد الروابط الفريدة
+  const uniqueHrefs = [...new Set(links.map(l => l.href).filter(Boolean))];
+
+  // عرض
+  const body = `
+    <div class="kv">
+      <div><b>جُلب عبر:</b> ${via}</div>
+      <div><b>حجم HTML:</b> ${html.length} حرف</div>
+      <div><b>lang:</b> ${htmlLang || '(غير محدد)'} &nbsp; <b>dir:</b> ${htmlDir || '(غير محدد)'}</div>
+      <div><b>Title:</b> ${escapeHTML(title)}</div>
+      <div><b>Meta description:</b> ${escapeHTML(metaDesc || '(لا يوجد)')}</div>
+      <div><b>عدد <a> :</b> ${links.length} &nbsp; <b>روابط فريدة:</b> ${uniqueHrefs.length}</div>
+      <div><b>عدد العناوين h1/h2/h3:</b> ${headings.length}</div>
+      <div><b>عدد مطابقات "N الإعلان":</b> ${adCounts.length}</div>
+    </div>
+
+    <h3 style="font-size:13px;color:#1a73e8;margin:10px 0 4px">عناوين h1/h2/h3 (كما هي في الرد):</h3>
+    ${headings.length ? `<ul style="font-size:12px;line-height:1.7;padding-right:18px">${headings.map(h=>`<li>${escapeHTML(h)}</li>`).join('')}</ul>` : '<div class="kv">(لا يوجد)</div>'}
+
+    <h3 style="font-size:13px;color:#1a73e8;margin:10px 0 4px">مطابقات "N الإعلان" (كما هي في الرد):</h3>
+    ${adCounts.length ? `<div class="kv">${adCounts.map(escapeHTML).join(' • ')}</div>` : '<div class="kv">(لا يوجد)</div>'}
+
+    <h3 style="font-size:13px;color:#1a73e8;margin:10px 0 4px">أول 50 رابط (كما هي في الرد):</h3>
+    ${links.length ? `<table><thead><tr><th>النص</th><th>href</th></tr></thead><tbody>${links.slice(0,50).map(l=>`<tr><td>${escapeHTML(l.text)}</td><td><a href="${escapeAttr(l.href)}" target="_blank" rel="noopener">${escapeHTML(l.href)}</a></td></tr>`).join('')}</tbody></table>` : '<div class="kv">(لا يوجد)</div>'}
+
+    <h3 style="font-size:13px;color:#1a73e8;margin:10px 0 4px">مقتطف نص الصفحة (أول 800 حرف كما هي):</h3>
+    <pre>${escapeHTML(cleanText.slice(0, 800))}</pre>
+  `;
+  setBody(id, body);
+  setStatus(id, `تم التحليل — ${links.length} رابط، ${headings.length} عنوان، ${adCounts.length} مطابقة إعلان`, 'ok');
+  log(`📊 تحليل: ${links.length} رابط، ${headings.length} عنوان، ${adCounts.length} مطابقة "N الإعلان"`,'suc');
+}
+
+/* ================= التشغيل ================= */
+async function runScrape(){
+  const btn = document.getElementById('btnScrape');
+  btn.disabled = true;
+  document.getElementById('cstat').textContent = 'جارٍ...';
+  R.innerHTML = '';
+  C.innerHTML = '';
+  log('🚀 بدء scraping حقيقي لـ '+TARGET,'suc');
+  try{
+    const res = await fetchRealHTML();
+    if(!res){
+      log('⛔ لا يوجد HTML — لن يتم عرض أي بيانات','err2');
+      document.getElementById('cstat').textContent = 'فشل';
+      return;
+    }
+    parseRealHTML(res.html, res.via);
+    document.getElementById('cstat').textContent = 'انتهى بنجاح';
+  }catch(e){
+    log('💥 خطأ عام: '+e.message,'err2');
+    document.getElementById('cstat').textContent = 'خطأ';
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+/* ================= Utils ================= */
+function escapeHTML(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s){ return escapeHTML(s).replace(/`/g,'&#96;'); }
+
+log('جاهز. اضغط "Scrape الآن".','suc');
+</script>
+
+</body>
+</html>
