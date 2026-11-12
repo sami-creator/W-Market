@@ -1,5 +1,5 @@
 /* sw.js — Service Worker: كاش شامل (HTML + CSS + JS + بيانات) */
-const VERSION = 'souk-v2';
+const VERSION = 'souk-v3';
 const STATIC = [
   '/', 'index.html', 'auth.html', 'ad-details.html', 'profile.html',
   'edit-profile.html', 'post-ad.html', 'my-ads.html', 'favorites.html',
