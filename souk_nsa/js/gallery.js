@@ -22,7 +22,7 @@
       });
       const show = n => {
         i = (n + list.length) % list.length;
-        main.src = src(i, 'path_medium');
+        main.src = src(i, 'path_large');
         count.textContent = (i + 1) + ' / ' + list.length;
         thumbs.querySelectorAll('img').forEach((x, k) => x.classList.toggle('active', k === i));
         // تحميل الصورة التالية فورًا في الخلفية
