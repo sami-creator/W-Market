@@ -49,7 +49,7 @@
         if (!imgs || imgs.length < 2) { stopCurrent(); return; }
         idx = (idx + 1) % imgs.length;
         const mainImg = wrap.querySelector('img');
-        if (mainImg) mainImg.src = Utils.imgUrl(imgs[idx].path_thumb || imgs[idx].path_medium || imgs[idx].path, 'thumb');
+        if (mainImg) mainImg.src = Utils.imgUrl(imgs[idx].path_medium || imgs[idx].path_large || imgs[idx].path_thumb, 'medium');
       }, 800);
     }
 
