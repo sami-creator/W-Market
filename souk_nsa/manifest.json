@@ -1,8 +1,8 @@
 {
-  "name": "سوق النساء",
-  "short_name": "سوق النساء",
-  "lang": "ar",
-  "dir": "rtl",
+  "name": "Souk nsa",
+  "short_name": "Souk nsa",
+  "lang": "fr",
+  "dir": "ltr",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
