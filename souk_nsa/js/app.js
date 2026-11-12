@@ -17,6 +17,13 @@
     async boot({ guard = false, complete = true } = {}) {
       Theme.init();
       await I18n.init();
+      //glm5.2
+      window.addEventListener('pageshow', e => {
+        if (!e.persisted) return;
+        Theme.init();
+        I18n.applyDir();
+        I18n.apply();});
+
       SB.init();
       this.mountChrome();
       Router.bindNav();
