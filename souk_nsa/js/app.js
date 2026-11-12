@@ -334,7 +334,21 @@
     if (p && App.pages[p]) App.pages[p]().catch(e => console.error('[App] page', p, e));
     // تسجيل Service Worker
     if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    reg.addEventListener('updatefound', () => {
+      const nw = reg.installing;
+      if (!nw) return;
+      nw.addEventListener('statechange', () => {
+        if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+          location.reload();
+        }
+      });
+    });
+    setInterval(() => reg.update(), 60000);
+  }).catch(e => console.warn('[SW]', e));
+}
+    /*if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(e => console.warn('[SW]', e));
-    }
+    }*/
   });
 })();
