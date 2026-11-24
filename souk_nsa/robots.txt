@@ -1,0 +1,36 @@
+User-agent: *
+Allow: /
+Allow: /ad-details.html
+Allow: /profile.html
+Allow: /privacy.html
+
+Disallow: /admin.html
+Disallow: /post-ad.html
+Disallow: /my-ads.html
+Disallow: /favorites.html
+Disallow: /chat.html
+Disallow: /auth.html
+Disallow: /settings.html
+Disallow: /notifications.html
+Disallow: /verify.html
+Disallow: /complete-profile.html
+Disallow: /edit-profile.html
+Disallow: /ad-stats.html
+Disallow: /nsfw-verify-images.html
+Disallow: /swiga_scrab.html
+Disallow: /smart_agent.html
+Disallow: /toDarija.html
+Disallow: /virtual_tryon.html
+Disallow: /js/
+Disallow: /css/
+Disallow: /data/
+
+Sitemap: https://souknsa.com/sitemap.xml
+
+# Google
+User-agent: Googlebot
+Allow: /landing/
+
+# Bing / Copilot
+User-agent: Bingbot
+Allow: /landing/

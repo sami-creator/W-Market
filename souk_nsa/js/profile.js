@@ -77,6 +77,7 @@
     $('#p-avatar').src = Utils.imgUrl(sp.avatar_url || 'assets/images/avatar.svg', 'medium');
     $('#p-avatar').addEventListener('error', e => { e.target.src = 'assets/images/avatar.svg'; }, { once: true });
     $('#p-name').textContent = sp.name || ''; $('#p-tick').hidden = !sp.is_verified;
+    if (window.SEO) SEO.updateProfileMeta(Object.assign({}, sp, { id: uid }));
     paintBio(sp.bio);
     $('#btn-share-profile').addEventListener('click', () => shareProfile(uid, sp.name));
     const { data } = await SB.db.rpc('profile_stats', { p_user: uid });
@@ -141,6 +142,7 @@
     $('#p-avatar').src = Utils.imgUrl(p.avatar_url || 'assets/images/avatar.svg', 'medium');
     $('#p-avatar').addEventListener('error', e => { e.target.src = 'assets/images/avatar.svg'; }, { once: true });
     $('#p-name').textContent = p.name || '';
+    if (window.SEO) SEO.updateProfileMeta(p);
     $('#p-tick').hidden = !p.is_verified;
     paintBio(p.bio);
     $('#btn-share-profile').addEventListener('click', () => shareProfile(p.id, p.name));

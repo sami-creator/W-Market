@@ -244,7 +244,8 @@
     skeletonInfo.remove();
 
     if (!ad || ad.status === 'deleted') return UI.emptyState($('#gallery'), 'ad.unavailable', 'empty.sub');
-    document.title = ad.title + ' — souk nsa';
+    document.title = ad.title + ' — سوق نسا';
+    if (window.SEO) SEO.updateAdMeta(ad);
     // المشاهدة تُحتسب هنا (فتح صفحة الإعلان فعلًا) وتظهر فورًا في العدّاد
     if (Tracking.view(ad)) ad.click_count = (ad.click_count || 0) + 1;
 
