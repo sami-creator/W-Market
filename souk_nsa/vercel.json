@@ -55,8 +55,23 @@
       ]
     }
   ],
-  "redirects": [
-  { "source": "/ad/:id", "destination": "/ad-details.html?id=:id", "permanent": true },
-  { "source": "https://www.souknsa.com/(.*)", "destination": "https://souknsa.com/$1", "permanent": true }
+"redirects": [
+  {
+    "source": "/ad/:id",
+    "destination": "/ad-details.html?id=:id",
+    "permanent": true
+  },
+  {
+    "source": "/:path*",
+    "has": [{ "type": "host", "value": "www.souknsa.com" }],
+    "destination": "https://souknsa.com/:path*",
+    "permanent": true
+  }
+],
+"rewrites": [
+  {
+    "source": "/ad-details.html",
+    "destination": "https://hbwkrpekqiouyeopgvpa.supabase.co/functions/v1/ad-meta"
+  }
 ]
 }

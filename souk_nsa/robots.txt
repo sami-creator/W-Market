@@ -21,8 +21,6 @@ Disallow: /swiga_scrab.html
 Disallow: /smart_agent.html
 Disallow: /toDarija.html
 Disallow: /virtual_tryon.html
-Disallow: /js/
-Disallow: /css/
 Disallow: /data/
 
 Sitemap: https://souknsa.com/sitemap.xml
