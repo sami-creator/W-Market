@@ -56,10 +56,7 @@
     }
   ],
   "redirects": [
-    {
-      "source": "/ad/:id",
-      "destination": "/ad-details.html?id=:id",
-      "permanent": false
-    }
-  ]
+  { "source": "/ad/:id", "destination": "/ad-details.html?id=:id", "permanent": true },
+  { "source": "https://www.souknsa.com/(.*)", "destination": "https://souknsa.com/$1", "permanent": true }
+]
 }

@@ -53,6 +53,12 @@
 
       // Canonical
       setCanonical(pageUrl);
+      // جديد: أضف هذا
+['ar','fr','x-default'].forEach(lang => {
+  let el = document.querySelector('link[hreflang="' + lang + '"]');
+  if (!el) { el = document.createElement('link'); el.rel = 'alternate'; el.hreflang = lang; document.head.appendChild(el); }
+  el.href = pageUrl + (lang === 'x-default' || lang === 'ar' ? '' : '&lang=' + lang);
+});
 
       // Open Graph
       setMeta('og:title',       title,       'property');
