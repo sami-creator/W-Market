@@ -439,5 +439,10 @@
   "agent.chars_left": "{n} chars left",
   "agent.clear_confirm": "Do you want to clear the conversation?",
   "agent.clear": "Clear conversation",
-  "err.avatar_ratio": "Photo must be nearly square"
+  "err.avatar_ratio": "Photo must be nearly square",
+  "nav.about": "About Us",
+  "nav.contact": "Contact Us",
+  "nav.faq": "FAQ",
+  "nav.disclaimer": "Disclaimer",
+  "nav.cookies": "Cookie Policy"
 }

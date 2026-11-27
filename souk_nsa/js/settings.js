@@ -93,11 +93,11 @@
       if (tgNotify) root.append(row(tx('settings.tg_notify', 'إشعارات تلغرام'), tgNotify));
       root.append(
         el('div', { class: 'settings-row' }, [el('a', { href: C.ROUTES.PRIVACY, text: t('settings.privacy') })]),
-        el('div', { class: 'settings-row' }, [el('a', { href: 'about.html', text: 'من نحن' })]),
-  el('div', { class: 'settings-row' }, [el('a', { href: 'contact.html', text: 'تواصلي معنا' })]),
-  el('div', { class: 'settings-row' }, [el('a', { href: 'faq.html', text: 'الأسئلة الشائعة' })]),
-  el('div', { class: 'settings-row' }, [el('a', { href: 'disclaimer.html', text: 'إخلاء المسؤولية' })]),
-  el('div', { class: 'settings-row' }, [el('a', { href: 'cookie-policy.html', text: 'سياسة الكوكيز' })]),
+        el('div', { class: 'settings-row' }, [el('a', { href: 'about.html', text: t('nav.about') })]),
+  el('div', { class: 'settings-row' }, [el('a', { href: 'contact.html', text: t('nav.contact') })]),
+  el('div', { class: 'settings-row' }, [el('a', { href: 'faq.html', text: t('nav.faq') })]),
+  el('div', { class: 'settings-row' }, [el('a', { href: 'disclaimer.html', text: t('nav.disclaimer') })]),
+  el('div', { class: 'settings-row' }, [el('a', { href: 'cookie-policy.html', text: t('nav.cookies') })]),
         el('div', { class: 'settings-row' }, [el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => this.reportBug(), text: t('settings.report_bug') })])
       );
     },

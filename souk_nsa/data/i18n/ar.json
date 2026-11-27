@@ -439,5 +439,10 @@
   "agent.chars_left": "متبقٍّ {n} حرف",
   "agent.clear_confirm": "هل تريدين مسح المحادثة؟",
   "agent.clear": "مسح المحادثة",
-  "err.avatar_ratio": "الصورة يجب أن تكون شبه مربعة"
+  "err.avatar_ratio": "الصورة يجب أن تكون شبه مربعة",
+  "nav.about": "من نحن",
+  "nav.contact": "تواصلي معنا",
+  "nav.faq": "الأسئلة الشائعة",
+  "nav.disclaimer": "إخلاء المسؤولية",
+  "nav.cookies": "سياسة الكوكيز"
 }
