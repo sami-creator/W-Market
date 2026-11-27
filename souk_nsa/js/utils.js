@@ -133,7 +133,7 @@
   const IK_HOST = /^https:\/\/ik\.imagekit\.io\//i;
 
   function imgUrl(path, size) {
-    if (!path) return 'assets/images/icon-192.png';
+    if (!path) return 'assets/images/default-avatar.png';
     if (/^https?:/i.test(path)) {
       // روابط ImageKit المطلقة: نطلب نسخة مصغّرة بدل الصورة الأصلية (إن لم يكن الرابط يحمل tr مسبقًا)
       const iw = IK_W[size];
