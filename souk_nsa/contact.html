@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="assets/images/favicon.png">
+<meta name="robots" content="index, follow">
+<meta name="description" content="تواصلي مع فريق دعم سوق نسا عبر واتساب أو تيليغرام.">
+<link rel="canonical" href="https://souknsa.com/contact.html">
+<meta property="og:title" content="تواصلي معنا — سوق نسا">
+<meta property="og:site_name" content="سوق نسا">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>تواصلي معنا — سوق نسا</title>
+<link rel="stylesheet" href="css/themes.css?v=1.1.0">
+<link rel="stylesheet" href="css/base.css?v=1.1.0">
+<link rel="stylesheet" href="css/rtl.css?v=1.1.0">
+<link rel="stylesheet" href="css/components.css?v=1.1.0">
+<link rel="stylesheet" href="css/pages.css?v=1.1.0">
+</head>
+<body data-page="static">
+<main class="container prose">
+  <h1 class="page-title">تواصلي معنا</h1>
+
+  <p>فريق الدعم متاح للإجابة على استفساراتك، مساعدتك في حسابك، أو استقبال اقتراحاتك. اختاري الوسيلة المناسبة لك:</p>
+
+  <div class="contact-links" id="contact-buttons">
+    <!-- تُبنى الأزرار بواسطة JavaScript -->
+  </div>
+
+  <h2>أوقات الدعم</h2>
+  <p>نرد عادةً خلال 24 ساعة، من الأحد إلى الخميس.</p>
+
+  <h2>للإبلاغ عن مشكلة</h2>
+  <p>إذا واجهتِ إعلانًا مخالفًا أو مشكلة تقنية، يمكنك الإبلاغ مباشرة من صفحة الإعلان، أو التواصل معنا عبر الأزرار أعلاه.</p>
+</main>
+<script src="js/env.js?v=1.1.0"></script>
+<script src="js/config.js?v=1.1.0"></script>
+<script src="js/console-logger.js?v=1.1.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="js/supabase.js?v=1.1.0"></script>
+<script src="js/sanitize.js?v=1.1.0"></script>
+<script src="js/utils.js?v=1.1.0"></script>
+<script src="js/ui.js?v=1.1.0"></script>
+<script src="js/i18n.js?v=1.1.0"></script>
+<script src="js/theme.js?v=1.1.0"></script>
+<script src="js/router.js?v=1.1.0"></script>
+<script src="js/auth.js?v=1.1.0"></script>
+<script src="js/geo.js?v=1.1.0"></script>
+<script src="js/categories.js?v=1.1.0"></script>
+<script src="js/price.js?v=1.1.0"></script>
+<script src="js/ads.js?v=1.1.0"></script>
+<script src="js/cards.js?v=1.1.0"></script>
+<script src="js/filters.js?v=1.1.0"></script>
+<script src="js/search.js?v=1.1.0"></script>
+<script src="js/offline-cache.js?v=1.1.0"></script>
+<script src="js/fingerprint.js?v=1.1.0"></script>
+<script src="js/interests.js?v=1.1.0"></script>
+<script src="js/likes.js?v=1.1.0"></script>
+<script src="js/notifications.js?v=1.1.0"></script>
+<script src="js/alerts.js?v=1.1.0"></script>
+<script src="js/tracking.js?v=1.1.0"></script>
+<script src="js/banners.js?v=1.1.0"></script>
+<script src="js/chat.js?v=1.1.0"></script>
+<script src="js/settings.js?v=1.1.0"></script>
+<script src="js/app.js?v=1.1.0"></script>
+<script src="js/logger.js?v=1.1.0"></script>
+<script>
+(function () {
+  const C = window.CONFIG;
+  if (!C) return;
+  const wa = C.SUPPORT.WHATSAPP ? 'https://wa.me/' + encodeURIComponent(C.SUPPORT.WHATSAPP) : null;
+  const tg = C.SUPPORT.TELEGRAM ? 'https://t.me/' + encodeURIComponent(C.SUPPORT.TELEGRAM) : null;
+  const wrap = document.getElementById('contact-buttons');
+  if (!wrap) return;
+  if (wa) {
+    const a = document.createElement('a');
+    a.href = wa;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.className = 'btn btn--primary contact-link contact-link--whatsapp';
+    a.textContent = 'WhatsApp';
+    wrap.appendChild(a);
+  }
+  if (tg) {
+    const a = document.createElement('a');
+    a.href = tg;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.className = 'btn btn--ghost contact-link contact-link--telegram';
+    a.textContent = 'Telegram';
+    wrap.appendChild(a);
+  }
+})();
+</script>
+</body>
+</html>
