@@ -47,3 +47,7 @@
 /* ===== النبذة ومشاركة الحساب ===== */
 .profile-bio{max-width:420px;text-align:center;font-size:13px;color:var(--muted);line-height:1.7;margin:2px 0 4px;white-space:pre-line;word-break:break-word}
 .profile-share{margin:0 auto 10px;min-height:38px;padding:8px 16px}
+.about-section{padding:2rem 1rem;border-top:1px solid var(--border);margin-top:2rem}
+.about-section h2{font-size:1.3rem;margin-bottom:1rem}
+.about-section h3{font-size:1rem;font-weight:700;margin:1.5rem 0 .5rem;color:var(--c-primary)}
+.about-section p{color:var(--muted);line-height:1.8;margin:0}
