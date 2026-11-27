@@ -44,6 +44,7 @@
         : DEFAULT_IMAGE;
       const pageUrl     = SITE_URL + '/ad-details.html?id=' + ad.id;
       const price       = ad.price ? String(ad.price) + ' دج' : '';
+      const imageAlt    = (ad.title || 'إعلان') + ' — سوق نسا';
 
       // Title
       document.title = title;
@@ -53,23 +54,30 @@
 
       // Canonical
       setCanonical(pageUrl);
-      // جديد: أضف هذا
-['ar','fr','x-default'].forEach(lang => {
-  let el = document.querySelector('link[hreflang="' + lang + '"]');
-  if (!el) { el = document.createElement('link'); el.rel = 'alternate'; el.hreflang = lang; document.head.appendChild(el); }
-  el.href = pageUrl + (lang === 'x-default' || lang === 'ar' ? '' : '&lang=' + lang);
-});
+
+      // hreflang — ar + fr + en + x-default
+      ['ar', 'fr', 'en', 'x-default'].forEach(function(lang) {
+        let el = document.querySelector('link[hreflang="' + lang + '"]');
+        if (!el) { el = document.createElement('link'); el.rel = 'alternate'; el.hreflang = lang; document.head.appendChild(el); }
+        if (lang === 'x-default' || lang === 'ar') {
+          el.href = pageUrl;
+        } else {
+          el.href = pageUrl + '&lang=' + lang;
+        }
+      });
 
       // Open Graph
       setMeta('og:title',       title,       'property');
       setMeta('og:description', description, 'property');
       setMeta('og:image',       imageUrl,    'property');
+      setMeta('og:image:alt',   imageAlt,    'property');
       setMeta('og:url',         pageUrl,     'property');
 
       // Twitter
       setMeta('twitter:title',       title);
       setMeta('twitter:description', description);
       setMeta('twitter:image',       imageUrl);
+      setMeta('twitter:image:alt',   imageAlt);
 
       // Schema.org — Product
       var schema = {
@@ -108,6 +116,7 @@
       setMeta('og:title',       title,  'property');
       setMeta('og:description', bio,    'property');
       setMeta('og:image',       avatar, 'property');
+      setMeta('og:image:alt',   name + ' — سوق نسا', 'property');
       setMeta('og:url',         pageUrl,'property');
 
       setSchema({

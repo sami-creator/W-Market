@@ -10,47 +10,65 @@
 <meta name="keywords" content="سوق نسا, إعلانات مبوبة, الجزائر, ملابس نساء, بيع وشراء, souknsa">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://souknsa.com/">
-<!-- جديد: أضف هذا -->
 <link rel="alternate" hreflang="ar" href="https://souknsa.com/">
 <link rel="alternate" hreflang="fr" href="https://souknsa.com/?lang=fr">
+<link rel="alternate" hreflang="en" href="https://souknsa.com/?lang=en">
 <link rel="alternate" hreflang="x-default" href="https://souknsa.com/">
 
 <!-- ══ Open Graph ══ -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="سوق نسا">
-<meta property="og:title" content="سوق نسا — إعلانات مبوبة للمرأة الجزائرية">
+<meta property="og:title" content="سوق نسا — أكبر سوق إعلانات مبوبة للمرأة الجزائرية">
 <meta property="og:description" content="أكبر سوق إعلانات مبوبة مخصص للمرأة الجزائرية. ملابس، إكسسوارات، خدمات وأكثر.">
 <meta property="og:image" content="https://souknsa.com/landing/og.jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="سوق نسا — إعلانات مبوبة للمرأة الجزائرية">
 <meta property="og:url" content="https://souknsa.com/">
 <meta property="og:locale" content="ar_DZ">
+<meta property="og:locale:alternate" content="fr_DZ">
 
 <!-- ══ Twitter Card ══ -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="سوق نسا — إعلانات مبوبة للمرأة الجزائرية">
+<meta name="twitter:title" content="سوق نسا — أكبر سوق إعلانات مبوبة للمرأة الجزائرية">
 <meta name="twitter:description" content="أكبر سوق إعلانات مبوبة مخصص للمرأة الجزائرية.">
 <meta name="twitter:image" content="https://souknsa.com/landing/og.jpeg">
+<meta name="twitter:image:alt" content="سوق نسا">
 
-<!-- ══ Schema.org: WebSite + SearchAction ══ -->
+<!-- ══ Schema.org: WebSite + Organization ══ -->
 <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "سوق نسا",
-  "alternateName": "Souk Nsa",
-  "url": "https://souknsa.com/",
-  "description": "موقع إعلانات مبوبة مخصص للمرأة الجزائرية",
-  "inLanguage": ["ar", "fr"],
-  "potentialAction": {
-    "@type": "SearchAction",
-    "target": {
-      "@type": "EntryPoint",
-      "urlTemplate": "https://souknsa.com/?q={search_term_string}"
-    },
-    "query-input": "required name=search_term_string"
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "سوق نسا",
+    "alternateName": "Souk Nsa",
+    "url": "https://souknsa.com/",
+    "description": "موقع إعلانات مبوبة مخصص للمرأة الجزائرية",
+    "inLanguage": ["ar", "fr", "en"],
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://souknsa.com/?q={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "سوق نسا",
+    "alternateName": "Souk Nsa",
+    "url": "https://souknsa.com/",
+    "logo": "https://souknsa.com/assets/images/icon-512.png",
+    "description": "منصة إعلانات مبوبة جزائرية موجهة للنساء",
+    "areaServed": "DZ",
+    "sameAs": [
+      "https://t.me/souknsa_bot"
+    ]
   }
-}
+]
 </script>
 
 <!-- ══ Favicon & PWA ══ -->
@@ -103,9 +121,28 @@
   </div>
   <div id="sub-wrap" class="chips-wrap" hidden><div id="sub-chips" class="chips chips--sub"></div></div>
 </header>
-<!-- جديد -->
+
 <main class="container">
   <h1 class="sr-only">سوق نسا — إعلانات مبوبة للمرأة الجزائرية</h1>
+
+  <!-- محتوى ثابت للزاحف — مخفي بصرياً لكن مقروء لمحركات البحث والـ AI -->
+  <section class="sr-only" aria-hidden="true">
+    <p>سوق نسا هو أكبر موقع إعلانات مبوبة مخصص للمرأة الجزائرية. تصفحي آلاف الإعلانات في مجالات الملابس والأزياء الجزائرية، الإكسسوارات، الأحذية، المنتجات النسائية، والخدمات المتنوعة.</p>
+    <p>ابحثي عن ملابس الأعراس الجزائرية كالكراكو والقندورة، ملابس السهرات، ملابس العمل، الأحذية، والإكسسوارات بأسعار مناسبة من بائعات موثوقات في جميع ولايات الجزائر الـ 58.</p>
+    <nav aria-label="الفئات الرئيسية">
+      <ul>
+        <li><a href="category/clothes_wedding.html">ملابس الأعراس الجزائرية</a></li>
+        <li><a href="category/clothes_work.html">ملابس العمل للمرأة</a></li>
+        <li><a href="category/clothes_evening.html">ملابس السهرات</a></li>
+        <li><a href="category/clothes_beach.html">ملابس البحر</a></li>
+        <li><a href="category/clothes_girls.html">ملابس البنات الصغار</a></li>
+        <li><a href="category/shoes.html">أحذية نسائية</a></li>
+        <li><a href="category/products.html">منتجات نسائية</a></li>
+        <li><a href="category/services.html">خدمات</a></li>
+      </ul>
+    </nav>
+  </section>
+
   <div id="dym" class="did-you-mean"></div>
   <div id="active-tags" class="active-filters"></div>
   <div id="search-actions" class="search-actions"></div>
