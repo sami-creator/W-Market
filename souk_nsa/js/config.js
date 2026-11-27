@@ -33,7 +33,7 @@
     FONTS: { proto: 'Poppins', times: 'Times New Roman', cairo: 'Cairo', tajawal: 'Tajawal', almarai: 'Almarai', amiri: 'Amiri', plex: 'IBM Plex Sans Arabic', system: 'system-ui' },
     INTEREST_POINTS: { click: 1, like: 3, message: 5, buy_or_rate: 8 },
     CLICK_RAW_DAYS: 30,
-    SUPPORT: { WHATSAPP: '+213659088226', TELEGRAM: 'Nawalquee' },
+    SUPPORT: { WHATSAPP: '+213659088226', TELEGRAM: 'souknsa_support' },
     SMART_AGENT: {
       EDGE_FUNCTION_URL: '/functions/v1/smart-agent',
       RATE_PER_MIN: 10,
