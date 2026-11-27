@@ -24,6 +24,7 @@ Disallow: /virtual_tryon.html
 Disallow: /data/
 
 Sitemap: https://souknsa.com/sitemap.xml
+Sitemap: https://souknsa.com/sitemap-static.xml
 
 # Google
 User-agent: Googlebot
@@ -32,3 +33,19 @@ Allow: /landing/
 # Bing / Copilot
 User-agent: Bingbot
 Allow: /landing/
+
+# AI / LLM Crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
