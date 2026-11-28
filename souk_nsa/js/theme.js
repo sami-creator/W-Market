@@ -3,7 +3,7 @@
   'use strict';
   const C = window.CONFIG, K = C.STORAGE_KEYS;
   const GF = {
-    proto: 'Poppins:wght@400;500;600;700', cairo: 'Cairo:wght@400;600;700', tajawal: 'Tajawal:wght@400;500;700',
+    proto: 'Poppins:wght@400;600', cairo: 'Cairo:wght@400;600;700', tajawal: 'Tajawal:wght@400;500;700',
     almarai: 'Almarai:wght@400;700', amiri: 'Amiri:wght@400;700', plex: 'IBM+Plex+Sans+Arabic:wght@400;500;700'
   };
   const STACK = {

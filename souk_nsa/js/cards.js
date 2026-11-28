@@ -7,7 +7,7 @@
   const HEART = 'M12 21s-6.7-4.35-9.33-8.02C.86 10.6 1.2 7.3 3.6 5.4 5.8 3.66 8.9 4.1 10.6 6.1L12 7.7l1.4-1.6c1.7-2 4.8-2.44 7-.7 2.4 1.9 2.74 5.2 0.93 7.58C18.7 16.65 12 21 12 21z';
   const STAR = 'M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z';
   const seen = new Map(); // user_id -> last_seen
-  const EAGER_COUNT = 4; // عدد البطاقات التي تظهر في الشاشة الأولى على الجوال (عمودان × صفان)
+  const EAGER_COUNT = 2; // عدد البطاقات التي تظهر في الشاشة الأولى على الجوال (عمودان × صفان)
 
   function svg(path, size, attrs) {
     const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -20,7 +20,7 @@
   // opts.kind: 'thumb' | 'avatar' — opts.eager: تحميل فوري (أول الشاشة) — opts.high: أولوية عالية (أكبر صورة LCP)
   function img(src, alt, cls, opts) {
     const o = opts || {}, kind = o.kind || 'thumb';
-    const attrs = { class: cls, alt: alt || '', loading: o.eager ? 'eager' : 'lazy', decoding: 'async', src: Utils.imgUrl(src, kind) };
+    const attrs = { class: cls, alt: alt || '', loading: o.eager ? 'eager' : 'lazy', decoding: 'async', src: Utils.imgUrl(src, kind), width: kind === 'avatar' ? 46 : 300, height: kind === 'avatar' ? 46 : 300 };
     if (o.high) attrs.fetchpriority = 'high';
     else if (kind === 'avatar') attrs.fetchpriority = 'low'; // الأفاتار صغير ولا يجب أن ينافس صور الإعلانات
     const i = el('img', attrs);
@@ -112,7 +112,7 @@
 
       card.append(wrap,
         el('h3', { text: ad.title }), seller,
-        wil ? el('div', { class: 'loc' }, [el('img', { src: 'assets/images/map-pin.svg', style: 'width:14px;height:14px;vertical-align:middle;margin-left:3px' }), ' ' + Geo.label(wil) + (near ? ' · ' + t('card.near') : '')]) : el('span'),
+        wil ? el('div', { class: 'loc' }, [el('img', { src: 'assets/images/map-pin.svg', alt: '', style: 'width:14px;height:14px;vertical-align:middle;margin-left:3px' }), ' ' + Geo.label(wil) + (near ? ' · ' + t('card.near') : '')]) : el('span'),
         el('div', { class: 'nego-tag' + (ad.negotiable ? '' : ' fixed'), text: ad.negotiable ? t('ad.negotiable') : t('ad.fixed_price') }),
         priceEl,
         el('div', { class: 'card-footer' }, [el('div', { class: 'rating' }, [star, Number(ad.rating_avg || 0).toFixed(1)]), heartBtn]),

@@ -79,20 +79,33 @@
 
 <!-- ══ Preconnect ══ -->
 <link rel="preconnect" href="https://hbwkrpekqiouyeopgvpa.supabase.co" crossorigin>
-<link rel="preconnect" href="https://ik.imagekit.io">
+<link rel="preconnect" href="https://ik.imagekit.io" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="image" href="assets/images/favicon.png" fetchpriority="high">
 
 <!-- ══ CSS ══ -->
-<link rel="stylesheet" href="css/themes.css?v=1.1.0">
-<link rel="stylesheet" href="css/base.css?v=1.1.0">
-<link rel="stylesheet" href="css/rtl.css?v=1.1.0">
-<link rel="stylesheet" href="css/components.css?v=1.1.0">
-<link rel="stylesheet" href="css/pages.css?v=1.1.0">
+<link rel="stylesheet" href="css/main.css?v=1.2.0">
 
 <!-- ══ Google Analytics ══ -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-E69VV3091S"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-E69VV3091S');</script>
+<script>
+window.dataLayer=window.dataLayer||[];
+function gtag(){dataLayer.push(arguments);}
+gtag('js',new Date());
+gtag('config','G-E69VV3091S');
+function loadGtag(){
+  if(window._gtagLoaded) return;
+  window._gtagLoaded=true;
+  var s=document.createElement('script');
+  s.src='https://www.googletagmanager.com/gtag/js?id=G-E69VV3091S';
+  s.async=true;
+  document.head.appendChild(s);
+}
+window.addEventListener('scroll', loadGtag, {once:true, passive:true});
+window.addEventListener('click', loadGtag, {once:true});
+setTimeout(loadGtag, 5000);
+</script>
 </head>
 <body data-page="home">
 <header id="app-header" class="top-bar">
@@ -127,21 +140,20 @@
 
   <!-- محتوى ثابت للزاحف — مخفي بصرياً لكن مقروء لمحركات البحث والـ AI -->
   <section class="sr-only" aria-hidden="true">
-    <p>سوق نسا هو أكبر موقع إعلانات مبوبة مخصص للمرأة الجزائرية. تصفحي آلاف الإعلانات في مجالات الملابس والأزياء الجزائرية، الإكسسوارات، الأحذية، المنتجات النسائية، والخدمات المتنوعة.</p>
-    <p>ابحثي عن ملابس الأعراس الجزائرية كالكراكو والقندورة، ملابس السهرات، ملابس العمل، الأحذية، والإكسسوارات بأسعار مناسبة من بائعات موثوقات في جميع ولايات الجزائر الـ 58.</p>
-    <nav aria-label="الفئات الرئيسية">
-      <ul>
-        <li><a href="category/clothes_wedding.html">ملابس الأعراس الجزائرية</a></li>
-        <li><a href="category/clothes_work.html">ملابس العمل للمرأة</a></li>
-        <li><a href="category/clothes_evening.html">ملابس السهرات</a></li>
-        <li><a href="category/clothes_beach.html">ملابس البحر</a></li>
-        <li><a href="category/clothes_girls.html">ملابس البنات الصغار</a></li>
-        <li><a href="category/shoes.html">أحذية نسائية</a></li>
-        <li><a href="category/products.html">منتجات نسائية</a></li>
-        <li><a href="category/services.html">خدمات</a></li>
-      </ul>
-    </nav>
-  </section>
+  ...
+  <nav aria-label="الفئات الرئيسية">
+    <ul>
+      <li><a href="category/clothes_wedding.html" tabindex="-1">ملابس الأعراس الجزائرية</a></li>
+      <li><a href="category/clothes_work.html" tabindex="-1">ملابس العمل للمرأة</a></li>
+      <li><a href="category/clothes_evening.html" tabindex="-1">ملابس السهرات</a></li>
+      <li><a href="category/clothes_beach.html" tabindex="-1">ملابس البحر</a></li>
+      <li><a href="category/clothes_girls.html" tabindex="-1">ملابس البنات الصغار</a></li>
+      <li><a href="category/shoes.html" tabindex="-1">أحذية نسائية</a></li>
+      <li><a href="category/products.html" tabindex="-1">منتجات نسائية</a></li>
+      <li><a href="category/services.html" tabindex="-1">خدمات</a></li>
+    </ul>
+  </nav>
+</section>
 
   <div id="dym" class="did-you-mean"></div>
   <div id="active-tags" class="active-filters"></div>

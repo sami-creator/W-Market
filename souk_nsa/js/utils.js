@@ -129,8 +129,9 @@
   }
 
   // عرض الصورة المطلوب من ImageKit بالبكسل (ضعف العرض المعروض تقريبًا للشاشات عالية الدقة)
-  const IK_W = { thumb: 300, avatar: 90 };
+  const IK_W = { thumb: 300, avatar: 46 };
   const IK_HOST = /^https:\/\/ik\.imagekit\.io\//i;
+  const SB_HOST = /^https:\/\/[a-z]+\.supabase\.co\//i;
 
   function imgUrl(path, size) {
     if (!path) return 'assets/images/default-avatar.png';
@@ -139,6 +140,7 @@
       // روابط ImageKit المطلقة: نطلب نسخة مصغّرة بدل الصورة الأصلية (إن لم يكن الرابط يحمل tr مسبقًا)
       const iw = IK_W[size];
       if (iw && IK_HOST.test(path) && !/[?&]tr=/.test(path)) return path + (path.includes('?') ? '&' : '?') + 'tr=w-' + iw;
+      if (iw && SB_HOST.test(path)) return path + (path.includes('?') ? '&' : '?') + 'width=' + iw + '&resize=cover';
       return path;
     }
     const base = (window.__ENV__ && window.__ENV__.IMAGE_CDN_BASE) || '';

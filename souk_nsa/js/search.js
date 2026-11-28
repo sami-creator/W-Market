@@ -17,13 +17,15 @@
     current = txt; phBox.hidden = false;
     const rtl = /[\u0600-\u06FF]/.test(txt);
     phBox.dir = rtl ? 'rtl' : 'ltr';
-    phSpan.textContent = txt; phSpan.style.transform = 'none';
-    const bw = phBox.clientWidth, tw = phSpan.scrollWidth;
-    if (tw > bw + 2 && phSpan.animate) {
-      const from = rtl ? tw : -tw, to = rtl ? -bw : bw;
-      phAnim = phSpan.animate([{ transform: 'translateX(' + from + 'px)' }, { transform: 'translateX(' + to + 'px)' }], { duration: Math.max(4000, (bw + tw) / 45 * 1000), easing: 'linear' });
-      phAnim.onfinish = phShow;
-    } else phTimer = setTimeout(phShow, 3200);
+    requestAnimationFrame(() => {
+      phSpan.textContent = txt; phSpan.style.transform = 'none';
+      const bw = phBox.clientWidth, tw = phSpan.scrollWidth;
+      if (tw > bw + 2 && phSpan.animate) {
+        const from = rtl ? tw : -tw, to = rtl ? -bw : bw;
+        phAnim = phSpan.animate([{ transform: 'translateX(' + from + 'px)' }, { transform: 'translateX(' + to + 'px)' }], { duration: Math.max(4000, (bw + tw) / 45 * 1000), easing: 'linear' });
+        phAnim.onfinish = phShow;
+      } else phTimer = setTimeout(phShow, 3200);
+    });
   }
   const togglePh = () => { if (!phBox) return; if (input.value) { phStop(); phBox.hidden = true; } else if (phBox.hidden) phShow(); };
 
