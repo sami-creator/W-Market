@@ -74,8 +74,8 @@
     $('#own-actions').hidden = true; $('#own-menu').hidden = true;
     const { data: sp } = await SB.db.from('seller_public').select('*').eq('id', uid).maybeSingle();
     if (!sp) return Utils.go(R.HOME);
-    $('#p-avatar').src = Utils.imgUrl(sp.avatar_url || 'assets/images/avatar.svg', 'medium');
-    $('#p-avatar').addEventListener('error', e => { e.target.src = 'assets/images/avatar.svg'; }, { once: true });
+    $('#p-avatar').src = Utils.imgUrl(sp.avatar_url || 'assets/images/default-avatar.png', 'medium');
+    $('#p-avatar').addEventListener('error', e => { e.target.src = 'assets/images/default-avatar.png'; }, { once: true });
     $('#p-name').textContent = sp.name || ''; $('#p-tick').hidden = !sp.is_verified;
     if (window.SEO) SEO.updateProfileMeta(Object.assign({}, sp, { id: uid }));
     paintBio(sp.bio);
@@ -139,8 +139,8 @@
     const st = uParam ? await Auth.ready() : await App.boot({ guard: true });
     if (!st) return;
     const p = st.profile;
-    $('#p-avatar').src = Utils.imgUrl(p.avatar_url || 'assets/images/avatar.svg', 'medium');
-    $('#p-avatar').addEventListener('error', e => { e.target.src = 'assets/images/avatar.svg'; }, { once: true });
+    $('#p-avatar').src = Utils.imgUrl(p.avatar_url || 'assets/images/default-avatar.png', 'medium');
+    $('#p-avatar').addEventListener('error', e => { e.target.src = 'assets/images/default-avatar.png'; }, { once: true });
     $('#p-name').textContent = p.name || '';
     if (window.SEO) SEO.updateProfileMeta(p);
     $('#p-tick').hidden = !p.is_verified;
@@ -196,7 +196,7 @@
     links.forEach(x => { x.i.value = p[x.k] || ''; x.i.maxLength = 300; }); maps.value = p.maps_url || ''; maps.maxLength = 300;
     f.phone.value = p.phone || ''; f.phone.maxLength = 16; f.phone.disabled = !!p.is_verified;
     f.show.checked = !!p.show_phone;
-    $('#avatar-prev').src = Utils.imgUrl(p.avatar_url || 'assets/images/avatar.svg', 'thumb');
+    $('#avatar-prev').src = Utils.imgUrl(p.avatar_url || 'assets/images/default-avatar.png', 'thumb');
 
     let newAvatar = null;
     let _avatarBlocked = false;   // true إن كانت الصورة UNSAFE
@@ -233,7 +233,7 @@
               if (myToken !== _avatarToken) return;
               newAvatar = null; _avatarBlocked = false;
               f.avatar.value = '';
-              $('#avatar-prev').src = p.avatar_url || 'assets/images/avatar.svg';
+              $('#avatar-prev').src = p.avatar_url || 'assets/images/default-avatar.png';
             }
           );
         }

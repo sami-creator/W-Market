@@ -72,7 +72,7 @@
         };
         // RTL: الرئيسية أقصى اليمين ← المفضلة ← (زر +) ← الإشعارات ← حسابي أقصى اليسار
         const account = el('button', { class: 'nav-item', id: 'btn-account', type: 'button', 'aria-label': t('nav.account') }, [
-          el('div', { class: 'nav-profile' }, [el('img', { alt: '', src: 'assets/images/avatar.svg' }), el('div', { class: 'nav-dot off' })])
+          el('div', { class: 'nav-profile' }, [el('img', { alt: '', src: 'assets/images/default-avatar.png' }), el('div', { class: 'nav-dot off' })])
         ]);
         if (page === 'profile') account.classList.add('active');
         account.addEventListener('click', () => Utils.go(Auth.isLogged() ? R.PROFILE : R.AUTH));
@@ -153,7 +153,7 @@
     paintAccount(st) {
       const img = $('#btn-account img'), dot = $('#btn-account .nav-dot');
       if (dot) dot.classList.toggle('off', !Auth.isLogged());
-      if (img && st.profile && st.profile.avatar_url) { img.src = Utils.imgUrl(st.profile.avatar_url, 'avatar'); img.addEventListener('error', () => { img.src = 'assets/images/avatar.svg'; }, { once: true }); }
+      if (img && st.profile && st.profile.avatar_url) { img.src = Utils.imgUrl(st.profile.avatar_url, 'avatar'); img.addEventListener('error', () => { img.src = 'assets/images/default-avatar.png'; }, { once: true }); }
     },
 
     pages: {}

@@ -22,7 +22,7 @@
       if (!data || !data.length) return UI.emptyState(container, 'notif.none', 'empty.sub');
       const box = el('div', { class: 'chat-list' });
       data.forEach(c => box.append(el('a', { class: 'chat-item', href: window.CONFIG.ROUTES.CHAT + '?c=' + encodeURIComponent(c.id) }, [
-        el('img', { class: 'avatar-xs', style: 'width:42px;height:42px', src: Utils.imgUrl(c.other_avatar || 'assets/images/avatar.svg', 'thumb'), alt: '' }),
+        el('img', { class: 'avatar-xs', style: 'width:42px;height:42px', src: Utils.imgUrl(c.other_avatar || 'assets/images/default-avatar.png', 'thumb'), alt: '' }),
         el('div', { class: 'grow' }, [el('b', { text: c.other_name || '' }), el('div', { class: 'hint', text: c.ad_title || '' }), el('div', { class: 'muted', text: c.last_message || '' })]),
         c.unread ? el('span', { class: 'dot-badge', style: 'position:static', text: c.unread }) : null
       ])));
@@ -62,8 +62,8 @@
         const { data: u } = await SB.db.from('seller_public').select('name,avatar_url,last_seen').eq('id', status.other_id).maybeSingle();
         if (!u) return;
         const on = !!u.last_seen && Date.now() - new Date(u.last_seen).getTime() < 5 * 60 * 1000;
-        const im = el('img', { class: 'avatar-xs', style: 'width:36px;height:36px', src: Utils.imgUrl(u.avatar_url || 'assets/images/avatar.svg', 'thumb'), alt: '' });
-        im.addEventListener('error', () => { im.src = 'assets/images/avatar.svg'; }, { once: true });
+        const im = el('img', { class: 'avatar-xs', style: 'width:36px;height:36px', src: Utils.imgUrl(u.avatar_url || 'assets/images/default-avatar.png', 'thumb'), alt: '' });
+        im.addEventListener('error', () => { im.src = 'assets/images/default-avatar.png'; }, { once: true });
         peerBar.replaceChildren(im, el('div', { class: 'grow' }, [
           el('b', { text: u.name || '' }),
           el('div', { class: 'chat-peer__st' + (on ? ' on' : '') }, [el('span', { class: 'presence' + (on ? ' on' : '') }), on ? t('chat.online') : (u.last_seen ? t('chat.last_seen') + ' ' + Utils.timeAgo(u.last_seen) : '')])
