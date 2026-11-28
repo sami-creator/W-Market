@@ -45,11 +45,19 @@ self.addEventListener('fetch', e => {
 
   /* طلبات Supabase / Edge Functions: Network-First مع fallback */
   if (url.hostname.includes('supabase.co') || url.pathname.includes('/functions/')) {
-    e.respondWith(
-      fetch(e.request).catch(() => caches.match(e.request))
-    );
-    return;
-  }
+  if (e.request.method !== 'GET') return;
+  e.respondWith(
+    caches.open('supabase-cache').then(async cache => {
+      const cached = await cache.match(e.request);
+      const fetchPromise = fetch(e.request).then(res => {
+        if (res && res.status === 200) cache.put(e.request, res.clone());
+        return res;
+      });
+      return cached || fetchPromise;
+    })
+  );
+  return;
+}
 
   /* الملفات الثابتة: Cache-First */
   if (e.request.method === 'GET') {
