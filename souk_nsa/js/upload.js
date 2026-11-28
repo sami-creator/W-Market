@@ -275,7 +275,7 @@
     /* مستند خاص (هوية) — يبقى في Supabase Storage */
     async putPrivate(bucket, path, file) {
       const blob = await resize(await createImageBitmap(file), 1600);
-      const { error } = await SB.db.storage.from(bucket).upload(path, blob, { contentType: blob.type, upsert: true });
+      const { error } = await SB.db.storage.from(bucket).upload(path, blob, { contentType: blob.type, upsert: true, cacheControl: '86400' });
       if (error) throw error;
       return path;
     }

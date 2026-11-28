@@ -271,7 +271,7 @@
           }
           if (_avatarBlocked) { UI.toastKey('ad.blocked_images_exist', 'error'); return; }
           const blobs = await Upload.compress(newAvatar); const path = `${Auth.uid()}/avatar.webp`;
-          const up = await SB.db.storage.from('avatars').upload(path, blobs.medium, { contentType: blobs.medium.type, upsert: true });
+          const up = await SB.db.storage.from('avatars').upload(path, blobs.medium, { contentType: blobs.medium.type, upsert: true, cacheControl: '86400' });
           if (up.error) throw up.error; patch.avatar_url = SB.db.storage.from('avatars').getPublicUrl(path).data.publicUrl + '?v=' + Date.now();
         }
         let { error } = await SB.db.from('users').update(patch).eq('id', Auth.uid());
