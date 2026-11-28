@@ -93,7 +93,7 @@
     }
     let q = SB.db.from('ads_feed').select(LIST_COLS).eq('status', 'active');
     if (ids) q = q.in('id', ids);
-    q = applyFilters(q, f).order('created_at', { ascending: false }).limit(CAP());
+    q = applyFilters(q, f).limit(CAP());
     const { data, error } = await q;
     if (error) throw error;
     const items = (data || []).map(a => ({ a, s: rankScore(a, rel ? rel.get(a.id) : null) })).sort((x, y) => y.s - x.s).map(x => x.a);

@@ -127,8 +127,8 @@
     },
 
     needAI(p) {
-      if (p.tokens < 3) return false;
-      return p.unknownPlace > 0 || p.leftover >= 3 || (!p.recognized && p.leftover >= 2);
+  if (p.tokens < 2) return false;
+  return p.unknownPlace > 0 || p.leftover >= 4 || (!p.recognized && p.leftover >= 3);
     },
     async ai(raw) {
       const key = Dict.norm(raw), hit = SearchState.aiGet(key);
