@@ -639,3 +639,4 @@ button:not(:disabled):active,a.btn:active,.chip:active,.icon-btn:active,.nav-ite
 .about-section h2{font-size:1.3rem;margin-bottom:1rem}
 .about-section h3{font-size:1rem;font-weight:700;margin:1.5rem 0 .5rem;color:var(--c-primary)}
 .about-section p{color:var(--muted);line-height:1.8;margin:0}
+.about-section{margin-top:2rem;padding:2rem 1rem;border-top:1px solid var(--border)}

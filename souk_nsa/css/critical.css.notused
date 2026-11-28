@@ -49,7 +49,7 @@ button{cursor:pointer}
 .chip.active{background:var(--c-primary);color:var(--c-on);box-shadow:0 8px 16px color-mix(in srgb,var(--c-primary) 30%,transparent)}
 
 /* ══ شبكة البطاقات ══ */
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:12px;width:100%}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:12px;width:100%;min-height:100vh;align-content:start}
 .grid>*{min-width:0}
 .card{min-width:0;max-width:100%;background:var(--surface);border-radius:20px;padding:12px 12px 14px;box-shadow:var(--shadow);border:1px solid var(--border);position:relative;cursor:pointer;display:block;overflow:visible}
 .card .img-wrap{width:100%;aspect-ratio:4/5;border-radius:14px;overflow:hidden;background:var(--surface-2);margin-bottom:10px;position:relative}
