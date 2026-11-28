@@ -414,7 +414,7 @@
     const online = seller.last_seen && (Date.now() - new Date(seller.last_seen).getTime() < ONLINE_MS);
     const rate = el('span', { class: 'seller-rate', text: '⭐ ' + Number(seller.rating_avg || ad.rating_avg || 0).toFixed(1) });
     const sellerHead = el('div', { class: 'seller-head', role: 'link', tabindex: 0 }, [
-      el('div', { class: 'seller-avatar' }, [el('img', { src: Utils.imgUrl(seller.avatar_url || 'assets/images/avatar.svg', 'thumb'), alt: '' }), el('div', { class: 'mini-dot' + (online ? ' online' : '') })]),
+      el('div', { class: 'seller-avatar' }, [el('img', { src: Utils.imgUrl(seller.avatar_url || 'assets/images/default-avatar.png', 'thumb'), alt: '' }), el('div', { class: 'mini-dot' + (online ? ' online' : '') })]),
       el('div', { class: 'seller-head__txt' }, [
         el('span', { class: 'seller-name' }, [seller.name || ad.user_name || '', seller.is_verified ? el('span', { class: 'verified-tick', text: ' ✓' }) : null]),
         el('div', { class: 'hint', text: online ? t('ad.online') : (seller.last_seen ? t('ad.last_seen') + ' ' + Utils.timeAgo(seller.last_seen) : '') })
