@@ -72,7 +72,7 @@
       input.setAttribute('autocapitalize', 'off'); input.setAttribute('autocorrect', 'off'); input.setAttribute('spellcheck', 'false');
       const st = window.Filters && Filters.get();
       if (st && (st.qraw || st.q)) input.value = st.qraw || st.q;
-      phIdx = 0; phShow();
+      phIdx = 0; setTimeout(phShow, 3000);
       document.addEventListener('langchange', () => { phIdx = 0; phShow(); });
       input.addEventListener('input', () => { togglePh(); keepTail(); this.suggestSoon(); });
       input.addEventListener('focus', () => this.suggest());
