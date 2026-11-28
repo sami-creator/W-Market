@@ -134,6 +134,7 @@
 
   function imgUrl(path, size) {
     if (!path) return 'assets/images/default-avatar.png';
+    if (path.startsWith('assets/')) return path;
     if (/^https?:/i.test(path)) {
       // روابط ImageKit المطلقة: نطلب نسخة مصغّرة بدل الصورة الأصلية (إن لم يكن الرابط يحمل tr مسبقًا)
       const iw = IK_W[size];

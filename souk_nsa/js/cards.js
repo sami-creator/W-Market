@@ -91,7 +91,7 @@
 
       const dot = el('div', { class: 'mini-dot', 'data-presence': ad.user_id });
       const seller = el('div', { class: 'seller-row' }, [
-        el('div', { class: 'seller-avatar' }, [img(ad.user_avatar || 'assets/images/default-avatar.png', ad.user_name, '', { kind: 'avatar' }), dot]),
+        el('div', { class: 'seller-avatar' }, [img(ad.user_avatar ||'assets/images/default-avatar.png', ad.user_name, '', { kind: 'avatar' }), dot]),
         el('div', { class: 'seller' }, [ad.user_name || '', ad.is_verified ? el('span', { class: 'seller-verified', text: ' ✓' }) : null])
       ]);
 
