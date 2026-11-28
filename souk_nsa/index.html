@@ -86,7 +86,9 @@
 <link rel="preload" as="image" href="assets/images/favicon.png" fetchpriority="high">
 
 <!-- ══ CSS ══ -->
-<link rel="stylesheet" href="css/main.css?v=1.2.0">
+<link rel="stylesheet" href="css/critical.css?v=1.0.0">
+<link rel="preload" href="css/main.css?v=1.2.0" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="css/main.css?v=1.2.0"></noscript>
 
 <!-- ══ Google Analytics ══ -->
 <script>
@@ -180,7 +182,7 @@ setTimeout(loadGtag, 5000);
   <p>نظام توثيق الحساب بالهوية الوطنية يمنح البائعة شارة الموثوقية، مما يوفر بيئة آمنة للبيع والشراء. يمكنك الإبلاغ عن أي إعلان مخالف، والفريق يراجع البلاغات خلال 24 ساعة.</p>
 </section>
 </main>
-<script src="js/env.js?v=1.1.0"></script>
+<script src="js/env.js?v=1.1.0" defer></script>
 <script src="js/config.js?v=1.1.0" defer></script>
 <script src="js/console-logger.js?v=1.1.0" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" defer></script>

@@ -134,6 +134,7 @@ textarea.input{min-height:100px;resize:vertical}
 .card:active{transform:scale(.97)}
 .card .img-wrap{width:100%;aspect-ratio:4/5;border-radius:14px;overflow:hidden;background:var(--surface-2);margin-bottom:10px;position:relative}
 .card .img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+.seller-avatar img{width:46px;height:46px;border-radius:50%;flex-shrink:0}
 .card .badge-sold{position:absolute;top:8px;right:8px;background:var(--c-primary);color:var(--c-on);padding:2px 8px;border-radius:20px;font-size:9px;font-weight:700;z-index:2}
 .card .badge-discount{position:absolute;top:8px;left:8px;background:#047857;color:#fff;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;z-index:2}
 .card h3{margin:0 0 2px;font-size:14px;font-weight:700;color:var(--text);text-align:right;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -181,7 +182,7 @@ textarea.input{min-height:100px;resize:vertical}
 .like-btn.liked{color:var(--c-primary)}
 
 /* ===== الشريط السفلي + الزر العائم ===== */
-.bottom-bar{position:fixed;left:var(--edge);right:var(--edge);bottom:0;z-index:20;height:calc(var(--nav-h) + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px);background:var(--c-primary);display:flex;align-items:center;justify-content:space-around;direction:rtl;transition:transform .15s cubic-bezier(.4,0,.2,1),background .2s;will-change:transform}
+.bottom-bar{position:fixed;left:var(--edge);right:var(--edge);bottom:0;z-index:20;height:calc(var(--nav-h) + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px);background:var(--c-primary);display:flex;align-items:center;justify-content:space-around;direction:rtl;transition:transform .15s cubic-bezier(.4,0,.2,1),background .2s;will-change:transform;transform:translateY(0)}
 .bottom-bar.hidden{transform:translateY(100%)}
 .nav-item{flex:1;display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.65);cursor:pointer;border:none;background:transparent;padding:0;transition:color .15s;position:relative}
 .nav-item.active{color:#fff}
@@ -389,7 +390,7 @@ body:not([data-page="home"]) main.container{padding-top:16px}
 .modal__row{display:flex;gap:8px;margin-top:14px}.modal__row .btn{flex:1}
 .sk{background:linear-gradient(90deg,var(--surface-2),var(--border),var(--surface-2));background-size:200% 100%;animation:sh 1.2s infinite;border-radius:8px}
 @keyframes sh{to{background-position:-200% 0}}
-.sk-img{aspect-ratio:10/12;border-radius:14px}.sk-line{height:12px;margin:10px 0 0}.sk-short{width:50%}
+.sk-img{aspect-ratio:4/5;border-radius:14px}.sk-line{height:12px;margin:10px 0 0}.sk-short{width:50%}
 .empty{text-align:center;padding:40px 16px;color:var(--muted)}.empty svg{margin:0 auto 10px}
 .load-more{display:flex;justify-content:center;padding:14px}
 .grid .empty{grid-column:1/-1}
@@ -634,7 +635,7 @@ button:not(:disabled):active,a.btn:active,.chip:active,.icon-btn:active,.nav-ite
 /* ===== النبذة ومشاركة الحساب ===== */
 .profile-bio{max-width:420px;text-align:center;font-size:13px;color:var(--muted);line-height:1.7;margin:2px 0 4px;white-space:pre-line;word-break:break-word}
 .profile-share{margin:0 auto 10px;min-height:38px;padding:8px 16px}
-.about-section{padding:2rem 1rem;border-top:1px solid var(--border);margin-top:2rem}
+.about-section{padding:2rem 1rem;border-top:1px solid var(--border);margin-top:2rem;content-visibility:auto;contain-intrinsic-size:0 800px}
 .about-section h2{font-size:1.3rem;margin-bottom:1rem}
 .about-section h3{font-size:1rem;font-weight:700;margin:1.5rem 0 .5rem;color:var(--c-primary)}
 .about-section p{color:var(--muted);line-height:1.8;margin:0}
